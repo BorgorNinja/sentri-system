@@ -23,7 +23,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $conn->query("ALTER TABLE users ADD COLUMN token_expires_at DATETIME DEFAULT NULL AFTER verification_token");
         $conn->query("ALTER TABLE users ADD COLUMN reset_token VARCHAR(64) DEFAULT NULL AFTER token_expires_at");
         $conn->query("ALTER TABLE users ADD COLUMN reset_token_expires DATETIME DEFAULT NULL AFTER reset_token");
-        // Mark existing users as verified so they aren't locked out
         $conn->query("UPDATE users SET email_verified=1 WHERE created_at < NOW()");
     }
     // ─────────────────────────────────────────────────────────────────────────
@@ -73,7 +72,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 sendVerificationEmail($email, $user['first_name'], $newToken);
             } catch (Throwable $e) { error_log('SenTri resend: ' . $e->getMessage()); }
         }
-        // Always generic response — don't reveal if email exists
         echo json_encode(['status'=>'success','message'=>'If that account exists and is unverified, a new link has been sent. Please check your inbox.']);
         exit;
     }
@@ -88,7 +86,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt->bind_result($id, $first_name, $last_name, $hashed, $role, $email_verified);
         $stmt->fetch();
         if (password_verify($password, $hashed)) {
-            // ── Email verification gate ──────────────────────────────────────
             if (!$email_verified) {
                 echo json_encode([
                     'status'      => 'error',
@@ -96,7 +93,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'unverified'  => true,
                     'email'       => $email,
                 ]);
-                // Still log the attempt
                 $log = $conn->prepare("INSERT INTO login_logs (user_id, email, ip_address, device, status) VALUES (?, ?, ?, ?, ?)");
                 $log_s = 'Failed';
                 $log->bind_param("issss", $id, $email, $ip, $device, $log_s);
@@ -138,6 +134,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   --blue:#1c57b2;--blue-dark:#0e3d8c;--blue-light:#3a8dff;
   --admin:#7c3aed;--admin-light:#a78bfa;--admin-dark:#5b21b6;
   --text:#1a1a2e;--muted:#666;
+  --danger:#dc2626;--danger-light:#fee2e2;--danger-border:#fca5a5;
+  --warning:#d97706;--warning-light:#fef3c7;--warning-border:#fcd34d;
 }
 *{box-sizing:border-box;margin:0;padding:0;font-family:'Poppins',sans-serif;}
 body{background:#0a0f1e;min-height:100vh;display:flex;position:relative;overflow:hidden;}
@@ -158,6 +156,9 @@ body{background:#0a0f1e;min-height:100vh;display:flex;position:relative;overflow
 @keyframes fadeInUp{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
 @keyframes fadeInForm{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
 @keyframes pulse-icon{0%,100%{box-shadow:0 8px 24px rgba(58,141,255,0.4);}50%{box-shadow:0 8px 36px rgba(58,141,255,0.75);}}
+@keyframes shake{0%,100%{transform:translateX(0);}20%{transform:translateX(-8px);}40%{transform:translateX(8px);}60%{transform:translateX(-6px);}80%{transform:translateX(6px);}}
+@keyframes lockIn{from{opacity:0;transform:scale(0.92);}to{opacity:1;transform:scale(1);}}
+@keyframes drainBar{from{width:100%;}to{width:0%;}}
 
 .left{flex:1.1;display:flex;flex-direction:column;justify-content:center;padding:60px 56px;position:relative;z-index:1;animation:slideInLeft 0.7s cubic-bezier(0.22,1,0.36,1) both;}
 .brand{display:flex;align-items:center;gap:12px;margin-bottom:48px;text-decoration:none;}
@@ -199,17 +200,39 @@ body{background:#0a0f1e;min-height:100vh;display:flex;position:relative;overflow
 .form-group input{width:100%;padding:12px 16px;border:1.5px solid #e0e0e0;border-radius:10px;font-size:0.93rem;transition:all 0.2s;outline:none;font-family:'Poppins',sans-serif;background:#fafafa;}
 .form-group input:focus{border-color:var(--blue-light);background:#fff;box-shadow:0 0 0 4px rgba(58,141,255,0.1);}
 .admin-mode .form-group input:focus{border-color:var(--admin-light);box-shadow:0 0 0 4px rgba(124,58,237,0.1);}
+.form-group input.input-error{border-color:var(--danger-border);background:#fff5f5;}
 .show-btn{position:absolute;right:13px;bottom:12px;font-size:0.72rem;color:var(--blue);cursor:pointer;font-weight:700;user-select:none;letter-spacing:0.5px;}
 .forgot{text-align:right;margin-top:-8px;margin-bottom:18px;}
 .forgot a{font-size:0.82rem;color:var(--blue);text-decoration:none;font-weight:600;}
 .forgot a:hover{text-decoration:underline;}
 
+/* ── Attempt counter badge ── */
+.attempt-badge{display:none;align-items:center;gap:8px;background:var(--warning-light);border:1px solid var(--warning-border);border-radius:8px;padding:9px 13px;margin-bottom:14px;font-size:0.82rem;font-weight:600;color:var(--warning);animation:fadeInUp 0.3s ease both;}
+.attempt-badge.last-attempt{background:var(--danger-light);border-color:var(--danger-border);color:var(--danger);}
+.attempt-badge i{font-size:0.9rem;flex-shrink:0;}
+.attempt-dots{display:flex;gap:5px;margin-left:auto;}
+.attempt-dot{width:10px;height:10px;border-radius:50%;background:currentColor;opacity:0.25;transition:opacity 0.3s;}
+.attempt-dot.used{opacity:1;}
+
+/* ── Lockout overlay ── */
+.lockout-box{display:none;animation:lockIn 0.4s cubic-bezier(0.34,1.56,0.64,1) both;}
+.lockout-box.active{display:block;}
+.lockout-inner{background:linear-gradient(135deg,#fff5f5,#fee2e2);border:1.5px solid var(--danger-border);border-radius:14px;padding:22px 20px;text-align:center;}
+.lockout-icon{width:52px;height:52px;background:var(--danger);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;color:#fff;margin:0 auto 14px;box-shadow:0 4px 16px rgba(220,38,38,0.35);}
+.lockout-title{font-size:1rem;font-weight:800;color:var(--danger);margin-bottom:4px;}
+.lockout-sub{font-size:0.82rem;color:#b91c1c;margin-bottom:16px;line-height:1.5;}
+.lockout-timer-label{font-size:0.78rem;font-weight:700;color:#991b1b;margin-bottom:8px;letter-spacing:0.5px;text-transform:uppercase;}
+.lockout-countdown{font-size:2.2rem;font-weight:800;color:var(--danger);line-height:1;margin-bottom:14px;font-variant-numeric:tabular-nums;}
+.lockout-bar-track{background:#fca5a5;border-radius:99px;height:6px;overflow:hidden;}
+.lockout-bar-fill{height:100%;border-radius:99px;background:var(--danger);transition:none;}
+
 .btn-primary{width:100%;background:linear-gradient(135deg,var(--blue-light),var(--blue));color:#fff;border:none;padding:13px;border-radius:10px;font-size:0.96rem;font-weight:700;cursor:pointer;transition:all 0.25s;font-family:'Poppins',sans-serif;position:relative;overflow:hidden;}
-.btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(28,87,178,0.4);}
-.btn-primary:active{transform:translateY(0);}
-.btn-primary:disabled{opacity:0.6;cursor:not-allowed;transform:none;}
+.btn-primary:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 8px 24px rgba(28,87,178,0.4);}
+.btn-primary:active:not(:disabled){transform:translateY(0);}
+.btn-primary:disabled{opacity:0.5;cursor:not-allowed;transform:none !important;}
 .btn-admin{background:linear-gradient(135deg,var(--admin-light),var(--admin));}
-.btn-admin:hover{box-shadow:0 8px 24px rgba(124,58,237,0.45);}
+.btn-admin:hover:not(:disabled){box-shadow:0 8px 24px rgba(124,58,237,0.45);}
+.btn-primary.shake{animation:shake 0.5s cubic-bezier(0.36,0.07,0.19,0.97);}
 
 .signup-link{text-align:center;margin-top:18px;font-size:0.86rem;color:var(--muted);}
 .signup-link a{color:var(--blue);font-weight:700;text-decoration:none;}
@@ -299,6 +322,32 @@ body{background:#0a0f1e;min-height:100vh;display:flex;position:relative;overflow
     <div class="section-title">Welcome Back</div>
     <p class="section-sub">Sign in to your SenTri account</p>
     <div id="userMsg" class="msg"></div>
+
+    <!-- Attempt badge -->
+    <div class="attempt-badge" id="userAttemptBadge">
+      <i class="fas fa-triangle-exclamation"></i>
+      <span id="userAttemptText">2 attempts remaining</span>
+      <div class="attempt-dots">
+        <div class="attempt-dot used" id="userDot1"></div>
+        <div class="attempt-dot used" id="userDot2"></div>
+        <div class="attempt-dot used" id="userDot3"></div>
+      </div>
+    </div>
+
+    <!-- Lockout box -->
+    <div class="lockout-box" id="userLockout">
+      <div class="lockout-inner">
+        <div class="lockout-icon"><i class="fas fa-lock"></i></div>
+        <div class="lockout-title">Account Temporarily Locked</div>
+        <div class="lockout-sub">Too many failed attempts. Please wait before trying again.</div>
+        <div class="lockout-timer-label">Unlocking in</div>
+        <div class="lockout-countdown" id="userCountdown">10</div>
+        <div class="lockout-bar-track">
+          <div class="lockout-bar-fill" id="userBar" style="width:100%;"></div>
+        </div>
+      </div>
+    </div>
+
     <form id="userForm" novalidate>
       <input type="hidden" name="mode" value="user">
       <div class="form-group">
@@ -315,7 +364,7 @@ body{background:#0a0f1e;min-height:100vh;display:flex;position:relative;overflow
       <div id="resendBlock" class="resend-block">
         <p><i class="fas fa-envelope-circle-check" style="color:#f59e0b;margin-right:5px;"></i>Your email isn't verified yet. Enter your email and we'll resend the link.</p>
         <input type="email" id="resendEmailInput" placeholder="you@example.com">
-        <button class="btn-resend" id="resendBtn" onclick="resendVerification()"><i class="fas fa-paper-plane"></i> Resend Verification Email</button>
+        <button class="btn-resend" id="resendBtn" type="button" onclick="resendVerification()"><i class="fas fa-paper-plane"></i> Resend Verification Email</button>
       </div>
       <div class="signup-link">Don't have an account? <a href="signup.php">Create one</a></div>
     </form>
@@ -333,6 +382,32 @@ body{background:#0a0f1e;min-height:100vh;display:flex;position:relative;overflow
       </div>
     </div>
     <div id="adminMsg" class="msg"></div>
+
+    <!-- Attempt badge -->
+    <div class="attempt-badge" id="adminAttemptBadge">
+      <i class="fas fa-triangle-exclamation"></i>
+      <span id="adminAttemptText">2 attempts remaining</span>
+      <div class="attempt-dots">
+        <div class="attempt-dot used" id="adminDot1"></div>
+        <div class="attempt-dot used" id="adminDot2"></div>
+        <div class="attempt-dot used" id="adminDot3"></div>
+      </div>
+    </div>
+
+    <!-- Lockout box -->
+    <div class="lockout-box" id="adminLockout">
+      <div class="lockout-inner">
+        <div class="lockout-icon"><i class="fas fa-lock"></i></div>
+        <div class="lockout-title">Portal Temporarily Locked</div>
+        <div class="lockout-sub">Too many failed attempts. Please wait before trying again.</div>
+        <div class="lockout-timer-label">Unlocking in</div>
+        <div class="lockout-countdown" id="adminCountdown">10</div>
+        <div class="lockout-bar-track">
+          <div class="lockout-bar-fill" id="adminBar" style="width:100%;"></div>
+        </div>
+      </div>
+    </div>
+
     <form id="adminForm" novalidate>
       <input type="hidden" name="mode" value="admin">
       <div class="form-group">
@@ -352,6 +427,7 @@ body{background:#0a0f1e;min-height:100vh;display:flex;position:relative;overflow
 </div>
 
 <script>
+// ── Particle background ────────────────────────────────────────────────────
 (function(){
   const c=document.getElementById('particles');
   for(let i=0;i<50;i++){
@@ -362,6 +438,114 @@ body{background:#0a0f1e;min-height:100vh;display:flex;position:relative;overflow
   }
 })();
 
+// ── Attempt-lock state ─────────────────────────────────────────────────────
+const MAX_ATTEMPTS  = 3;
+const LOCKOUT_SECS  = 10;
+
+const state = {
+  user:  { attempts: 0, locked: false, timer: null },
+  admin: { attempts: 0, locked: false, timer: null },
+};
+
+function getScope(formId){ return formId === 'userForm' ? 'user' : 'admin'; }
+
+function updateAttemptBadge(scope) {
+  const s        = state[scope];
+  const badge    = document.getElementById(scope + 'AttemptBadge');
+  const text     = document.getElementById(scope + 'AttemptText');
+  const remaining = MAX_ATTEMPTS - s.attempts;
+
+  if (s.attempts === 0) { badge.style.display = 'none'; return; }
+  if (s.locked)         { badge.style.display = 'none'; return; }
+
+  badge.style.display = 'flex';
+  badge.classList.toggle('last-attempt', remaining === 1);
+
+  text.textContent = remaining === 1
+    ? '⚠ Last attempt — account will lock!'
+    : `${remaining} attempt${remaining !== 1 ? 's' : ''} remaining`;
+
+  // Update dots: filled = used, empty = remaining
+  for (let i = 1; i <= MAX_ATTEMPTS; i++) {
+    const dot = document.getElementById(scope + 'Dot' + i);
+    dot.classList.toggle('used', i > remaining);
+    dot.style.opacity = i > remaining ? '1' : '0.2';
+  }
+}
+
+function startLockout(scope) {
+  const s       = state[scope];
+  s.locked      = true;
+
+  const lockBox    = document.getElementById(scope + 'Lockout');
+  const countdown  = document.getElementById(scope + 'Countdown');
+  const bar        = document.getElementById(scope + 'Bar');
+  const btn        = document.getElementById(scope === 'user' ? 'loginBtn' : 'adminBtn');
+  const form       = document.getElementById(scope + 'Form');
+  const badge      = document.getElementById(scope + 'AttemptBadge');
+
+  // Show lockout, hide badge, disable inputs
+  lockBox.classList.add('active');
+  badge.style.display = 'none';
+  btn.disabled = true;
+  form.querySelectorAll('input').forEach(el => el.disabled = true);
+
+  // Animate the drain bar using CSS transition
+  bar.style.transition = `width ${LOCKOUT_SECS}s linear`;
+  // Force reflow so transition fires from 100%
+  bar.getBoundingClientRect();
+  bar.style.width = '0%';
+
+  let secs = LOCKOUT_SECS;
+  countdown.textContent = secs;
+
+  s.timer = setInterval(() => {
+    secs--;
+    countdown.textContent = secs;
+    if (secs <= 0) {
+      clearInterval(s.timer);
+      s.timer    = null;
+      s.locked   = false;
+      s.attempts = 0;
+
+      // Hide lockout, re-enable
+      lockBox.classList.remove('active');
+      btn.disabled = false;
+      form.querySelectorAll('input').forEach(el => el.disabled = false);
+
+      // Reset bar for next potential lockout
+      bar.style.transition = 'none';
+      bar.style.width = '100%';
+
+      // Clear any error messages
+      const msgEl = document.getElementById(scope + 'Msg');
+      msgEl.style.display = 'none';
+      updateAttemptBadge(scope);
+    }
+  }, 1000);
+}
+
+function recordFailure(scope, btn, btnOrigHTML) {
+  const s = state[scope];
+  if (s.locked) return;
+
+  s.attempts++;
+
+  // Shake the button
+  btn.classList.remove('shake');
+  void btn.offsetWidth; // reflow
+  btn.classList.add('shake');
+  btn.addEventListener('animationend', () => btn.classList.remove('shake'), { once: true });
+
+  if (s.attempts >= MAX_ATTEMPTS) {
+    btn.innerHTML = btnOrigHTML;
+    startLockout(scope);
+  } else {
+    updateAttemptBadge(scope);
+  }
+}
+
+// ── Tab switching ──────────────────────────────────────────────────────────
 function switchTab(mode){
   const isAdmin=mode==='admin';
   document.getElementById('userSection').classList.toggle('active',!isAdmin);
@@ -369,71 +553,100 @@ function switchTab(mode){
   document.getElementById('tabUser').className='tab-btn'+((!isAdmin)?' active-user':'');
   document.getElementById('tabAdmin').className='tab-btn'+((isAdmin)?' active-admin':'');
 }
+
 function togglePw(id,btn){
   const el=document.getElementById(id);
   const s=el.type==='text';
   el.type=s?'password':'text';
   btn.textContent=s?'SHOW':'HIDE';
 }
-async function handleLogin(formId,btnId,msgId){
-  const btn=document.getElementById(btnId);
-  const msgEl=document.getElementById(msgId);
-  const form=document.getElementById(formId);
-  const fd=new FormData(form);
-  const email=fd.get('email')?.trim();
-  const password=fd.get('password')?.trim();
-  if(!email||!password){show(msgEl,'error','Please fill in all fields.');return;}
-  const orig=btn.innerHTML;
-  btn.disabled=true;
-  btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Signing in...';
-  try{
-    const res=await fetch('login.php',{method:'POST',body:fd});
-    const data=await res.json();
-    if(data.status==='success'){
-      show(msgEl,'success',data.message);
-      setTimeout(()=>{window.location.href=data.redirect;},800);
-    }else{
-      show(msgEl,'error',data.message);
-      btn.disabled=false;btn.innerHTML=orig;
-      // Show resend block if account is unverified
-      if(data.unverified){
-        const rb=document.getElementById('resendBlock');
-        const ri=document.getElementById('resendEmailInput');
-        if(rb){rb.style.display='block';}
-        if(ri&&data.email){ri.value=data.email;}
+
+// ── Login handler ──────────────────────────────────────────────────────────
+async function handleLogin(formId, btnId, msgId){
+  const scope  = getScope(formId);
+  const s      = state[scope];
+  if (s.locked) return;
+
+  const btn    = document.getElementById(btnId);
+  const msgEl  = document.getElementById(msgId);
+  const form   = document.getElementById(formId);
+  const fd     = new FormData(form);
+  const email  = fd.get('email')?.trim();
+  const password = fd.get('password')?.trim();
+
+  if (!email || !password) { show(msgEl,'error','Please fill in all fields.'); return; }
+
+  const orig = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Signing in...';
+
+  try {
+    const res  = await fetch('login.php', { method: 'POST', body: fd });
+    const data = await res.json();
+
+    if (data.status === 'success') {
+      show(msgEl, 'success', data.message);
+      // Clear any attempt badge on success
+      document.getElementById(scope + 'AttemptBadge').style.display = 'none';
+      setTimeout(() => { window.location.href = data.redirect; }, 800);
+    } else {
+      show(msgEl, 'error', data.message);
+
+      // Don't count unverified as a lockout-worthy failure
+      if (!data.unverified) {
+        recordFailure(scope, btn, orig);
+      }
+
+      if (!s.locked) {
+        btn.disabled = false;
+        btn.innerHTML = orig;
+      }
+
+      // Show resend block if unverified
+      if (data.unverified) {
+        const rb = document.getElementById('resendBlock');
+        const ri = document.getElementById('resendEmailInput');
+        if (rb) rb.style.display = 'block';
+        if (ri && data.email) ri.value = data.email;
+        btn.disabled = false;
+        btn.innerHTML = orig;
       }
     }
-  }catch{
-    show(msgEl,'error','Something went wrong. Please try again.');
-    btn.disabled=false;btn.innerHTML=orig;
+  } catch {
+    show(msgEl, 'error', 'Something went wrong. Please try again.');
+    btn.disabled = false;
+    btn.innerHTML = orig;
   }
 }
 
 async function resendVerification(){
-  const email=document.getElementById('resendEmailInput')?.value?.trim();
-  const btn=document.getElementById('resendBtn');
-  const msgEl=document.getElementById('userMsg');
-  if(!email){show(msgEl,'error','Please enter your email address.');return;}
-  const orig=btn.innerHTML;
-  btn.disabled=true;
-  btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Sending...';
-  try{
-    const fd=new FormData();
+  const email  = document.getElementById('resendEmailInput')?.value?.trim();
+  const btn    = document.getElementById('resendBtn');
+  const msgEl  = document.getElementById('userMsg');
+  if (!email) { show(msgEl,'error','Please enter your email address.'); return; }
+  const orig = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+  try {
+    const fd = new FormData();
     fd.append('mode','resend_verification');
-    fd.append('email',email);
-    fd.append('password','__resend__'); // required field guard, ignored server-side for this mode
-    const res=await fetch('login.php',{method:'POST',body:fd});
-    const data=await res.json();
-    show(msgEl,'success',data.message);
-    btn.innerHTML='<i class="fas fa-check"></i> Sent!';
-  }catch{
+    fd.append('email', email);
+    fd.append('password','__resend__');
+    const res  = await fetch('login.php', { method:'POST', body:fd });
+    const data = await res.json();
+    show(msgEl, 'success', data.message);
+    btn.innerHTML = '<i class="fas fa-check"></i> Sent!';
+  } catch {
     show(msgEl,'error','Something went wrong.');
-    btn.disabled=false;btn.innerHTML=orig;
+    btn.disabled = false;
+    btn.innerHTML = orig;
   }
 }
-document.getElementById('userForm').addEventListener('submit',e=>{e.preventDefault();handleLogin('userForm','loginBtn','userMsg');});
-document.getElementById('adminForm').addEventListener('submit',e=>{e.preventDefault();handleLogin('adminForm','adminBtn','adminMsg');});
-function show(el,type,text){el.className='msg '+type;el.textContent=text;el.style.display='block';}
+
+document.getElementById('userForm').addEventListener('submit', e => { e.preventDefault(); handleLogin('userForm','loginBtn','userMsg'); });
+document.getElementById('adminForm').addEventListener('submit', e => { e.preventDefault(); handleLogin('adminForm','adminBtn','adminMsg'); });
+
+function show(el, type, text){ el.className='msg '+type; el.textContent=text; el.style.display='block'; }
 </script>
 </body>
 </html>

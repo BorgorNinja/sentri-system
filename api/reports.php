@@ -224,23 +224,33 @@ switch ($action) {
         break;
 
     case 'delete_report':
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') { echo json_encode(['status'=>'error','message'=>'POST required.']); exit; }
-        $report_id=(int)($_POST['report_id']??0);
-        if(!$report_id){echo json_encode(['status'=>'error','message'=>'Invalid ID.']);exit;}
-        if($role==='admin'){$d=$conn->prepare("UPDATE reports SET is_archived=1 WHERE id=?");$d->bind_param("i",$report_id);}
-        else{$d=$conn->prepare("UPDATE reports SET is_archived=1 WHERE id=? AND user_id=?");$d->bind_param("ii",$report_id,$user_id);}
-        $d->execute();
-        if($d->affected_rows>0){echo json_encode(['status'=>'success','message'=>'Report removed.']);}
-        else{echo json_encode(['status'=>'error','message'=>'Could not delete.']);}
-        $d->close();
-        break;
+    $report_id = intval($_POST['report_id']);
+    // Get report title first
+    $r = $conn->query("SELECT title FROM reports WHERE id=$report_id")->fetch_assoc();
+    $title = $conn->real_escape_string($r['title'] ?? 'Unknown');
+    $by_id = $_SESSION['user_id'];
+    $by_name = $conn->real_escape_string($_SESSION['first_name'].' '.($_SESSION['last_name']??''));
+    
+    $conn->query("UPDATE reports SET is_archived=1 WHERE id=$report_id");
+    // Log it
+    $conn->query("INSERT INTO report_audit_logs (report_id, report_title, action, performed_by, performed_by_name)
+                  VALUES ($report_id, '$title', 'archived', $by_id, '$by_name')");
+    echo json_encode(['status'=>'success']);
+    break;
 
     case 'restore_report':
-        if($role!=='admin'){echo json_encode(['status'=>'error','message'=>'Admin required.']);exit;}
-        $report_id=(int)($_POST['report_id']??0);
-        $u=$conn->prepare("UPDATE reports SET is_archived=0 WHERE id=?");$u->bind_param("i",$report_id);$u->execute();
-        echo json_encode(['status'=>'success','message'=>'Report restored.']); $u->close();
-        break;
+    $report_id = intval($_POST['report_id']);
+    $r = $conn->query("SELECT title FROM reports WHERE id=$report_id")->fetch_assoc();
+    $title = $conn->real_escape_string($r['title'] ?? 'Unknown');
+    $by_id = $_SESSION['user_id'];
+    $by_name = $conn->real_escape_string($_SESSION['first_name'].' '.($_SESSION['last_name']??''));
+    
+    $conn->query("UPDATE reports SET is_archived=0 WHERE id=$report_id");
+    // Log it
+    $conn->query("INSERT INTO report_audit_logs (report_id, report_title, action, performed_by, performed_by_name)
+                  VALUES ($report_id, '$title', 'restored', $by_id, '$by_name')");
+    echo json_encode(['status'=>'success']);
+    break;
 
     case 'admin_get_reports':
         if($role!=='admin'){echo json_encode(['status'=>'error','message'=>'Admin required.']);exit;}
@@ -287,6 +297,13 @@ switch ($action) {
         while($row=$res->fetch_assoc()){$row['id']=(int)$row['id'];$logs[]=$row;}
         echo json_encode(['status'=>'success','logs'=>$logs]);
         break;
+
+        case 'admin_get_audit_logs':
+    $logs = [];
+    $result = $conn->query("SELECT * FROM report_audit_logs ORDER BY performed_at DESC LIMIT 200");
+    while($row = $result->fetch_assoc()) $logs[] = $row;
+    echo json_encode(['status'=>'success','logs'=>$logs]);
+    break;
 
     // ─── Save user GPS coordinates ───────────────────────────────────────────
     case 'save_gps':

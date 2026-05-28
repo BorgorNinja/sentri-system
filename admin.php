@@ -222,23 +222,26 @@ tr:hover td{background:#fafbff;transition:background 0.15s;}
   <div style="margin-top:12px;">
     <div class="nav-section">Navigation</div>
     <nav class="menu">
-      <button class="menu-item active" id="navOverview" onclick="showTab('overview')">
-        <i class="fas fa-gauge"></i> Overview
-      </button>
-      <button class="menu-item" id="navUsers" onclick="showTab('users')">
-        <i class="fas fa-users"></i> Manage Users
-        <span class="menu-badge" id="userCount">—</span>
-      </button>
-      <button class="menu-item" id="navPosts" onclick="showTab('posts')">
-        <i class="fas fa-clipboard-list"></i> Manage Posts
-      </button>
-      <button class="menu-item" id="navLogs" onclick="showTab('logs')">
-        <i class="fas fa-scroll"></i> Login Logs
-      </button>
-      <button class="menu-item" id="navContacts" onclick="showTab('contacts')">
-        <i class="fas fa-address-book"></i> Emergency Contacts
-      </button>
-    </nav>
+  <button class="menu-item active" id="navOverview" onclick="showTab('overview')">
+    <i class="fas fa-gauge"></i> Overview
+  </button>
+  <button class="menu-item" id="navUsers" onclick="showTab('users')">
+    <i class="fas fa-users"></i> Manage Users
+    <span class="menu-badge" id="userCount">—</span>
+  </button>
+  <button class="menu-item" id="navPosts" onclick="showTab('posts')">
+    <i class="fas fa-clipboard-list"></i> Manage Posts
+  </button>
+  <button class="menu-item" id="navAudit" onclick="showTab('audit')">
+    <i class="fas fa-shield-halved"></i> Reports Audit
+  </button>
+  <button class="menu-item" id="navLogs" onclick="showTab('logs')">
+    <i class="fas fa-scroll"></i> Login Logs
+  </button>
+  <button class="menu-item" id="navContacts" onclick="showTab('contacts')">
+    <i class="fas fa-address-book"></i> Emergency Contacts
+  </button>
+</nav>
     <div class="nav-section" style="margin-top:16px;">Quick Links</div>
     <nav class="menu">
       <a href="dashboard.php" class="menu-item">
@@ -365,10 +368,10 @@ tr:hover td{background:#fafbff;transition:background 0.15s;}
             <option value="safe">Safe</option>
           </select>
           <select id="postArchived">
-            <option value="0">Active Only</option>
-            <option value="1">Archived Only</option>
-            <option value="">All</option>
-          </select>
+          <option value="" selected>All</option>
+          <option value="0">Active Only</option>
+          <option value="1">Archived Only</option>
+</select>
         </div>
         <div class="table-wrap">
           <div class="loading" id="postsLoading"><i class="fas fa-spinner"></i> Loading posts...</div>
@@ -396,6 +399,39 @@ tr:hover td{background:#fafbff;transition:background 0.15s;}
         </div>
       </div>
     </div>
+
+    <!-- ── AUDIT TAB ── -->
+<div class="tab-panel" id="tab-audit">
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title"><i class="fas fa-shield-halved"></i> Reports Audit Log</div>
+      <span style="font-size:0.8rem;color:var(--muted);">All archive / restore actions</span>
+    </div>
+    <div class="filter-bar">
+      <input type="text" id="auditSearch" placeholder="Search title or admin name...">
+      <select id="auditAction">
+        <option value="">All Actions</option>
+        <option value="archived">Archived</option>
+        <option value="restored">Restored</option>
+      </select>
+    </div>
+    <div class="table-wrap">
+      <div class="loading" id="auditLoading"><i class="fas fa-spinner"></i> Loading audit log...</div>
+      <table id="auditTable" style="display:none;">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Report</th>
+            <th>Action</th>
+            <th>Performed By</th>
+            <th>Date / Time</th>
+          </tr>
+        </thead>
+        <tbody id="auditBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
 
     <div class="tab-panel" id="tab-contacts">
       <div class="panel">
@@ -503,11 +539,12 @@ function closeSidebar(){
 
 // ── Tab navigation ────────────────────────────────────────────
 const tabTitles = {
-  overview:'<i class="fas fa-gauge" style="color:var(--blue);margin-right:8px;"></i>Overview',
-  users:'<i class="fas fa-users" style="color:var(--blue);margin-right:8px;"></i>Manage Users',
-  posts:'<i class="fas fa-clipboard-list" style="color:var(--blue);margin-right:8px;"></i>Manage Posts',
-  logs:'<i class="fas fa-scroll" style="color:var(--blue);margin-right:8px;"></i>Login Logs',
-  contacts:'<i class="fas fa-address-book" style="color:var(--blue);margin-right:8px;"></i>Emergency Contacts',
+  overview: '<i class="fas fa-gauge" style="color:var(--blue);margin-right:8px;"></i>Overview',
+  users:    '<i class="fas fa-users" style="color:var(--blue);margin-right:8px;"></i>Manage Users',
+  posts:    '<i class="fas fa-clipboard-list" style="color:var(--blue);margin-right:8px;"></i>Manage Posts',
+  audit:    '<i class="fas fa-shield-halved" style="color:var(--blue);margin-right:8px;"></i>Reports Audit',
+  logs:     '<i class="fas fa-scroll" style="color:var(--blue);margin-right:8px;"></i>Login Logs',
+  contacts: '<i class="fas fa-address-book" style="color:var(--blue);margin-right:8px;"></i>Emergency Contacts',
 };
 function showTab(name){
   currentTab=name;
@@ -516,10 +553,11 @@ function showTab(name){
   document.getElementById('tab-'+name).classList.add('active');
   document.getElementById('nav'+name.charAt(0).toUpperCase()+name.slice(1))?.classList.add('active');
   document.getElementById('pageTitle').innerHTML=tabTitles[name];
-  // Lazy load
+
   if(name==='users'    && allUsers.length===0)    loadUsers();
-  if(name==='posts'    && allReports.length===0)  loadReports();
+  if(name==='posts')                              loadReports();  // always call
   if(name==='logs'     && allLogs.length===0)     loadLogs();
+  if(name==='audit') loadAuditLogs();
   if(name==='contacts' && allContacts.length===0) loadContacts();
   if(window.innerWidth<=900) closeSidebar();
 }
@@ -609,14 +647,27 @@ document.getElementById('userRoleFilter').addEventListener('change',renderUsers)
 
 // ── POSTS ─────────────────────────────────────────────────────
 async function loadReports(){
-  if(allReports.length>0){renderPosts();document.getElementById('postsLoading').style.display='none';document.getElementById('postsTable').style.display='table';return;}
-  const res=await fetch('api/reports.php?action=admin_get_reports');
-  const data=await res.json();
-  if(data.status==='success'){
-    allReports=data.reports;
-    renderPosts();
+  // If data already cached from overview, just render immediately
+  if(allReports.length > 0){
     document.getElementById('postsLoading').style.display='none';
     document.getElementById('postsTable').style.display='table';
+    renderPosts();
+    return;
+  }
+  // Otherwise fetch
+  document.getElementById('postsLoading').style.display='block';
+  document.getElementById('postsTable').style.display='none';
+  try {
+    const res  = await fetch('api/reports.php?action=admin_get_reports');
+    const data = await res.json();
+    if(data.status==='success'){
+      allReports = data.reports;
+      renderPosts();
+      document.getElementById('postsLoading').style.display='none';
+      document.getElementById('postsTable').style.display='table';
+    }
+  } catch(e) {
+    document.getElementById('postsLoading').innerHTML='<i class="fas fa-triangle-exclamation"></i> Failed to load posts.';
   }
 }
 function renderPosts(){
@@ -695,6 +746,76 @@ async function loadLogs(){
     document.getElementById('logsTable').style.display='table';
   }
 }
+
+  // ── AUDIT LOG ────────────────────────────────────────────────
+let allAuditLogs = [];
+
+async function loadAuditLogs(){
+  if(allAuditLogs.length > 0){ renderAudit(); return; }
+  document.getElementById('auditLoading').style.display='block';
+  document.getElementById('auditTable').style.display='none';
+  try {
+    const res  = await fetch('api/reports.php?action=admin_get_audit_logs');
+    const data = await res.json();
+    if(data.status==='success'){
+      allAuditLogs = data.logs;
+      renderAudit();
+      document.getElementById('auditLoading').style.display='none';
+      document.getElementById('auditTable').style.display='table';
+    }
+  } catch(e) {
+    document.getElementById('auditLoading').innerHTML='<i class="fas fa-triangle-exclamation"></i> Failed to load audit log.';
+  }
+}
+
+function renderAudit(){
+  const search = document.getElementById('auditSearch').value.toLowerCase();
+  const action = document.getElementById('auditAction').value;
+  let list = allAuditLogs.filter(l => {
+    if(action && l.action !== action) return false;
+    if(search){
+      const hay = (l.report_title + l.performed_by_name).toLowerCase();
+      if(!hay.includes(search)) return false;
+    }
+    return true;
+  });
+  const body = document.getElementById('auditBody');
+  if(!list.length){
+    body.innerHTML='<tr><td colspan="5"><div class="empty"><i class="fas fa-clipboard-check"></i><p>No audit entries found.</p></div></td></tr>';
+    return;
+  }
+  const actionStyles = {
+    archived: 'background:#fff0f0;color:var(--red);',
+    restored: 'background:#f0fff4;color:var(--green);',
+  };
+  const actionIcons = {
+    archived: 'fa-archive',
+    restored: 'fa-rotate-left',
+  };
+  body.innerHTML = list.map((l,i) => {
+    const date = new Date(l.performed_at).toLocaleString('en-PH');
+    const style = actionStyles[l.action] || 'background:#f0f2f7;color:#555;';
+    const icon  = actionIcons[l.action]  || 'fa-circle-info';
+    return `<tr>
+      <td style="color:#aaa;">${l.id}</td>
+      <td>
+        <div style="font-weight:600;">${esc(l.report_title)}</div>
+        <small style="color:#aaa;">Report #${l.report_id}</small>
+      </td>
+      <td>
+        <span style="padding:3px 10px;border-radius:50px;font-size:0.72rem;font-weight:700;${style}">
+          <i class="fas ${icon}" style="margin-right:4px;"></i>${l.action.toUpperCase()}
+        </span>
+      </td>
+      <td style="font-weight:500;">${esc(l.performed_by_name)}</td>
+      <td style="color:#888;font-size:0.78rem;white-space:nowrap;">${date}</td>
+    </tr>`;
+  }).join('');
+}
+
+document.getElementById('auditSearch').addEventListener('input', renderAudit);
+document.getElementById('auditAction').addEventListener('change', renderAudit);
+
 
 function esc(s){if(!s)return'';return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 
