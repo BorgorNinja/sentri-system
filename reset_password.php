@@ -1,6 +1,6 @@
 <?php
 session_start();
-if (isset($_SESSION['user_id'])) { header("Location: dashboard.php"); exit; }
+if (isset($_SESSION['user_id'])) { require_once __DIR__ . '/config/auth.php'; redirect_to_portal(); }
 require __DIR__ . '/config/db.php';
 
 $token     = trim($_GET['token'] ?? '');
