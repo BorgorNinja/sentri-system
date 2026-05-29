@@ -9,6 +9,7 @@ $total_users    = $conn->query("SELECT COUNT(*) FROM users")->fetch_row()[0];
 $total_reports  = $conn->query("SELECT COUNT(*) FROM reports WHERE is_archived=0")->fetch_row()[0];
 $total_archived = $conn->query("SELECT COUNT(*) FROM reports WHERE is_archived=1")->fetch_row()[0];
 $danger_count   = $conn->query("SELECT COUNT(*) FROM reports WHERE status='dangerous' AND is_archived=0")->fetch_row()[0];
+$pending_count  = $conn->query("SELECT COUNT(*) FROM users WHERE is_approved=0 AND role NOT IN('community','user','admin')")->fetch_row()[0];
 $first_name     = $_SESSION['first_name'];
 ?>
 <!DOCTYPE html>
@@ -46,7 +47,7 @@ body{background:var(--bg);display:flex;min-height:100vh;color:var(--text);}
   width:var(--sidebar-w);
   background:linear-gradient(180deg,#1a1a2e 0%,#16213e 60%,#0f1629 100%);
   color:#fff;display:flex;flex-direction:column;flex-shrink:0;
-  position:fixed;top:0;left:0;bottom:0;z-index:100;
+  position:fixed;top:0;left:0;bottom:0;z-index:200;
   transition:transform 0.3s cubic-bezier(0.4,0,0.2,1);
   box-shadow:4px 0 24px rgba(0,0,0,0.25);
 }
@@ -82,7 +83,7 @@ body{background:var(--bg);display:flex;min-height:100vh;color:var(--text);}
 .main.expanded{margin-left:0;}
 
 /* ── TOPBAR ── */
-.topbar{background:#fff;padding:14px 28px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 12px rgba(0,0,0,0.07);position:sticky;top:0;z-index:50;}
+.topbar{background:#fff;padding:14px 28px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 12px rgba(0,0,0,0.07);position:sticky;top:0;z-index:100;}
 .topbar-left{display:flex;align-items:center;gap:14px;}
 .ham-btn{background:none;border:none;font-size:1.2rem;color:var(--muted);cursor:pointer;padding:6px;border-radius:8px;transition:all 0.2s;display:none;}
 .ham-btn:hover{background:#f0f2f7;color:var(--text);}
@@ -176,8 +177,13 @@ tr:hover td{background:#fafbff;transition:background 0.15s;}
 .user-avatar-sm.admin-av{background:linear-gradient(135deg,var(--admin-light),var(--admin));}
 
 /* ── OVERLAY FOR MOBILE SIDEBAR ── */
-.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:99;}
+.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:150;}
 .sidebar-overlay.show{display:block;}
+.badge.community{background:#eff6ff;color:#2563eb;}
+.badge.barangay{background:#f0fdf4;color:#166534;}
+.badge.lgu{background:#f0f7ff;color:#0a3d62;}
+.badge.first_responder{background:#fef2f2;color:#b91c1c;}
+.badge.user{background:#ebf2ff;color:#2563eb;}
 
 /* ── MOBILE ── */
 @media(max-width:900px){
@@ -222,26 +228,30 @@ tr:hover td{background:#fafbff;transition:background 0.15s;}
   <div style="margin-top:12px;">
     <div class="nav-section">Navigation</div>
     <nav class="menu">
-  <button class="menu-item active" id="navOverview" onclick="showTab('overview')">
-    <i class="fas fa-gauge"></i> Overview
-  </button>
-  <button class="menu-item" id="navUsers" onclick="showTab('users')">
-    <i class="fas fa-users"></i> Manage Users
-    <span class="menu-badge" id="userCount">—</span>
-  </button>
-  <button class="menu-item" id="navPosts" onclick="showTab('posts')">
-    <i class="fas fa-clipboard-list"></i> Manage Posts
-  </button>
-  <button class="menu-item" id="navAudit" onclick="showTab('audit')">
-    <i class="fas fa-shield-halved"></i> Reports Audit
-  </button>
-  <button class="menu-item" id="navLogs" onclick="showTab('logs')">
-    <i class="fas fa-scroll"></i> Login Logs
-  </button>
-  <button class="menu-item" id="navContacts" onclick="showTab('contacts')">
-    <i class="fas fa-address-book"></i> Emergency Contacts
-  </button>
-</nav>
+      <button class="menu-item active" id="navOverview" onclick="showTab('overview')">
+        <i class="fas fa-gauge"></i> Overview
+      </button>
+      <button class="menu-item" id="navUsers" onclick="showTab('users')">
+        <i class="fas fa-users"></i> Manage Users
+        <span class="menu-badge" id="userCount">—</span>
+      </button>
+      <button class="menu-item" id="navPending" onclick="showTab('pending')">
+        <i class="fas fa-clock"></i> Pending Approvals
+        <?php if($pending_count > 0): ?><span class="menu-badge" id="pendingNavBadge"><?= $pending_count ?></span><?php endif; ?>
+      </button>
+      <button class="menu-item" id="navPosts" onclick="showTab('posts')">
+        <i class="fas fa-clipboard-list"></i> Manage Posts
+      </button>
+      <button class="menu-item" id="navAudit" onclick="showTab('audit')">
+        <i class="fas fa-shield-halved"></i> Reports Audit
+      </button>
+      <button class="menu-item" id="navLogs" onclick="showTab('logs')">
+        <i class="fas fa-scroll"></i> Login Logs
+      </button>
+      <button class="menu-item" id="navContacts" onclick="showTab('contacts')">
+        <i class="fas fa-address-book"></i> Emergency Contacts
+      </button>
+    </nav>
     <div class="nav-section" style="margin-top:16px;">Quick Links</div>
     <nav class="menu">
       <a href="dashboard.php" class="menu-item">
@@ -308,6 +318,13 @@ tr:hover td{background:#fafbff;transition:background 0.15s;}
           <div class="stat-label">Archived Posts</div>
         </div>
       </div>
+      <div class="stat-card" style="border-left:4px solid #d97706;">
+        <div class="stat-icon" style="background:rgba(251,191,36,0.15);color:#d97706;"><i class="fas fa-clock"></i></div>
+        <div>
+          <div class="stat-num" id="pendingStatNum"><?= $pending_count ?></div>
+          <div class="stat-label">Pending Approvals</div>
+        </div>
+      </div>
     </div>
 
     <!-- ── OVERVIEW TAB ── -->
@@ -338,8 +355,12 @@ tr:hover td{background:#fafbff;transition:background 0.15s;}
           <input type="text" id="userSearch" placeholder="Search name or email...">
           <select id="userRoleFilter">
             <option value="">All Roles</option>
-            <option value="user">Members</option>
-            <option value="admin">Admins</option>
+            <option value="community">Community</option>
+            <option value="user">Legacy Members</option>
+            <option value="barangay">Barangay</option>
+            <option value="lgu">LGU</option>
+            <option value="first_responder">First Responder</option>
+            <option value="admin">Admin</option>
           </select>
         </div>
         <div class="table-wrap">
@@ -368,10 +389,10 @@ tr:hover td{background:#fafbff;transition:background 0.15s;}
             <option value="safe">Safe</option>
           </select>
           <select id="postArchived">
-          <option value="" selected>All</option>
-          <option value="0">Active Only</option>
-          <option value="1">Archived Only</option>
-</select>
+            <option value="0">Active Only</option>
+            <option value="1">Archived Only</option>
+            <option value="">All</option>
+          </select>
         </div>
         <div class="table-wrap">
           <div class="loading" id="postsLoading"><i class="fas fa-spinner"></i> Loading posts...</div>
@@ -400,39 +421,6 @@ tr:hover td{background:#fafbff;transition:background 0.15s;}
       </div>
     </div>
 
-    <!-- ── AUDIT TAB ── -->
-<div class="tab-panel" id="tab-audit">
-  <div class="panel">
-    <div class="panel-header">
-      <div class="panel-title"><i class="fas fa-shield-halved"></i> Reports Audit Log</div>
-      <span style="font-size:0.8rem;color:var(--muted);">All archive / restore actions</span>
-    </div>
-    <div class="filter-bar">
-      <input type="text" id="auditSearch" placeholder="Search title or admin name...">
-      <select id="auditAction">
-        <option value="">All Actions</option>
-        <option value="archived">Archived</option>
-        <option value="restored">Restored</option>
-      </select>
-    </div>
-    <div class="table-wrap">
-      <div class="loading" id="auditLoading"><i class="fas fa-spinner"></i> Loading audit log...</div>
-      <table id="auditTable" style="display:none;">
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>Report</th>
-            <th>Action</th>
-            <th>Performed By</th>
-            <th>Date / Time</th>
-          </tr>
-        </thead>
-        <tbody id="auditBody"></tbody>
-      </table>
-    </div>
-  </div>
-</div>
-
     <div class="tab-panel" id="tab-contacts">
       <div class="panel">
         <div class="panel-header" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
@@ -457,6 +445,58 @@ tr:hover td{background:#fafbff;transition:background 0.15s;}
           <table id="contactsTable" style="display:none;">
             <thead><tr><th>#</th><th>Name</th><th>Type</th><th>Barangay</th><th>City</th><th>Phone</th><th>Email</th><th>Status</th><th>Actions</th></tr></thead>
             <tbody id="contactsBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ── AUDIT TAB ── -->
+    <div class="tab-panel" id="tab-audit">
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title"><i class="fas fa-shield-halved"></i> Reports Audit Log</div>
+          <span style="font-size:0.8rem;color:var(--muted);">All archive / restore actions</span>
+        </div>
+        <div class="filter-bar">
+          <input type="text" id="auditSearch" placeholder="Search title or admin name...">
+          <select id="auditAction">
+            <option value="">All Actions</option>
+            <option value="archived">Archived</option>
+            <option value="restored">Restored</option>
+          </select>
+        </div>
+        <div class="table-wrap">
+          <div class="loading" id="auditLoading"><i class="fas fa-spinner"></i> Loading audit log...</div>
+          <table id="auditTable" style="display:none;">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Report</th>
+                <th>Action</th>
+                <th>Performed By</th>
+                <th>Date / Time</th>
+              </tr>
+            </thead>
+            <tbody id="auditBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── PENDING APPROVALS TAB ── -->
+    <div class="tab-panel" id="tab-pending">
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title"><i class="fas fa-clock"></i> Pending Official Account Approvals</div>
+          <span style="font-size:0.8rem;color:var(--muted);">Official accounts awaiting verification</span>
+        </div>
+        <div class="table-wrap">
+          <div class="loading" id="pendingLoading"><i class="fas fa-spinner"></i> Loading...</div>
+          <div id="pendingEmpty" style="display:none;padding:48px;text-align:center;color:var(--muted);"><i class="fas fa-check-circle" style="font-size:2rem;display:block;margin-bottom:10px;color:#16a34a;opacity:0.5;"></i>No pending approvals.</div>
+          <table id="pendingTable" style="display:none;">
+            <thead><tr><th>#</th><th>Applicant</th><th>Email</th><th>Role</th><th>Office / Unit</th><th>Position</th><th>Jurisdiction</th><th>Applied</th><th>Actions</th></tr></thead>
+            <tbody id="pendingBody"></tbody>
           </table>
         </div>
       </div>
@@ -531,21 +571,25 @@ let currentTab='overview';
 function openSidebar(){
   document.getElementById('sidebar').classList.add('mobile-open');
   document.getElementById('overlay').classList.add('show');
+  document.body.style.overflow='hidden';
 }
 function closeSidebar(){
   document.getElementById('sidebar').classList.remove('mobile-open');
   document.getElementById('overlay').classList.remove('show');
+  document.body.style.overflow='';
 }
 
 // ── Tab navigation ────────────────────────────────────────────
 const tabTitles = {
-  overview: '<i class="fas fa-gauge" style="color:var(--blue);margin-right:8px;"></i>Overview',
-  users:    '<i class="fas fa-users" style="color:var(--blue);margin-right:8px;"></i>Manage Users',
-  posts:    '<i class="fas fa-clipboard-list" style="color:var(--blue);margin-right:8px;"></i>Manage Posts',
-  audit:    '<i class="fas fa-shield-halved" style="color:var(--blue);margin-right:8px;"></i>Reports Audit',
-  logs:     '<i class="fas fa-scroll" style="color:var(--blue);margin-right:8px;"></i>Login Logs',
-  contacts: '<i class="fas fa-address-book" style="color:var(--blue);margin-right:8px;"></i>Emergency Contacts',
+  overview:'<i class="fas fa-gauge" style="color:var(--blue);margin-right:8px;"></i>Overview',
+  users:'<i class="fas fa-users" style="color:var(--blue);margin-right:8px;"></i>Manage Users',
+  pending:'<i class="fas fa-clock" style="color:#d97706;margin-right:8px;"></i>Pending Approvals',
+  posts:'<i class="fas fa-clipboard-list" style="color:var(--blue);margin-right:8px;"></i>Manage Posts',
+  audit:'<i class="fas fa-shield-halved" style="color:var(--blue);margin-right:8px;"></i>Reports Audit',
+  logs:'<i class="fas fa-scroll" style="color:var(--blue);margin-right:8px;"></i>Login Logs',
+  contacts:'<i class="fas fa-address-book" style="color:var(--blue);margin-right:8px;"></i>Emergency Contacts',
 };
+let pendingLoaded = false;
 function showTab(name){
   currentTab=name;
   document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
@@ -553,11 +597,12 @@ function showTab(name){
   document.getElementById('tab-'+name).classList.add('active');
   document.getElementById('nav'+name.charAt(0).toUpperCase()+name.slice(1))?.classList.add('active');
   document.getElementById('pageTitle').innerHTML=tabTitles[name];
-
+  // Lazy load
   if(name==='users'    && allUsers.length===0)    loadUsers();
-  if(name==='posts')                              loadReports();  // always call
+  if(name==='posts'    && allReports.length===0)  loadReports();
+  if(name==='pending'  && !pendingLoaded)          loadPending();
+  if(name==='audit')                               loadAuditLogs();
   if(name==='logs'     && allLogs.length===0)     loadLogs();
-  if(name==='audit') loadAuditLogs();
   if(name==='contacts' && allContacts.length===0) loadContacts();
   if(window.innerWidth<=900) closeSidebar();
 }
@@ -614,21 +659,41 @@ function renderUsers(){
   body.innerHTML=list.map(u=>{
     const date=new Date(u.created_at).toLocaleDateString('en-PH',{year:'numeric',month:'short',day:'numeric'});
     const initials=(u.first_name[0]||'?').toUpperCase();
-    return `<tr id="urow_${u.id}">
+    const isPending = u.is_approved===0 && u.role!=='community' && u.role!=='admin';
+    const roleLabel = u.role.replace('_',' ');
+    const orgInfo = u.org_name ? `<div style="font-size:0.72rem;color:#888;">${esc(u.org_name)}</div>` : '';
+    return `<tr id="urow_${u.id}" ${isPending?'style="background:#fffbeb;"':''}>
       <td style="color:#aaa;">${u.id}</td>
       <td><div style="display:flex;align-items:center;gap:10px;">
         <div class="user-avatar-sm ${u.role==='admin'?'admin-av':''}">${initials}</div>
-        <div><div style="font-weight:600;">${esc(u.first_name)} ${esc(u.last_name)}</div></div>
+        <div><div style="font-weight:600;">${esc(u.first_name)} ${esc(u.last_name)}</div>${orgInfo}${isPending?'<span style="font-size:0.68rem;background:#fef9ec;color:#92400e;border:1px solid #fde68a;padding:1px 7px;border-radius:10px;font-weight:700;margin-top:3px;display:inline-block;">PENDING APPROVAL</span>':''}</div>
       </div></td>
       <td style="color:var(--muted);">${esc(u.email)}</td>
-      <td><span class="badge ${u.role}">${u.role}</span></td>
+      <td><span class="badge ${u.role}">${roleLabel}</span></td>
       <td style="color:#888;font-size:0.78rem;">${date}</td>
       <td style="text-align:center;">${u.report_count}</td>
-      <td>
-        ${u.role!=='admin' ? `<button class="act-btn del" onclick="deleteUser(${u.id},'${esc(u.first_name)} ${esc(u.last_name)}')"><i class="fas fa-trash-can"></i> Remove</button>` : '<span style="color:#aaa;font-size:0.78rem;">Protected</span>'}
-      </td>
+      <td><div style="display:flex;gap:6px;flex-wrap:wrap;">
+        ${isPending ? `<button class="act-btn" style="background:#16a34a;color:#fff;border:none;padding:5px 10px;font-size:0.75rem;" onclick="approveUser(${u.id})"><i class="fas fa-check"></i> Approve</button><button class="act-btn del" style="font-size:0.75rem;" onclick="rejectUser(${u.id},'${esc(u.first_name)}')"><i class="fas fa-xmark"></i> Reject</button>` : ''}
+        ${u.role!=='admin'&&!isPending ? `<button class="act-btn del" onclick="deleteUser(${u.id},'${esc(u.first_name)} ${esc(u.last_name)}')"><i class="fas fa-trash-can"></i> Remove</button>` : ''}
+        ${u.role==='admin' ? '<span style="color:#aaa;font-size:0.78rem;">Protected</span>' : ''}
+      </div></td>
     </tr>`;
   }).join('');
+}
+async function approveUser(uid){
+  const fd=new FormData(); fd.append('action','admin_approve_user'); fd.append('user_id',uid);
+  const res=await fetch('api/reports.php',{method:'POST',body:fd});
+  const data=await res.json();
+  if(data.status==='success'){ const u=allUsers.find(x=>x.id==uid); if(u){u.is_approved=1;} renderUsers(); }
+  else alert(data.message||'Failed.');
+}
+async function rejectUser(uid, name){
+  if(!confirm(`Reject and remove account for "${name}"? This cannot be undone.`)) return;
+  const fd=new FormData(); fd.append('action','admin_reject_user'); fd.append('user_id',uid);
+  const res=await fetch('api/reports.php',{method:'POST',body:fd});
+  const data=await res.json();
+  if(data.status==='success'){ allUsers=allUsers.filter(u=>u.id!=uid); renderUsers(); }
+  else alert(data.message||'Failed.');
 }
 async function deleteUser(uid, name){
   if(!confirm(`Remove user "${name}"?\n\nThis will delete their account and all their reports. This cannot be undone.`)) return;
@@ -638,36 +703,91 @@ async function deleteUser(uid, name){
   if(data.status==='success'){
     allUsers=allUsers.filter(u=>u.id!=uid);
     renderUsers();
-    // update stat
     document.querySelector('.stat-num').textContent=allUsers.length;
   } else alert(data.message||'Failed to delete user.');
 }
 document.getElementById('userSearch').addEventListener('input',renderUsers);
 document.getElementById('userRoleFilter').addEventListener('change',renderUsers);
 
+// ── PENDING APPROVALS ─────────────────────────────────────────
+async function loadPending(){
+  pendingLoaded=true;
+  const res=await fetch('api/reports.php?action=admin_get_users');
+  const data=await res.json();
+  document.getElementById('pendingLoading').style.display='none';
+  if(data.status!=='success') return;
+  const pending=data.users.filter(u=>u.is_approved===0 && u.role!=='community' && u.role!=='user' && u.role!=='admin');
+  // Update badge
+  const badge=document.getElementById('pendingNavBadge');
+  const stat=document.getElementById('pendingStatNum');
+  if(stat) stat.textContent=pending.length;
+  if(badge){ if(pending.length>0){badge.textContent=pending.length;badge.style.display='';}else badge.style.display='none'; }
+  if(pending.length===0){ document.getElementById('pendingEmpty').style.display='block'; return; }
+  document.getElementById('pendingTable').style.display='table';
+  document.getElementById('pendingBody').innerHTML=pending.map(u=>{
+    const date=new Date(u.created_at).toLocaleDateString('en-PH',{year:'numeric',month:'short',day:'numeric'});
+    const initials=(u.first_name[0]||'?').toUpperCase();
+    const roleLabel=u.role.replace('_',' ');
+    const roleBg={'barangay':'#f0fdf4','lgu':'#f0f7ff','first_responder':'#fef2f2'}[u.role]||'#f5f3ff';
+    const roleClr={'barangay':'#166534','lgu':'#0a3d62','first_responder':'#b91c1c'}[u.role]||'#7c3aed';
+    return `<tr id="prow_${u.id}">
+      <td style="color:#aaa;font-size:0.78rem;">${u.id}</td>
+      <td><div style="display:flex;align-items:center;gap:9px;">
+        <div style="width:32px;height:32px;border-radius:50%;background:#f0f7ff;color:#0a3d62;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:0.82rem;flex-shrink:0;">${initials}</div>
+        <div><div style="font-weight:700;font-size:0.85rem;">${esc(u.first_name)} ${esc(u.last_name)}</div></div>
+      </div></td>
+      <td style="color:var(--muted);font-size:0.82rem;">${esc(u.email)}</td>
+      <td><span style="background:${roleBg};color:${roleClr};padding:3px 9px;border-radius:20px;font-size:0.72rem;font-weight:700;text-transform:capitalize;">${roleLabel}</span></td>
+      <td style="font-size:0.82rem;">${esc(u.org_name||'—')}</td>
+      <td style="font-size:0.82rem;">${esc(u.position||'—')}</td>
+      <td style="font-size:0.82rem;">${esc((u.barangay_name||'')+(u.municipality?', '+u.municipality:''))}</td>
+      <td style="font-size:0.78rem;color:var(--muted);">${date}</td>
+      <td>
+        <div style="display:flex;gap:6px;">
+          <button class="btn-action approve" onclick="approvePending(${u.id})"><i class="fas fa-check"></i> Approve</button>
+          <button class="btn-action" style="background:#fef2f2;color:#b91c1c;border:1px solid #fecaca;" onclick="rejectPending(${u.id},'${esc(u.first_name)}')"><i class="fas fa-xmark"></i> Reject</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+async function approvePending(uid){
+  const fd=new FormData(); fd.append('action','admin_approve_user'); fd.append('user_id',uid);
+  const data=await (await fetch('api/reports.php',{method:'POST',body:fd})).json();
+  if(data.status==='success'){
+    const row=document.getElementById('prow_'+uid); if(row) row.remove();
+    const remaining=document.querySelectorAll('[id^="prow_"]').length;
+    const stat=document.getElementById('pendingStatNum'); if(stat) stat.textContent=remaining;
+    const badge=document.getElementById('pendingNavBadge'); if(badge){ if(remaining>0) badge.textContent=remaining; else badge.style.display='none'; }
+    if(remaining===0){ document.getElementById('pendingTable').style.display='none'; document.getElementById('pendingEmpty').style.display='block'; }
+    // refresh user list if loaded
+    if(allUsers.length>0){ const u=allUsers.find(x=>x.id==uid); if(u) u.is_approved=1; renderUsers(); }
+  } else alert(data.message||'Failed.');
+}
+async function rejectPending(uid,name){
+  if(!confirm('Reject and permanently delete the account for "'+name+'"?')) return;
+  const fd=new FormData(); fd.append('action','admin_reject_user'); fd.append('user_id',uid);
+  const data=await (await fetch('api/reports.php',{method:'POST',body:fd})).json();
+  if(data.status==='success'){
+    const row=document.getElementById('prow_'+uid); if(row) row.remove();
+    const remaining=document.querySelectorAll('[id^="prow_"]').length;
+    const stat=document.getElementById('pendingStatNum'); if(stat) stat.textContent=remaining;
+    const badge=document.getElementById('pendingNavBadge'); if(badge){ if(remaining>0) badge.textContent=remaining; else badge.style.display='none'; }
+    if(remaining===0){ document.getElementById('pendingTable').style.display='none'; document.getElementById('pendingEmpty').style.display='block'; }
+    allUsers=allUsers.filter(u=>u.id!=uid); renderUsers();
+  } else alert(data.message||'Failed.');
+}
+
 // ── POSTS ─────────────────────────────────────────────────────
 async function loadReports(){
-  // If data already cached from overview, just render immediately
-  if(allReports.length > 0){
+  if(allReports.length>0){renderPosts();document.getElementById('postsLoading').style.display='none';document.getElementById('postsTable').style.display='table';return;}
+  const res=await fetch('api/reports.php?action=admin_get_reports');
+  const data=await res.json();
+  if(data.status==='success'){
+    allReports=data.reports;
+    renderPosts();
     document.getElementById('postsLoading').style.display='none';
     document.getElementById('postsTable').style.display='table';
-    renderPosts();
-    return;
-  }
-  // Otherwise fetch
-  document.getElementById('postsLoading').style.display='block';
-  document.getElementById('postsTable').style.display='none';
-  try {
-    const res  = await fetch('api/reports.php?action=admin_get_reports');
-    const data = await res.json();
-    if(data.status==='success'){
-      allReports = data.reports;
-      renderPosts();
-      document.getElementById('postsLoading').style.display='none';
-      document.getElementById('postsTable').style.display='table';
-    }
-  } catch(e) {
-    document.getElementById('postsLoading').innerHTML='<i class="fas fa-triangle-exclamation"></i> Failed to load posts.';
   }
 }
 function renderPosts(){
@@ -746,76 +866,6 @@ async function loadLogs(){
     document.getElementById('logsTable').style.display='table';
   }
 }
-
-  // ── AUDIT LOG ────────────────────────────────────────────────
-let allAuditLogs = [];
-
-async function loadAuditLogs(){
-  if(allAuditLogs.length > 0){ renderAudit(); return; }
-  document.getElementById('auditLoading').style.display='block';
-  document.getElementById('auditTable').style.display='none';
-  try {
-    const res  = await fetch('api/reports.php?action=admin_get_audit_logs');
-    const data = await res.json();
-    if(data.status==='success'){
-      allAuditLogs = data.logs;
-      renderAudit();
-      document.getElementById('auditLoading').style.display='none';
-      document.getElementById('auditTable').style.display='table';
-    }
-  } catch(e) {
-    document.getElementById('auditLoading').innerHTML='<i class="fas fa-triangle-exclamation"></i> Failed to load audit log.';
-  }
-}
-
-function renderAudit(){
-  const search = document.getElementById('auditSearch').value.toLowerCase();
-  const action = document.getElementById('auditAction').value;
-  let list = allAuditLogs.filter(l => {
-    if(action && l.action !== action) return false;
-    if(search){
-      const hay = (l.report_title + l.performed_by_name).toLowerCase();
-      if(!hay.includes(search)) return false;
-    }
-    return true;
-  });
-  const body = document.getElementById('auditBody');
-  if(!list.length){
-    body.innerHTML='<tr><td colspan="5"><div class="empty"><i class="fas fa-clipboard-check"></i><p>No audit entries found.</p></div></td></tr>';
-    return;
-  }
-  const actionStyles = {
-    archived: 'background:#fff0f0;color:var(--red);',
-    restored: 'background:#f0fff4;color:var(--green);',
-  };
-  const actionIcons = {
-    archived: 'fa-archive',
-    restored: 'fa-rotate-left',
-  };
-  body.innerHTML = list.map((l,i) => {
-    const date = new Date(l.performed_at).toLocaleString('en-PH');
-    const style = actionStyles[l.action] || 'background:#f0f2f7;color:#555;';
-    const icon  = actionIcons[l.action]  || 'fa-circle-info';
-    return `<tr>
-      <td style="color:#aaa;">${l.id}</td>
-      <td>
-        <div style="font-weight:600;">${esc(l.report_title)}</div>
-        <small style="color:#aaa;">Report #${l.report_id}</small>
-      </td>
-      <td>
-        <span style="padding:3px 10px;border-radius:50px;font-size:0.72rem;font-weight:700;${style}">
-          <i class="fas ${icon}" style="margin-right:4px;"></i>${l.action.toUpperCase()}
-        </span>
-      </td>
-      <td style="font-weight:500;">${esc(l.performed_by_name)}</td>
-      <td style="color:#888;font-size:0.78rem;white-space:nowrap;">${date}</td>
-    </tr>`;
-  }).join('');
-}
-
-document.getElementById('auditSearch').addEventListener('input', renderAudit);
-document.getElementById('auditAction').addEventListener('change', renderAudit);
-
 
 function esc(s){if(!s)return'';return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 
@@ -964,6 +1014,60 @@ document.getElementById('contactModalOverlay').addEventListener('click', functio
 
 // ── INIT ─────────────────────────────────────────────────────
 loadOverview();
+loadPending();
+
+// ── AUDIT LOG ─────────────────────────────────────────────────────────────
+let allAuditLogs = [];
+
+async function loadAuditLogs(){
+  if(allAuditLogs.length > 0){ renderAudit(); return; }
+  document.getElementById('auditLoading').style.display='block';
+  document.getElementById('auditTable').style.display='none';
+  try {
+    const res  = await fetch('api/reports.php?action=admin_get_audit_logs');
+    const data = await res.json();
+    if(data.status==='success'){
+      allAuditLogs = data.logs;
+      renderAudit();
+      document.getElementById('auditLoading').style.display='none';
+      document.getElementById('auditTable').style.display='table';
+    }
+  } catch(e) {
+    document.getElementById('auditLoading').innerHTML='<i class="fas fa-triangle-exclamation"></i> Failed to load audit log.';
+  }
+}
+
+function renderAudit(){
+  const search = document.getElementById('auditSearch').value.toLowerCase();
+  const action = document.getElementById('auditAction').value;
+  let list = allAuditLogs.filter(l => {
+    if(action && l.action !== action) return false;
+    if(search){ const hay=(l.report_title+l.performed_by_name).toLowerCase(); if(!hay.includes(search)) return false; }
+    return true;
+  });
+  const body = document.getElementById('auditBody');
+  if(!list.length){ body.innerHTML='<tr><td colspan="5"><div class="empty"><i class="fas fa-clipboard-check"></i><p>No audit entries found.</p></div></td></tr>'; return; }
+  const actionStyles={archived:'background:#fff0f0;color:var(--red);',restored:'background:#f0fff4;color:var(--green);'};
+  const actionIcons={archived:'fa-archive',restored:'fa-rotate-left'};
+  body.innerHTML=list.map((l,i)=>{
+    const date=new Date(l.performed_at).toLocaleString('en-PH');
+    const style=actionStyles[l.action]||'background:#f0f2f7;color:#555;';
+    const icon=actionIcons[l.action]||'fa-circle-info';
+    return `<tr>
+      <td style="color:#aaa;">${l.id}</td>
+      <td><div style="font-weight:600;">${esc(l.report_title)}</div><small style="color:#aaa;">Report #${l.report_id}</small></td>
+      <td><span style="padding:3px 10px;border-radius:50px;font-size:0.72rem;font-weight:700;${style}"><i class="fas ${icon}" style="margin-right:4px;"></i>${l.action.toUpperCase()}</span></td>
+      <td style="font-weight:500;">${esc(l.performed_by_name)}</td>
+      <td style="color:#888;font-size:0.78rem;white-space:nowrap;">${date}</td>
+    </tr>`;
+  }).join('');
+}
+document.addEventListener('DOMContentLoaded',()=>{
+  const as=document.getElementById('auditSearch'); if(as) as.addEventListener('input',renderAudit);
+  const aa=document.getElementById('auditAction'); if(aa) aa.addEventListener('change',renderAudit);
+});
+
 </script>
 </body>
 </html>
+
