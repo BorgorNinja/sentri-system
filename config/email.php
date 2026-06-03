@@ -19,10 +19,10 @@ define('MAIL_HOST',      'smtp.gmail.com');
 define('MAIL_PORT',      587);                          // STARTTLS port
 
 // ── Your Gmail address ──
-define('MAIL_USERNAME',  '1999aryastark1999@gmail.com');       // ← CHANGE THIS
+define('MAIL_USERNAME',  'sican.isaac201419@gmail.com');       // ← CHANGE THIS
 
 // ── Gmail App Password (16 chars, no spaces) ──
-define('MAIL_PASSWORD',  'hmdchsbkleqqmcyy');           // ← CHANGE THIS
+define('MAIL_PASSWORD',  'ylxtkntytawtqjti');           // ← CHANGE THIS
 
 // ── Sender name & address shown to recipients ──
 define('MAIL_FROM',      '1999aryastark1999@gmail.com');       // ← CHANGE THIS
