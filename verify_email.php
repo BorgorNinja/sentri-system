@@ -29,7 +29,7 @@ if (!empty($token) && preg_match('/^[a-f0-9]{64}$/', $token)) {
         $upd->execute();
         $upd->close();
         $status    = 'success';
-        $firstName = htmlspecialchars($user['first_name']);
+        $firstname = htmlspecialchars($user['first_name']);
     }
 }
 
@@ -121,7 +121,7 @@ p strong{color:#1a1a2e;}
   <?php if ($status === 'success'): ?>
     <div class="icon-wrap success"><i class="fas fa-circle-check"></i></div>
     <h1>Email Verified!</h1>
-    <p>Welcome to SenTri, <strong><?= $firstName ?></strong>! Your account is now active. You can sign in and start contributing to your community's safety.</p>
+    <p>Welcome to SenTri, <strong><?= $firstname ?></strong>! Your account is now active. You can sign in and start contributing to your community's safety.</p>
     <a href="login.php" class="btn btn-primary"><i class="fas fa-right-to-bracket"></i> Sign In Now</a>
 
   <?php elseif ($status === 'already'): ?>

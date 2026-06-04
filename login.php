@@ -7,6 +7,7 @@ if (isset($_SESSION['user_id'])) {
     redirect_to_portal();
 }
 require __DIR__ . '/config/db.php';
+require_once __DIR__ . '/config/auth.php';
 
 function getFailedAttemptsCount($conn, $email, $minutes = 30) {
     $cutoff = date('Y-m-d H:i:s', strtotime("-{$minutes} minutes"));
@@ -44,16 +45,108 @@ function flagHighRiskAttempt($conn, $email) {
         $stmt->bind_param("iii", $user_id, $failed_count, $failed_count);
         $stmt->execute();
         $stmt->close();
+
+        $stmt = $conn->prepare("SELECT COUNT(*) FROM login_logs WHERE email = ? AND status = 'Locked' AND created_at >= NOW() - INTERVAL 30 SECOND");
+        $stmt->bind_param("s", $email);
+        $stmt->execute();
+        $stmt->bind_result($lock_count);
+        $stmt->fetch();
+        $stmt->close();
+
+        if ($lock_count === 0) {
+            $stmt = $conn->prepare("INSERT INTO login_logs (user_id, email, ip_address, device, status) VALUES (?, ?, 'Lockout', 'System', 'Locked')");
+            $stmt->bind_param("is", $user_id, $email);
+            $stmt->execute();
+            $stmt->close();
+        }
+
+        return true;
+    }
+
+    return false;
+}
+
+function sendLoginOtpEmail($email, $name, $otp) {
+    require_once __DIR__ . '/core/SenTriMailer.php';
+    $subject = 'Your SenTri login code';
+    $html = '<div style="font-family:Arial,sans-serif;color:#111;line-height:1.6;">'
+          . '<h2 style="color:#1a1a2e;">Your SenTri login code</h2>'
+          . '<p>Use the code below to complete your Community portal sign in.</p>'
+          . '<p style="font-size:2rem;font-weight:700;margin:18px 0;letter-spacing:0.2rem;">' . htmlspecialchars($otp, ENT_QUOTES, 'UTF-8') . '</p>'
+          . '<p style="margin-top:10px;color:#555;">This code expires in 10 minutes. Do not share it with anyone.</p>'
+          . '<hr style="border:none;border-top:1px solid #eee;margin:22px 0;">'
+          . '<p style="font-size:0.9rem;color:#777;">If you did not request this code, ignore this email.</p>'
+          . '</div>';
+    try {
+        $mailer = new SenTriMailer();
+        return $mailer->send($email, $name, $subject, $html);
+    } catch (Throwable $e) {
+        error_log('OTP email error: ' . $e->getMessage());
+        return false;
     }
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     header('Content-Type: application/json');
+    $action   = trim($_POST['action'] ?? '');
     $email    = trim($_POST['email']    ?? '');
     $password = trim($_POST['password'] ?? '');
     $portal   = trim($_POST['portal']   ?? 'community');
     $ip       = $_SERVER['HTTP_CLIENT_IP'] ?? $_SERVER['HTTP_X_FORWARDED_FOR'] ?? $_SERVER['REMOTE_ADDR'] ?? 'Unknown';
     $device   = $_SERVER['HTTP_USER_AGENT'] ?? 'Unknown';
+
+    if ($action === 'verify_otp') {
+        $otp_code = trim($_POST['otp'] ?? '');
+        $pending  = $_SESSION['otp_login'] ?? null;
+        if (!$pending || empty($pending['email']) || empty($pending['code']) || empty($pending['expires_at'])) {
+            echo json_encode(['status' => 'error', 'message' => 'No OTP session found. Please sign in again.']);
+            exit;
+        }
+        if ($pending['email'] !== $email) {
+            echo json_encode(['status' => 'error', 'message' => 'OTP email mismatch. Please use the same email.']);
+            exit;
+        }
+        if (new DateTime() > new DateTime($pending['expires_at'])) {
+            unset($_SESSION['otp_login']);
+            echo json_encode(['status' => 'error', 'message' => 'OTP expired. Please sign in again.']);
+            exit;
+        }
+        if ($otp_code !== $pending['code']) {
+            echo json_encode(['status' => 'error', 'message' => 'Invalid OTP. Please try again.']);
+            exit;
+        }
+
+        $stmt = $conn->prepare("SELECT id, first_name, last_name, role, email_verified, is_approved FROM users WHERE id = ? LIMIT 1");
+        $stmt->bind_param("i", $pending['user_id']);
+        $stmt->execute();
+        $user = $stmt->get_result()->fetch_assoc();
+        $stmt->close();
+
+        if (!$user) {
+            unset($_SESSION['otp_login']);
+            echo json_encode(['status' => 'error', 'message' => 'User not found.']);
+            exit;
+        }
+
+        $stmt = $conn->prepare("INSERT INTO login_logs(user_id,email,ip_address,device,status) VALUES (?,?,?,?,?)");
+        $successStatus = 'Success';
+        $stmt->bind_param("issss", $user['id'], $email, $ip, $device, $successStatus);
+        $stmt->execute();
+        $stmt->close();
+
+        session_regenerate_id(true);
+        $_SESSION = [
+            'user_id'    => $user['id'],
+            'first_name' => htmlspecialchars($user['first_name'], ENT_QUOTES, 'UTF-8'),
+            'last_name'  => htmlspecialchars($user['last_name'], ENT_QUOTES, 'UTF-8'),
+            'role'       => $user['role'],
+            'is_approved'=> (bool)$user['is_approved'],
+        ];
+        unset($_SESSION['otp_login']);
+
+        echo json_encode(['status' => 'success', 'redirect' => portal_url($user['role']), 'message' => 'OTP verified. Signing in...']);
+        exit;
+    }
 
     $db = $conn->query("SELECT DATABASE()")->fetch_row()[0];
     $cols = [];
@@ -101,7 +194,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if (isLockedOut($conn, $email)) {
-        echo json_encode(['status'=>'error','message'=>'Too many failed attempts. Please wait 30 seconds before trying again.']);
+        echo json_encode(['status'=>'error','message'=>'Too many failed attempts. Please wait 30 seconds before trying again.','lockout'=>true]);
         exit;
     }
 
@@ -134,6 +227,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (!$approved && !in_array($role,['community','user','admin'])) {
                 echo json_encode(['status'=>'error','message'=>'Your account is pending administrator approval. You will be notified once approved.','pending'=>true]); exit;
             }
+            if ($portal === 'community') {
+                $otp = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+                $_SESSION['otp_login'] = [
+                    'user_id'    => $id,
+                    'email'      => $email,
+                    'code'       => $otp,
+                    'expires_at' => date('Y-m-d H:i:s', strtotime('+10 minutes')),
+                    'portal'     => 'community',
+                ];
+                if (!sendLoginOtpEmail($email, $fn, $otp)) {
+                    unset($_SESSION['otp_login']);
+                    echo json_encode(['status' => 'error', 'message' => 'Unable to send OTP email. Please try again later.']);
+                    exit;
+                }
+                echo json_encode(['status' => 'otp_required', 'message' => 'A 6-digit login code was sent to your email. Enter it below to continue.', 'email' => $email]);
+                exit;
+            }
             session_regenerate_id(true);
             $_SESSION = ['user_id'=>$id,'first_name'=>htmlspecialchars($fn,ENT_QUOTES,'UTF-8'),'last_name'=>htmlspecialchars($ln,ENT_QUOTES,'UTF-8'),'role'=>$role,'is_approved'=>(bool)$approved];
             $log_status='Success'; $log_uid=$id;
@@ -144,12 +254,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     $stmt->close();
 
-    if (!$is_successful_login) {
-        flagHighRiskAttempt($conn, $email);
-    }
-
     $lg=$conn->prepare("INSERT INTO login_logs(user_id,email,ip_address,device,status)VALUES(?,?,?,?,?)");
     $lg->bind_param("issss",$log_uid,$email,$ip,$device,$log_status); $lg->execute(); $lg->close();
+
+    if (!$is_successful_login) {
+        $lockout = flagHighRiskAttempt($conn, $email);
+        if ($lockout) {
+            $resp = ['status'=>'error','message'=>'Too many failed attempts. Please wait 30 seconds before trying again.','lockout'=>true];
+        }
+    }
+
     echo json_encode($resp); exit;
 }
 ?>
@@ -294,6 +408,16 @@ body{min-height:100vh;background:var(--navy-dark);display:flex;flex-direction:co
       <div class="forgot-row"><a href="forgot_password.php">Forgot Password?</a></div>
       <button type="submit" class="btn-login" id="loginBtn" style="background:linear-gradient(135deg,#3b82f6,#2563eb);"><i class="fas fa-right-to-bracket"></i> Sign In to Community Portal</button>
     </form>
+    <div id="otpSection" style="display:none;">
+      <form id="otpForm" novalidate>
+        <input type="hidden" name="action" value="verify_otp">
+        <input type="hidden" name="email" id="otpEmail" value="">
+        <input type="hidden" name="portal" value="community">
+        <div class="form-group"><label>One-Time Code</label><input type="text" name="otp" id="otpField" placeholder="123456" maxlength="6" pattern="[0-9]*" inputmode="numeric" required></div>
+        <button type="submit" class="btn-login" id="otpSubmitBtn" style="background:linear-gradient(135deg,#3b82f6,#2563eb);"><i class="fas fa-key"></i> Verify OTP</button>
+        <button type="button" class="btn-login" id="otpBackBtn" style="background:#f3f4f6;color:#1f2937;margin-top:10px;"><i class="fas fa-arrow-left"></i> Back to Password</button>
+      </form>
+    </div>
     <div id="resendBox" class="resend-box">
       <p><i class="fas fa-envelope-circle-check" style="color:#d97706;margin-right:5px;"></i>Your email is not verified. Enter your email to resend the verification link.</p>
       <input type="email" id="resendEmail" placeholder="you@example.com">
@@ -344,21 +468,63 @@ function selectPortal(key,el){
 
 function togglePw(){const f=document.getElementById('pwField');const b=f.nextElementSibling;const s=f.type==='password';f.type=s?'text':'password';b.textContent=s?'HIDE':'SHOW';}
 
+function showOtpForm(email){
+  const loginForm=document.getElementById('loginForm');
+  const otpSection=document.getElementById('otpSection');
+  const otpEmail=document.getElementById('otpEmail');
+  const otpField=document.getElementById('otpField');
+  loginForm.style.display='none';
+  otpSection.style.display='block';
+  otpEmail.value=email;
+  otpField.value='';
+  otpField.focus();
+  document.getElementById('resendBox').style.display='none';
+}
+
+function hideOtpForm(){
+  document.getElementById('otpSection').style.display='none';
+  document.getElementById('loginForm').style.display='block';
+  document.getElementById('loginMsg').style.display='none';
+}
+
+document.getElementById('otpBackBtn').addEventListener('click',()=>hideOtpForm());
+
+document.getElementById('otpForm').addEventListener('submit',async e=>{
+  e.preventDefault();
+  const btn=document.getElementById('otpSubmitBtn');const msg=document.getElementById('loginMsg');const orig=btn.innerHTML;
+  btn.disabled=true;btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Verifying...';msg.style.display='none';
+  try{
+    const res=await fetch('login.php',{method:'POST',body:new FormData(e.target)});
+    const data=await res.json();
+    if(data.status==='success'){showMsg('success',data.message||'Redirecting...');setTimeout(()=>window.location.href=data.redirect,700);}
+    else{
+      showMsg('error',data.message||'Invalid OTP.');
+      btn.disabled=false;btn.innerHTML=orig;
+      if(data.lockout){startLockTimer(30);}    
+    }
+  }catch{showMsg('error','Connection error. Please try again.');btn.disabled=false;btn.innerHTML=orig;}
+});
+
 function startLockTimer(seconds) {
   const btn = document.getElementById('loginBtn');
+  const msg = document.getElementById('loginMsg');
   btn.disabled = true;
   let timeLeft = seconds;
 
-  if(timerInterval) clearInterval(timerInterval);
+  if (timerInterval) clearInterval(timerInterval);
+
+  showMsg('error', `Too many failed attempts. Please wait ${timeLeft} seconds before trying again.`);
 
   timerInterval = setInterval(() => {
     timeLeft--;
     btn.innerHTML = `<i class="fas fa-lock"></i> Wait ${timeLeft}s`;
+    showMsg('error', `Too many failed attempts. Please wait ${timeLeft} seconds before trying again.`);
     if (timeLeft <= 0) {
       clearInterval(timerInterval);
       btn.disabled = false;
       const p = portals[current];
       btn.innerHTML = `<i class="fas fa-right-to-bracket"></i> ${p.label}`;
+      msg.style.display = 'none';
     }
   }, 1000);
 }
@@ -371,9 +537,15 @@ document.getElementById('loginForm').addEventListener('submit',async e=>{
     const res=await fetch('login.php',{method:'POST',body:new FormData(e.target)});
     const data=await res.json();
     if(data.status==='success'){showMsg('success',data.message||'Redirecting...');setTimeout(()=>window.location.href=data.redirect,700);}
+    else if(data.status==='otp_required'){
+      showMsg('success',data.message||'Enter the 6-digit code from your email.');
+      showOtpForm(data.email || document.getElementById('emailField').value);
+      btn.disabled=false;
+      btn.innerHTML=orig;
+    }
     else{
       showMsg('error',data.message||'Sign in failed.');
-      if(data.message && data.message.includes('30 seconds')) {
+      if(data.lockout) {
         startLockTimer(30);
       } else {
         btn.disabled=false;

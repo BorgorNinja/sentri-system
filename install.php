@@ -192,6 +192,53 @@ run($conn, 'Create table <code>report_votes</code>',
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci"
 );
 
+run($conn, "Create table <code>report_audit_logs</code>",
+    "CREATE TABLE IF NOT EXISTS `report_audit_logs` (
+    `id`                int(11)                              NOT NULL AUTO_INCREMENT,
+    `report_id`         int(11)                              NOT NULL,
+    `report_title`      varchar(255)                         NOT NULL,
+    `action`            enum('archived', 'restored')         NOT NULL,
+    `performed_by`      int(11)                              DEFAULT NULL,
+    `performed_by_name` varchar(150)                         NOT NULL,
+    `performed_at`      timestamp                            NOT NULL DEFAULT current_timestamp(),
+    PRIMARY KEY (`id`),
+    KEY `report_id`     (`report_id`),
+    KEY `performed_by`  (`performed_by`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci"
+);
+
+run($conn, 'Create table <code>flagged_accounts</code>',
+    "CREATE TABLE IF NOT EXISTS `flagged_accounts`(`id`           int(11)       NOT NULL AUTO_INCREMENT,
+  `user_id`      int(11)       NOT NULL,
+  `risk_level`   enum('low','medium','high') NOT NULL DEFAULT 'medium',
+  `failed_count` int(11)       NOT NULL DEFAULT 0,
+  `flagged_at`   timestamp     NOT NULL DEFAULT current_timestamp(),
+  `last_attempt` timestamp     NULL DEFAULT NULL,
+  `notes`        text,
+  `reviewed`     tinyint(1)    NOT NULL DEFAULT 0,
+  PRIMARY KEY (`id`),
+  KEY `user_id`      (`user_id`),
+  KEY `risk_level`   (`risk_level`),
+  KEY `flagged_at`   (`flagged_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci"
+);
+
+run($conn, 'Create table <code>security_scans</code>',
+    "CREATE TABLE IF NOT EXISTS `security_scans` (
+        `id`                        INT(11)      NOT NULL AUTO_INCREMENT,
+        `scanned_at`                TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        `https_status`              ENUM('passed','warning','critical') NOT NULL,
+        `session_status`            ENUM('passed','warning','critical') NOT NULL,
+        `password_hash_status`      ENUM('passed','warning','critical') NOT NULL,
+        `security_headers_status`   ENUM('passed','warning','critical') NOT NULL,
+        `upload_restrictions_status` ENUM('passed','warning','critical') NOT NULL,
+        `score`                     INT(11)      NOT NULL DEFAULT 0,
+        `details`                   TEXT         DEFAULT NULL,
+        PRIMARY KEY (`id`),
+        KEY `idx_scanned_at`        (`scanned_at`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci"
+);
+
 // ── 5. login_logs ────────────────────────────────────────────────────────────
 run($conn, 'Create table <code>login_logs</code>',
     "CREATE TABLE IF NOT EXISTS `login_logs` (

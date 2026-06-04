@@ -206,6 +206,28 @@ tr:hover td{background:#fafbff;transition:background 0.15s;}
   .panel{padding:16px;}
   .tab-nav{overflow-x:auto;}
 }
+.vuln-row{display:grid;grid-template-columns:repeat(5,minmax(160px,1fr));gap:16px;margin-top:18px;}
+.vuln-card{background:#f8fbff;border:1px solid #e6effc;border-radius:16px;padding:18px;min-height:120px;display:flex;flex-direction:column;gap:10px;box-shadow:0 3px 18px rgba(15,23,42,0.05);}
+.vuln-card strong{font-size:0.95rem;color:var(--text);}
+.vuln-status{font-weight:700;font-size:0.95rem;}
+.vuln-status.passed{color:#166534;}
+.vuln-status.warning{color:#b45309;}
+.vuln-status.critical{color:#b91c1c;}
+.vuln-detail{font-size:0.8rem;color:#555;line-height:1.5;}
+#vulnerabilityScore{letter-spacing:0.03em;}
+.modal-overlay.vuln-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:10000;align-items:center;justify-content:center;padding:18px;}
+.modal-overlay.vuln-modal .modal-dialog{width:100%;max-width:1100px;}
+.modal-overlay.vuln-modal .panel{border-radius:20px;overflow:hidden;}
+.modal-overlay.vuln-modal .panel-header{padding:22px 24px;gap:14px;}
+.modal-overlay.vuln-modal .panel .table-wrap{padding:0 24px 24px;}
+.modal-overlay.vuln-modal .close-modal-btn{background:none;border:none;color:var(--muted);font-size:1.2rem;cursor:pointer;}
+.modal-overlay.vuln-modal .close-modal-btn:hover{color:var(--text);}
+@media(max-width:900px){
+  .vuln-row{grid-template-columns:1fr 1fr;}
+}
+@media(max-width:640px){
+  .vuln-row{grid-template-columns:1fr;}
+}
 </style>
 </head>
 <body>
@@ -253,6 +275,9 @@ tr:hover td{background:#fafbff;transition:background 0.15s;}
       </button>
       <button class="menu-item" id="navContacts" onclick="showTab('contacts')">
         <i class="fas fa-address-book"></i> Emergency Contacts
+      </button>
+      <button class="menu-item" id="navVulnerabilities" onclick="openVulnerabilityModal()">
+        <i class="fas fa-shield-exclamation"></i> Vulnerability Assessment
       </button>
     </nav>
     <div class="nav-section" style="margin-top:16px;">Quick Links</div>
@@ -420,6 +445,7 @@ tr:hover td{background:#fafbff;transition:background 0.15s;}
             <thead><tr><th>#</th><th>Email</th><th>Status</th><th>IP Address</th><th>Device</th><th>Date / Time</th></tr></thead>
             <tbody id="logsBody"></tbody>
           </table>
+          <div id="logsPaginationContainer" style="display:none;padding:16px;border-top:1px solid var(--border);background:#fafbfc;"></div>
         </div>
       </div>
     </div>
@@ -468,12 +494,17 @@ tr:hover td{background:#fafbff;transition:background 0.15s;}
         <option value="normal">Normal</option>
       </select>
     </div>
-
+    <div style="display:flex;align-items:center;gap:12px;margin:14px 0 8px;flex-wrap:wrap;">
+      <button class="btn-action del" id="deleteSelectedFlagsBtn" onclick="deleteSelectedFlags()" disabled style="padding:10px 14px;"><i class="fas fa-trash"></i> Delete Selected</button>
+      <button class="btn-action del" onclick="deleteAllFlagged()" style="padding:10px 14px;background:#f8fafc;color:#111;border:1px solid #cbd5e1;"><i class="fas fa-trash-can"></i> Delete All Flagged</button>
+      <div id="securitySelectionSummary" style="color:var(--muted);font-size:0.9rem;">Selected 0 of 0 flagged accounts</div>
+    </div>
     <div class="table-wrap">
       <div class="loading" id="securityLoading"><i class="fas fa-spinner"></i> Loading security data...</div>
       <table id="securityTable" style="display:none;">
         <thead>
           <tr>
+            <th style="width:42px;"><input type="checkbox" id="securitySelectAll" onchange="toggleSecuritySelectAll(this)"></th>
             <th>#</th>
             <th>Email</th>
             <th>IP Address</th>
@@ -486,9 +517,48 @@ tr:hover td{background:#fafbff;transition:background 0.15s;}
         </thead>
         <tbody id="securityBody"></tbody>
       </table>
+      <div id="securityPaginationContainer" style="display:none;margin-top:14px;border-top:1px solid var(--border);padding-top:14px;"></div>
     </div>
   </div>
 </div>
+
+    <div class="modal-overlay vuln-modal" id="vulnerabilityModalOverlay" onclick="if(event.target===this) closeVulnerabilityModal()">
+      <div class="modal-dialog">
+        <div class="panel">
+          <div class="panel-header" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+            <div class="panel-title"><i class="fas fa-biohazard"></i> Vulnerability Assessment</div>
+            <button class="close-modal-btn" onclick="closeVulnerabilityModal()" aria-label="Close"><i class="fas fa-xmark"></i></button>
+          </div>
+          <div class="filter-bar" style="align-items:flex-start; gap:16px; padding:0 24px 18px;">
+            <div style="flex:1;min-width:220px;">
+              <div style="font-size:0.82rem;color:var(--muted);margin-bottom:6px;">Last Scan Date</div>
+              <div id="lastScanDate" style="font-weight:700;color:var(--text);">Never</div>
+            </div>
+            <div style="flex:1;min-width:220px;">
+              <div style="font-size:0.82rem;color:var(--muted);margin-bottom:6px;">Overall Security Score</div>
+              <div id="vulnerabilityScore" style="font-size:1.8rem;font-weight:800;color:var(--blue);">0/100</div>
+            </div>
+            <button class="btn-action approve" onclick="runVulnerabilityAssessment()" style="margin-top:8px;"><i class="fas fa-play"></i> Run Assessment</button>
+          </div>
+          <div class="vuln-row" id="vulnSummaryRow" style="padding:0 24px 18px;">
+            <div class="vuln-card" id="vulnCardHttps"><strong>HTTPS</strong><div class="vuln-status">Pending</div><div class="vuln-detail">Check if HTTPS is enabled.</div></div>
+            <div class="vuln-card" id="vulnCardSession"><strong>Session Security</strong><div class="vuln-status">Pending</div><div class="vuln-detail">Inspect session cookie settings.</div></div>
+            <div class="vuln-card" id="vulnCardPassword"><strong>Password Hashing</strong><div class="vuln-status">Pending</div><div class="vuln-detail">Verify bcrypt/password_hash usage.</div></div>
+            <div class="vuln-card" id="vulnCardHeaders"><strong>Security Headers</strong><div class="vuln-status">Pending</div><div class="vuln-detail">Check standard response headers.</div></div>
+            <div class="vuln-card" id="vulnCardUpload"><strong>Upload Restrictions</strong><div class="vuln-status">Pending</div><div class="vuln-detail">Confirm file upload restrictions.</div></div>
+          </div>
+          <div class="table-wrap" style="margin-top:0;padding:0 24px 24px;">
+            <table id="vulnHistoryTable" style="display:none; width:100%;">
+              <thead>
+                <tr><th>#</th><th>Date</th><th>Score</th><th>HTTPS</th><th>Session</th><th>Password</th><th>Headers</th><th>Uploads</th></tr>
+              </thead>
+              <tbody id="vulnHistoryBody"></tbody>
+            </table>
+            <div class="loading" id="vulnHistoryLoading"><i class="fas fa-spinner"></i> Loading vulnerability history...</div>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <div class="tab-panel" id="tab-contacts">
       <div class="panel">
@@ -629,12 +699,29 @@ tr:hover td{background:#fafbff;transition:background 0.15s;}
       </div>
     </div>
 
+    <!-- DELETE CONFIRMATION MODAL -->
+    <div class="modal-overlay" id="deleteModalOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9999;align-items:center;justify-content:center;padding:20px;">
+      <div style="background:var(--card);border-radius:16px;padding:28px;width:100%;max-width:420px;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
+          <h3 style="font-size:1.05rem;font-weight:700;"><i class="fas fa-trash" style="color:#dc2626;margin-right:8px;"></i>Confirm Delete</h3>
+          <button onclick="closeDeleteModal()" style="background:none;border:none;font-size:1.1rem;cursor:pointer;color:var(--muted);"><i class="fas fa-xmark"></i></button>
+        </div>
+        <div id="deleteModalMessage" style="margin-bottom:18px;color:var(--text);line-height:1.6;">Are you sure you want to delete this flagged account? This action cannot be undone.</div>
+        <div style="display:flex;gap:10px;justify-content:flex-end;">
+          <button onclick="closeDeleteModal()" style="padding:11px 22px;border:1.5px solid var(--border);background:var(--card);border-radius:10px;font-size:0.9rem;cursor:pointer;font-family:'Poppins',sans-serif;font-weight:500;color:var(--text);">Cancel</button>
+          <button onclick="confirmDeleteFlag()" id="confirmDeleteBtn" style="padding:11px 22px;background:#dc2626;color:#fff;border:none;border-radius:10px;font-size:0.9rem;font-weight:600;cursor:pointer;font-family:'Poppins',sans-serif;">Delete</button>
+        </div>
+      </div>
+    </div>
+
   </div><!-- /content -->
 </div><!-- /main -->
 
 <script>
-let allReports=[], allUsers=[], allLogs=[], allContacts=[];
+let allReports=[], allUsers=[], allLogs=[], allContacts=[], allSecurityScans=[];
 let currentTab='overview';
+let currentLogsPage = 1;
+const logsItemsPerPage = 10;
 
 // ── Sidebar ──────────────────────────────────────────────────
 function openSidebar(){
@@ -670,10 +757,12 @@ function showTab(name){
   
   // Lazy load
   if(name==='users'    && allUsers.length===0)    loadUsers();
-  if(name==='posts'    && allReports.length===0)  loadReports();
+  if(name==='posts')                              loadReports();
   if(name==='pending'  && !pendingLoaded)          loadPending();
   if(name==='audit')                               loadAuditLogs();
   if(name==='logs'     && allLogs.length===0)     loadLogs();
+  if(name==='security')                           loadSecurityMonitor();
+  if(name==='vulnerabilities')                    loadVulnerabilities();
   if(name==='contacts' && allContacts.length===0) loadContacts();
   
   // ←←← ADD THIS LINE FOR SECURITY MONITOR
@@ -855,15 +944,30 @@ async function rejectPending(uid,name){
 
 // ── POSTS ─────────────────────────────────────────────────────
 async function loadReports(){
-  if(allReports.length>0){renderPosts();document.getElementById('postsLoading').style.display='none';document.getElementById('postsTable').style.display='table';return;}
-  const res=await fetch('api/reports.php?action=admin_get_reports');
-  const data=await res.json();
-  if(data.status==='success'){
-    allReports=data.reports;
+  document.getElementById('postsLoading').style.display='block';
+  document.getElementById('postsTable').style.display='none';
+  if(allReports.length>0){
     renderPosts();
     document.getElementById('postsLoading').style.display='none';
     document.getElementById('postsTable').style.display='table';
+    return;
   }
+  try {
+    const res=await fetch('api/reports.php?action=admin_get_reports');
+    const data=await res.json();
+    if(data.status==='success'){
+      allReports=data.reports;
+      renderPosts();
+      document.getElementById('postsLoading').style.display='none';
+      document.getElementById('postsTable').style.display='table';
+      return;
+    }
+  } catch (error) {
+    console.error('Failed to load reports:', error);
+  }
+  document.getElementById('postsLoading').style.display='none';
+  document.getElementById('postsTable').style.display='table';
+  document.getElementById('postsBody').innerHTML = '<tr><td colspan="9"><div class="empty"><i class="fas fa-exclamation-triangle"></i><p>Unable to load posts. Please refresh the page.</p></div></td></tr>';
 }
 function renderPosts(){
   const search=document.getElementById('postSearch').value.toLowerCase();
@@ -876,7 +980,12 @@ function renderPosts(){
     return true;
   });
   const body=document.getElementById('postsBody');
-  if(list.length===0){body.innerHTML='<tr><td colspan="9"><div class="empty"><i class="fas fa-binoculars"></i><p>No posts match current filters.</p></div></td></tr>';return;}
+  if(list.length===0){
+    body.innerHTML='<tr><td colspan="9"><div class="empty"><i class="fas fa-binoculars"></i><p>No posts match current filters.</p></div></td></tr>';
+    document.getElementById('postsLoading').style.display='none';
+    document.getElementById('postsTable').style.display='table';
+    return;
+  }
   body.innerHTML=list.map(r=>{
     const arc=r.is_archived==1;
     const date=new Date(r.created_at).toLocaleDateString('en-PH',{year:'numeric',month:'short',day:'numeric'});
@@ -918,28 +1027,110 @@ document.getElementById('postArchived').addEventListener('change',renderPosts);
 
 // ── LOGS ─────────────────────────────────────────────────────
 async function loadLogs(){
-  const res=await fetch('api/reports.php?action=admin_get_logs');
-  const data=await res.json();
-  if(data.status==='success'){
-    allLogs=data.logs;
-    const body=document.getElementById('logsBody');
-    body.innerHTML=allLogs.map(l=>{
-      const date=new Date(l.created_at).toLocaleString('en-PH');
-      const ok=l.status==='Success';
-      return `<tr>
-        <td style="color:#aaa;">${l.id}</td>
-        <td style="font-weight:500;">${esc(l.email)}</td>
-        <td><span class="badge ${ok?'safe':'dangerous'}">${ok?'✓ Success':'✗ Failed'}</span></td>
-        <td style="color:var(--muted);font-size:0.8rem;">${esc(l.ip_address||'—')}</td>
-        <td style="color:var(--muted);font-size:0.75rem;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${esc(l.device||'')}">
-          ${(l.device||'—').substring(0,40)}${l.device?.length>40?'…':''}
-        </td>
-        <td style="color:#888;font-size:0.78rem;white-space:nowrap;">${date}</td>
-      </tr>`;
-    }).join('');
-    document.getElementById('logsLoading').style.display='none';
-    document.getElementById('logsTable').style.display='table';
+  currentLogsPage = 1;
+  document.getElementById('logsLoading').style.display='block';
+  document.getElementById('logsTable').style.display='none';
+  document.getElementById('logsPaginationContainer').style.display='none';
+  
+  try{
+    const res=await fetch('api/reports.php?action=admin_get_logs');
+    const data=await res.json();
+    if(data.status==='success'){
+      allLogs=data.logs;
+      renderLogs();
+    }
+  }catch(e){
+    console.error('Logs load error',e);
   }
+  
+  document.getElementById('logsLoading').style.display='none';
+  document.getElementById('logsTable').style.display='table';
+}
+
+function renderLogs(){
+  if(allLogs.length===0){
+    document.getElementById('logsBody').innerHTML='<tr><td colspan="6" class="empty"><i class="fas fa-inbox"></i><p>No login logs available.</p></td></tr>';
+    document.getElementById('logsPaginationContainer').style.display='none';
+    return;
+  }
+  
+  const totalPages = Math.ceil(allLogs.length / logsItemsPerPage);
+  if(currentLogsPage > totalPages) currentLogsPage = totalPages;
+  if(currentLogsPage < 1) currentLogsPage = 1;
+  
+  const start = (currentLogsPage - 1) * logsItemsPerPage;
+  const end = start + logsItemsPerPage;
+  const pageData = allLogs.slice(start, end);
+  
+  const body = document.getElementById('logsBody');
+  body.innerHTML = pageData.map((l, i) => {
+    const date = new Date(l.created_at).toLocaleString('en-PH');
+    const ok = l.status === 'Success';
+    const globalIndex = start + i + 1;
+    return `<tr>
+      <td style="color:#aaa;">${globalIndex}</td>
+      <td style="font-weight:500;">${esc(l.email)}</td>
+      <td><span class="badge ${ok?'safe':'dangerous'}">${ok?'✓ Success':'✗ Failed'}</span></td>
+      <td style="color:var(--muted);font-size:0.8rem;">${esc(l.ip_address||'—')}</td>
+      <td style="color:var(--muted);font-size:0.75rem;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${esc(l.device||'')}">
+        ${(l.device||'—').substring(0,40)}${l.device?.length>40?'…':''}
+      </td>
+      <td style="color:#888;font-size:0.78rem;white-space:nowrap;">${date}</td>
+    </tr>`;
+  }).join('');
+  
+  renderLogsPagination(totalPages, allLogs.length);
+}
+
+function renderLogsPagination(totalPages, totalItems){
+  const container = document.getElementById('logsPaginationContainer');
+  if(!container) return;
+  
+  if(totalPages <= 1){
+    container.style.display='none';
+    return;
+  }
+  
+  container.style.display='flex';
+  let pageLinks = [];
+  if(totalPages <= 5){
+    pageLinks = Array.from({ length: totalPages }, (_, i) => i + 1);
+  } else {
+    pageLinks.push(1);
+    if(currentLogsPage > 3) pageLinks.push('...');
+    for(let i = Math.max(2, currentLogsPage - 1); i <= Math.min(totalPages - 1, currentLogsPage + 1); i++){
+      if(!pageLinks.includes(i)) pageLinks.push(i);
+    }
+    if(currentLogsPage < totalPages - 2) pageLinks.push('...');
+    pageLinks.push(totalPages);
+  }
+  
+  const paginationHtml = `
+    <div style="display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;">
+      <button class="btn-action" onclick="goToLogsPage(1)" title="First page" style="padding:8px 10px;font-size:0.8rem;" ${currentLogsPage === 1 ? 'disabled' : ''}><i class="fas fa-angles-left"></i></button>
+      <button class="btn-action" onclick="goToLogsPage(${currentLogsPage - 1})" title="Previous page" style="padding:8px 10px;font-size:0.8rem;" ${currentLogsPage === 1 ? 'disabled' : ''}><i class="fas fa-angle-left"></i></button>
+      
+      <div style="display:flex;gap:4px;align-items:center;">
+        ${pageLinks.map(page => {
+          if(page === '...') return `<span style="color:var(--muted);">...</span>`;
+          return `<button class="btn-action" onclick="goToLogsPage(${page})" style="padding:6px 10px;font-size:0.8rem;${currentLogsPage === page ? 'background:var(--blue);color:#fff;' : ''}">${page}</button>`;
+        }).join('')}
+      </div>
+      
+      <button class="btn-action" onclick="goToLogsPage(${currentLogsPage + 1})" title="Next page" style="padding:8px 10px;font-size:0.8rem;" ${currentLogsPage === totalPages ? 'disabled' : ''}><i class="fas fa-angle-right"></i></button>
+      <button class="btn-action" onclick="goToLogsPage(${totalPages})" title="Last page" style="padding:8px 10px;font-size:0.8rem;" ${currentLogsPage === totalPages ? 'disabled' : ''}><i class="fas fa-angles-right"></i></button>
+      
+      <span style="color:var(--muted);font-size:0.85rem;margin-left:12px;white-space:nowrap;">Page ${currentLogsPage} of ${totalPages} (${totalItems} total)</span>
+    </div>
+  `;
+  container.innerHTML = paginationHtml;
+}
+
+function goToLogsPage(page){
+  currentLogsPage = page;
+  renderLogs();
+  const table = document.getElementById('logsTable');
+  if(table) table.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 function esc(s){if(!s)return'';return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
@@ -1028,6 +1219,58 @@ function closeContactModal(){
   document.getElementById('contactModalOverlay').style.display='none';
 }
 
+function openDeleteModal(flagId, email) {
+  const msg = email ?
+    `Are you sure you want to delete the flagged account entry for ${email}? This action cannot be undone.` :
+    'Are you sure you want to delete this flagged account entry? This action cannot be undone.';
+  document.getElementById('deleteModalMessage').textContent = msg;
+  document.getElementById('confirmDeleteBtn').dataset.flagId = flagId;
+  document.getElementById('deleteModalOverlay').style.display = 'flex';
+}
+
+function closeDeleteModal(){
+  document.getElementById('deleteModalOverlay').style.display='none';
+  document.getElementById('confirmDeleteBtn').dataset.flagId = '';
+}
+
+async function confirmDeleteFlag() {
+  const button = document.getElementById('confirmDeleteBtn');
+  const flagId = button.dataset.flagId;
+  if (!flagId) return;
+
+  button.disabled = true;
+  button.textContent = 'Deleting...';
+
+  try {
+    const fd = new FormData();
+    fd.append('action', 'delete_flag');
+    fd.append('flag_id', flagId);
+
+    const res = await fetch('api/security.php', {
+      method: 'POST',
+      body: fd
+    });
+    const data = await res.json();
+
+    if (data.status === 'success') {
+      closeDeleteModal();
+      await loadSecurityMonitor();
+    } else {
+      alert(data.message || 'Failed to delete the entry.');
+    }
+  } catch (e) {
+    console.error(e);
+    alert('Unable to delete entry. Please try again.');
+  } finally {
+    button.disabled = false;
+    button.textContent = 'Delete';
+  }
+}
+
+function deleteFlag(flagId, email){
+  openDeleteModal(flagId, email);
+}
+
 function editContact(id){
   const c = allContacts.find(x=>x.id===id);
   if(c) openContactModal(c);
@@ -1087,6 +1330,10 @@ document.getElementById('contactModalOverlay').addEventListener('click', functio
   if(e.target===this) closeContactModal();
 });
 
+document.getElementById('deleteModalOverlay').addEventListener('click', function(e){
+  if(e.target===this) closeDeleteModal();
+});
+
 // ── INIT ─────────────────────────────────────────────────────
 loadOverview();
 loadPending();
@@ -1140,12 +1387,18 @@ function renderAudit(){
 document.addEventListener('DOMContentLoaded',()=>{
   const as=document.getElementById('auditSearch'); if(as) as.addEventListener('input',renderAudit);
   const aa=document.getElementById('auditAction'); if(aa) aa.addEventListener('change',renderAudit);
+  const ss=document.getElementById('securitySearch'); if(ss) ss.addEventListener('input',()=>{ renderSecurityTable(); updateSecuritySelectionSummary(); });
+  const rf=document.getElementById('riskFilter'); if(rf) rf.addEventListener('change',()=>{ renderSecurityTable(); updateSecuritySelectionSummary(); });
 });
 
 // ── SECURITY MONITOR ─────────────────────────────────────────
 let allSecurityData = [];
+let selectedSecurityFlags = new Set();
+let currentSecurityPage = 1;
+const securityItemsPerPage = 10;
 
 async function loadSecurityMonitor() {
+  currentSecurityPage = 1;
   document.getElementById('securityLoading').style.display = 'block';
   document.getElementById('securityTable').style.display = 'none';
 
@@ -1188,17 +1441,30 @@ function renderSecurityTable() {
 
   const body = document.getElementById('securityBody');
   if (filtered.length === 0) {
-    body.innerHTML = `<tr><td colspan="8" class="empty"><i class="fas fa-shield-halved"></i><p>No flagged attempts found.</p></td></tr>`;
+    body.innerHTML = `<tr><td colspan="9" class="empty"><i class="fas fa-shield-halved"></i><p>No flagged attempts found.</p></td></tr>`;
+    document.getElementById('securityPaginationContainer').style.display = 'none';
+    updateSecuritySelectionSummary();
     return;
   }
 
-  body.innerHTML = filtered.map((row, i) => {
+  const totalPages = Math.ceil(filtered.length / securityItemsPerPage);
+  if (currentSecurityPage > totalPages) currentSecurityPage = totalPages;
+  if (currentSecurityPage < 1) currentSecurityPage = 1;
+
+  const start = (currentSecurityPage - 1) * securityItemsPerPage;
+  const end = start + securityItemsPerPage;
+  const pageData = filtered.slice(start, end);
+
+  body.innerHTML = pageData.map((row, i) => {
+    const isSelected = selectedSecurityFlags.has(row.flag_id);
     const riskClass = row.risk_level === 'high' ? 'badge dangerous' : 
                      (row.risk_level === 'medium' ? 'badge caution' : 'badge safe');
+    const globalIndex = start + i + 1;
 
     return `
       <tr>
-        <td>${i+1}</td>
+        <td><input type="checkbox" class="security-row-checkbox" data-flag-id="${row.flag_id}" onchange="toggleSecuritySelect(${row.flag_id}, this.checked)" ${isSelected ? 'checked' : ''}></td>
+        <td>${globalIndex}</td>
         <td><strong>${esc(row.email || 'Unknown')}</strong></td>
         <td style="font-family:monospace;">${esc(row.ip_address)}</td>
         <td><strong>${row.failed_count || row.recent_failed || 0}</strong></td>
@@ -1207,10 +1473,247 @@ function renderSecurityTable() {
         <td><span class="badge ${row.reviewed ? 'archived' : 'dangerous'}">${row.reviewed ? 'Reviewed' : 'Flagged'}</span></td>
         <td>
           ${!row.reviewed ? `<button class="act-btn" style="background:#16a34a;color:#fff;" onclick="markReviewed(${row.flag_id})"><i class="fas fa-check"></i> Reviewed</button>` : ''}
-          <button class="act-btn del" onclick="deleteFlag(${row.flag_id})"><i class="fas fa-trash"></i></button>
+          <button class="act-btn del" onclick="deleteFlag(${row.flag_id}, '${(row.email||'').replace(/'/g,"\\'")}')"><i class="fas fa-trash"></i></button>
         </td>
       </tr>`;
   }).join('');
+
+  renderSecurityPagination(totalPages, filtered.length);
+  updateSecuritySelectionSummary();
+}
+
+function renderSecurityPagination(totalPages, totalItems) {
+  const container = document.getElementById('securityPaginationContainer');
+  if (!container) return;
+
+  if (totalPages <= 1) {
+    container.style.display = 'none';
+    return;
+  }
+
+  container.style.display = 'flex';
+  let pageLinks = [];
+  if (totalPages <= 5) {
+    pageLinks = Array.from({ length: totalPages }, (_, i) => i + 1);
+  } else {
+    pageLinks.push(1);
+    if (currentSecurityPage > 3) pageLinks.push('...');
+    for (let i = Math.max(2, currentSecurityPage - 1); i <= Math.min(totalPages - 1, currentSecurityPage + 1); i++) {
+      if (!pageLinks.includes(i)) pageLinks.push(i);
+    }
+    if (currentSecurityPage < totalPages - 2) pageLinks.push('...');
+    pageLinks.push(totalPages);
+  }
+
+  const paginationHtml = `
+    <div style="display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;">
+      <button class="btn-action" onclick="goToSecurityPage(1)" title="First page" style="padding:8px 10px;font-size:0.8rem;" ${currentSecurityPage === 1 ? 'disabled' : ''}><i class="fas fa-angles-left"></i></button>
+      <button class="btn-action" onclick="goToSecurityPage(${currentSecurityPage - 1})" title="Previous page" style="padding:8px 10px;font-size:0.8rem;" ${currentSecurityPage === 1 ? 'disabled' : ''}><i class="fas fa-angle-left"></i></button>
+      
+      <div style="display:flex;gap:4px;align-items:center;">
+        ${pageLinks.map(page => {
+          if (page === '...') return `<span style="color:var(--muted);">...</span>`;
+          return `<button class="btn-action" onclick="goToSecurityPage(${page})" style="padding:6px 10px;font-size:0.8rem;${currentSecurityPage === page ? 'background:var(--blue);color:#fff;' : ''}">${page}</button>`;
+        }).join('')}
+      </div>
+      
+      <button class="btn-action" onclick="goToSecurityPage(${currentSecurityPage + 1})" title="Next page" style="padding:8px 10px;font-size:0.8rem;" ${currentSecurityPage === totalPages ? 'disabled' : ''}><i class="fas fa-angle-right"></i></button>
+      <button class="btn-action" onclick="goToSecurityPage(${totalPages})" title="Last page" style="padding:8px 10px;font-size:0.8rem;" ${currentSecurityPage === totalPages ? 'disabled' : ''}><i class="fas fa-angles-right"></i></button>
+      
+      <span style="color:var(--muted);font-size:0.85rem;margin-left:12px;white-space:nowrap;">Page ${currentSecurityPage} of ${totalPages} (${totalItems} total)</span>
+    </div>
+  `;
+  container.innerHTML = paginationHtml;
+}
+
+function goToSecurityPage(page) {
+  currentSecurityPage = page;
+  renderSecurityTable();
+  const table = document.getElementById('securityTable');
+  if (table) table.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function updateSecuritySelectionSummary() {
+  const total = allSecurityData.length;
+  const selected = selectedSecurityFlags.size;
+  const summary = document.getElementById('securitySelectionSummary');
+  if (summary) {
+    summary.textContent = `Selected ${selected} of ${total} flagged accounts`;
+  }
+  const deleteBtn = document.getElementById('deleteSelectedFlagsBtn');
+  if (deleteBtn) deleteBtn.disabled = selected === 0;
+  const selectAll = document.getElementById('securitySelectAll');
+  if (selectAll) {
+    const visible = Array.from(document.querySelectorAll('#securityBody input.security-row-checkbox'));
+    selectAll.checked = visible.length > 0 && visible.every(cb => cb.checked);
+  }
+}
+
+function toggleSecuritySelectAll(checkbox) {
+  const checked = checkbox.checked;
+  document.querySelectorAll('#securityBody input.security-row-checkbox').forEach(input => {
+    input.checked = checked;
+    const id = parseInt(input.dataset.flagId, 10);
+    if (checked) selectedSecurityFlags.add(id);
+    else selectedSecurityFlags.delete(id);
+  });
+  updateSecuritySelectionSummary();
+}
+
+function toggleSecuritySelect(flagId, checked) {
+  if (checked) selectedSecurityFlags.add(flagId);
+  else selectedSecurityFlags.delete(flagId);
+  updateSecuritySelectionSummary();
+}
+
+async function deleteSelectedFlags() {
+  const ids = Array.from(selectedSecurityFlags);
+  if (!ids.length) return;
+  if (!confirm(`Delete ${ids.length} selected flagged account entries? This cannot be undone.`)) return;
+  await sendDeleteFlags(ids);
+}
+
+async function deleteAllFlagged() {
+  const ids = allSecurityData.map(row => row.flag_id);
+  if (!ids.length) return;
+  if (!confirm(`Delete all ${ids.length} flagged account entries? This cannot be undone.`)) return;
+  await sendDeleteFlags(ids);
+}
+
+async function sendDeleteFlags(flagIds) {
+  const button = document.getElementById('deleteSelectedFlagsBtn');
+  if (button) { button.disabled = true; button.textContent = 'Deleting...'; }
+  try {
+    const fd = new FormData();
+    fd.append('action', 'delete_flags');
+    fd.append('flag_ids', JSON.stringify(flagIds));
+
+    const res = await fetch('api/security.php', {
+      method: 'POST',
+      body: fd
+    });
+    const data = await res.json();
+
+    if (data.status === 'success') {
+      selectedSecurityFlags.clear();
+      await loadSecurityMonitor();
+    } else {
+      alert(data.message || 'Failed to delete flagged entries.');
+    }
+  } catch (e) {
+    console.error(e);
+    alert('Unable to delete flagged entries. Please try again.');
+  } finally {
+    if (button) { button.disabled = false; button.innerHTML = '<i class="fas fa-trash"></i> Delete Selected'; }
+  }
+}
+
+function renderVulnerabilities() {
+  const latest = allSecurityScans[0] || null;
+  document.getElementById('lastScanDate').textContent = latest ? latest.scanned_at : 'Never';
+  document.getElementById('vulnerabilityScore').textContent = latest ? `${latest.score}/100` : '0/100';
+
+  const statusMap = {
+    passed: {label:'Passed', cls:'passed'},
+    warning: {label:'Warning', cls:'warning'},
+    critical: {label:'Critical', cls:'critical'},
+  };
+
+  const cardKeyMap = {
+    https: 'vulnCardHttps',
+    session: 'vulnCardSession',
+    password_hash: 'vulnCardPassword',
+    security_headers: 'vulnCardHeaders',
+    upload_restrictions: 'vulnCardUpload',
+  };
+
+  Object.entries(cardKeyMap).forEach(([key, cardId]) => {
+    const card = document.getElementById(cardId);
+    if (!card) return;
+    let result = { status: 'warning', detail: 'No scan result available.' };
+    if (latest && latest[key]) result = latest[key];
+    const status = statusMap[result.status] || statusMap.warning;
+    card.querySelector('.vuln-status').textContent = status.label;
+    card.querySelector('.vuln-status').className = 'vuln-status ' + status.cls;
+    card.querySelector('.vuln-detail').textContent = result.detail || 'No detail available.';
+  });
+
+  const historyBody = document.getElementById('vulnHistoryBody');
+  const historyTable = document.getElementById('vulnHistoryTable');
+  const historyLoading = document.getElementById('vulnHistoryLoading');
+
+  if (allSecurityScans.length === 0) {
+    historyBody.innerHTML = '<tr><td colspan="8" class="empty"><i class="fas fa-search"></i><p>No vulnerability scans have been run yet.</p></td></tr>';
+    historyTable.style.display = 'table';
+    historyLoading.style.display = 'none';
+    return;
+  }
+
+  historyBody.innerHTML = allSecurityScans.map((scan, idx) => {
+    const statusRow = scan;
+    return `
+      <tr>
+        <td>${idx+1}</td>
+        <td>${scan.scanned_at}</td>
+        <td><strong>${scan.score}/100</strong></td>
+        <td><span class="badge ${statusMap[statusRow.https_status].cls}">${statusMap[statusRow.https_status].label}</span></td>
+        <td><span class="badge ${statusMap[statusRow.session_status].cls}">${statusMap[statusRow.session_status].label}</span></td>
+        <td><span class="badge ${statusMap[statusRow.password_hash_status].cls}">${statusMap[statusRow.password_hash_status].label}</span></td>
+        <td><span class="badge ${statusMap[statusRow.security_headers_status].cls}">${statusMap[statusRow.security_headers_status].label}</span></td>
+        <td><span class="badge ${statusMap[statusRow.upload_restrictions_status].cls}">${statusMap[statusRow.upload_restrictions_status].label}</span></td>
+      </tr>`;
+  }).join('');
+  historyTable.style.display = 'table';
+  historyLoading.style.display = 'none';
+}
+
+async function loadVulnerabilities() {
+  document.getElementById('vulnHistoryLoading').style.display = 'block';
+  document.getElementById('vulnHistoryTable').style.display = 'none';
+  try {
+    const res = await fetch('api/security.php?action=security_history');
+    const data = await res.json();
+    if (data.status === 'success') {
+      allSecurityScans = data.history.map(item => ({
+        ...item,
+        score: parseInt(item.score, 10),
+      }));
+      renderVulnerabilities();
+      return;
+    }
+  } catch (error) {
+    console.error('Vulnerability history load failed:', error);
+  }
+  document.getElementById('vulnHistoryLoading').style.display = 'none';
+  document.getElementById('vulnHistoryTable').style.display = 'table';
+}
+
+function openVulnerabilityModal() {
+  document.getElementById('vulnerabilityModalOverlay').style.display = 'flex';
+  loadVulnerabilities();
+}
+
+function closeVulnerabilityModal() {
+  document.getElementById('vulnerabilityModalOverlay').style.display = 'none';
+}
+
+async function runVulnerabilityAssessment() {
+  const button = document.querySelector('#vulnerabilityModalOverlay .btn-action.approve');
+  if (button) { button.disabled = true; button.textContent = 'Running...'; }
+  try {
+    const res = await fetch('api/security.php?action=run_security_scan', { method: 'POST' });
+    const data = await res.json();
+    if (data.status === 'success' && data.scan) {
+      allSecurityScans.unshift(data.scan);
+      renderVulnerabilities();
+    } else {
+      alert(data.message || 'Assessment failed.');
+    }
+  } catch (error) {
+    console.error('Vulnerability assessment failed:', error);
+    alert('Unable to run the assessment. Check console for details.');
+  }
+  if (button) { button.disabled = false; button.innerHTML = '<i class="fas fa-play"></i> Run Assessment'; }
 }
 
 </script>

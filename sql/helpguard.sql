@@ -49,6 +49,37 @@ CREATE TABLE `reports` (
   KEY `idx_lat_lng` (`latitude`, `longitude`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+-- Report Audit Logs (for archiving/restoring reports)
+CREATE TABLE `report_audit_logs` (
+  `id`                int(11)                              NOT NULL AUTO_INCREMENT,
+  `report_id`         int(11)                              NOT NULL,
+  `report_title`      varchar(255)                         NOT NULL,
+  `action`            enum('archived', 'restored')         NOT NULL,
+  `performed_by`      int(11)                              DEFAULT NULL,
+  `performed_by_name` varchar(150)                         NOT NULL,
+  `performed_at`      timestamp                            NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `report_id`     (`report_id`),
+  KEY `performed_by`  (`performed_by`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- Flagged Account Logs
+CREATE TABLE `flagged_accounts` (
+  `id`           int(11)       NOT NULL AUTO_INCREMENT,
+  `user_id`      int(11)       NOT NULL,
+  `risk_level`   enum('low','medium','high') NOT NULL DEFAULT 'medium',
+  `failed_count` int(11)       NOT NULL DEFAULT 0,
+  `flagged_at`   timestamp     NOT NULL DEFAULT current_timestamp(),
+  `last_attempt` timestamp     NULL DEFAULT NULL,
+  `notes`        text          DEFAULT NULL,
+  `reviewed`     tinyint(1)    NOT NULL DEFAULT 0,
+  PRIMARY KEY (`id`),
+  KEY `user_id`      (`user_id`),
+  KEY `risk_level`   (`risk_level`),
+  KEY `flagged_at`   (`flagged_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+
 -- Votes
 CREATE TABLE `report_votes` (
   `id`        int(11)           NOT NULL AUTO_INCREMENT,
@@ -79,6 +110,11 @@ ALTER TABLE `reports`
 ALTER TABLE `report_votes`
   ADD CONSTRAINT `fk_votes_report` FOREIGN KEY (`report_id`) REFERENCES `reports` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `fk_votes_user`   FOREIGN KEY (`user_id`)   REFERENCES `users`   (`id`) ON DELETE CASCADE;
+  ALTER TABLE `report_audit_logs`
+  ADD CONSTRAINT `fk_audit_report` FOREIGN KEY (`report_id`) REFERENCES `reports` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `fk_audit_performed_by` FOREIGN KEY (`performed_by`) REFERENCES `users` (`id`) ON DELETE SET NULL;
+  ALTER TABLE `flagged_accounts`
+  ADD CONSTRAINT `fk_flagged_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
 
 -- Default admin (password: Admin@1234)
 INSERT INTO `users` (`first_name`, `last_name`, `email`, `password`, `role`)
