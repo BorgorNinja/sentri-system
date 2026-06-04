@@ -28,12 +28,11 @@ function cq($conn,$sql,$types='',$params=[]){
     $s->execute();$s->bind_result($n);$s->fetch();$s->close();return(int)$n;
 }
 
-// Stats — filter to barangay if set
-$filter_sql  = $brgy ? "AND barangay=?" : "";
-$total   = cq($conn,"SELECT COUNT(*) FROM reports WHERE is_archived=0 $filter_sql", $brgy?"s":"", $brgy?[$brgy]:[]);
-$danger  = cq($conn,"SELECT COUNT(*) FROM reports WHERE status='dangerous' AND is_archived=0 $filter_sql", $brgy?"s":"", $brgy?[$brgy]:[]);
-$caution = cq($conn,"SELECT COUNT(*) FROM reports WHERE status='caution' AND is_archived=0 $filter_sql", $brgy?"s":"", $brgy?[$brgy]:[]);
-$safe    = cq($conn,"SELECT COUNT(*) FROM reports WHERE status='safe' AND is_archived=0 $filter_sql", $brgy?"s":"", $brgy?[$brgy]:[]);
+// Stats — show all reports (community-wide, no barangay filter)
+$total   = cq($conn,"SELECT COUNT(*) FROM reports WHERE is_archived=0");
+$danger  = cq($conn,"SELECT COUNT(*) FROM reports WHERE status='dangerous' AND is_archived=0");
+$caution = cq($conn,"SELECT COUNT(*) FROM reports WHERE status='caution' AND is_archived=0");
+$safe    = cq($conn,"SELECT COUNT(*) FROM reports WHERE status='safe' AND is_archived=0");
 
 $cat_icons = ['crime'=>'fa-user-slash','accident'=>'fa-car-burst','flooding'=>'fa-water','fire'=>'fa-fire','health'=>'fa-heart-pulse','infrastructure'=>'fa-road-barrier','other'=>'fa-circle-exclamation'];
 $type_icons = ['lgu'=>'fa-landmark','hospital'=>'fa-hospital','traffic'=>'fa-traffic-light','barangay'=>'fa-house-flag','police'=>'fa-shield','fire'=>'fa-fire-extinguisher','other'=>'fa-phone'];
@@ -44,12 +43,7 @@ $reports = $contacts = $residents = [];
 
 if (in_array($view, ['overview','reports'])) {
     $limit = ($view === 'overview') ? 20 : 100;
-    if ($brgy) {
-        $s = $conn->prepare("SELECT r.id,r.title,r.category,r.status,r.barangay,r.city,r.created_at,r.description,u.first_name,u.last_name FROM reports r JOIN users u ON u.id=r.user_id WHERE r.is_archived=0 AND r.barangay=? ORDER BY FIELD(r.status,'dangerous','caution','safe'),r.created_at DESC LIMIT $limit");
-        $s->bind_param("s",$brgy);
-    } else {
-        $s = $conn->prepare("SELECT r.id,r.title,r.category,r.status,r.barangay,r.city,r.created_at,r.description,u.first_name,u.last_name FROM reports r JOIN users u ON u.id=r.user_id WHERE r.is_archived=0 ORDER BY FIELD(r.status,'dangerous','caution','safe'),r.created_at DESC LIMIT $limit");
-    }
+    $s = $conn->prepare("SELECT r.id,r.title,r.category,r.status,r.barangay,r.city,r.created_at,r.description,u.first_name,u.last_name FROM reports r JOIN users u ON u.id=r.user_id WHERE r.is_archived=0 ORDER BY FIELD(r.status,'dangerous','caution','safe'),r.created_at DESC LIMIT $limit");
     $s->execute(); $res=$s->get_result();
     while($row=$res->fetch_assoc()) $reports[]=$row;
     $s->close();
@@ -85,19 +79,12 @@ if ($view === 'residents') {
 
 $map_reports = [];
 if ($view === 'map') {
-    if ($brgy) {
-        $s = $conn->prepare("SELECT r.id,r.title,r.category,r.status,r.barangay,r.city,r.latitude,r.longitude,r.created_at,r.description FROM reports r WHERE r.is_archived=0 AND r.latitude IS NOT NULL AND r.longitude IS NOT NULL AND r.barangay=? ORDER BY r.created_at DESC LIMIT 500");
-        $s->bind_param("s",$brgy);
-    } else {
-        $s = $conn->prepare("SELECT r.id,r.title,r.category,r.status,r.barangay,r.city,r.latitude,r.longitude,r.created_at,r.description FROM reports r WHERE r.is_archived=0 AND r.latitude IS NOT NULL AND r.longitude IS NOT NULL ORDER BY r.created_at DESC LIMIT 500");
-    }
+    $s = $conn->prepare("SELECT r.id,r.title,r.category,r.status,r.barangay,r.city,r.latitude,r.longitude,r.created_at,r.description,u.first_name,u.last_name FROM reports r JOIN users u ON u.id=r.user_id WHERE r.is_archived=0 AND r.latitude IS NOT NULL AND r.longitude IS NOT NULL ORDER BY r.created_at DESC LIMIT 500");
     $s->execute(); $res=$s->get_result();
     while($row=$res->fetch_assoc()) $map_reports[]=$row;
     $s->close();
 }
-$map_total_brgy = $brgy
-    ? cq($conn,"SELECT COUNT(*) FROM reports WHERE is_archived=0 AND barangay=?","s",[$brgy])
-    : cq($conn,"SELECT COUNT(*) FROM reports WHERE is_archived=0");
+$map_total_all = cq($conn,"SELECT COUNT(*) FROM reports WHERE is_archived=0");
 
 $nav_items = [
     'overview'  => ['icon'=>'fa-gauge',           'label'=>'Dashboard'],
@@ -130,7 +117,7 @@ $page_titles = [
 html,body{height:100%;}
 body{background:var(--bg);color:var(--text);display:flex;min-height:100vh;overflow-x:hidden;}
 /* SIDEBAR */
-.sidebar{width:var(--sidebar-w);flex-shrink:0;background:linear-gradient(180deg,var(--green-dark) 0%,var(--green-mid) 50%,var(--green) 100%);color:#fff;display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:200;box-shadow:4px 0 20px rgba(0,0,0,0.25);transition:transform 0.3s cubic-bezier(0.4,0,0.2,1);}
+.sidebar{width:var(--sidebar-w);flex-shrink:0;background:linear-gradient(180deg,var(--green-dark) 0%,var(--green-mid) 50%,var(--green) 100%);color:#fff;display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:1100;box-shadow:4px 0 20px rgba(0,0,0,0.25);transition:transform 0.3s cubic-bezier(0.4,0,0.2,1);}
 .sb-header{padding:18px 16px;border-bottom:1px solid rgba(255,255,255,0.1);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
 .sb-brand{display:flex;align-items:center;gap:10px;}
 .sb-seal{width:40px;height:40px;border-radius:50%;background:rgba(243,156,18,0.2);border:2px solid rgba(243,156,18,0.45);display:flex;align-items:center;justify-content:center;font-size:1.1rem;color:var(--gold);flex-shrink:0;}
@@ -218,7 +205,7 @@ tr:hover td{background:#fafafa;}
 .coming-soon h3{font-size:1rem;font-weight:700;color:var(--text);margin-bottom:6px;}
 .coming-soon p{font-size:0.85rem;color:var(--muted);}
 /* MAP */
-.map-wrap{position:relative;border-radius:14px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,0.1);border:1px solid var(--border);}
+.map-wrap{position:relative;z-index:0;border-radius:14px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,0.1);border:1px solid var(--border);isolation:isolate;}
 #incidentMap{height:490px;width:100%;background:#e8f4e8;}
 .map-controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:12px 16px;background:#fff;border-bottom:1px solid var(--border);border-radius:14px 14px 0 0;}
 .map-controls h3{font-size:0.88rem;font-weight:700;margin-right:4px;}
@@ -262,7 +249,7 @@ tr:hover td{background:#fafafa;}
 .btn-resolve-full{background:#16a34a;color:#fff;} .btn-resolve-full:hover{background:#166534;}
 .btn-escalate-full{background:#d97706;color:#fff;} .btn-escalate-full:hover{background:#b45309;}
 /* OVERLAY */
-.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:150;}
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:1050;}
 .overlay.show{display:block;}
 /* RESPONSIVE */
 @media(max-width:1000px){.stat-grid{grid-template-columns:repeat(2,1fr);}}
@@ -340,8 +327,8 @@ tr:hover td{background:#fafafa;}
       <div class="stat-card"><div class="stat-icon" style="background:#f0fdf4;color:#16a34a;"><i class="fas fa-circle-check"></i></div><div><div class="stat-num"><?= $safe ?></div><div class="stat-lbl">Resolved</div></div></div>
     </div>
     <div class="card">
-      <div class="card-header"><h3><i class="fas fa-list" style="color:var(--green);margin-right:6px;"></i>Recent Incidents<?= $brgy ? ' — '.htmlspecialchars($brgy) : '' ?></h3><span class="card-meta"><?= count($reports) ?> records</span></div>
-      <?php if(empty($reports)): ?><div class="empty"><i class="fas fa-folder-open"></i><p>No reports found<?= $brgy ? ' for '.htmlspecialchars($brgy) : '' ?>.</p></div>
+      <div class="card-header"><h3><i class="fas fa-list" style="color:var(--green);margin-right:6px;"></i>Recent Incidents</h3><span class="card-meta"><?= count($reports) ?> records</span></div>
+      <?php if(empty($reports)): ?><div class="empty"><i class="fas fa-folder-open"></i><p>No reports found.</p></div>
       <?php else: ?><?php include_once __DIR__.'/../portal/_report_table.php'; endif; ?>
     </div>
 
@@ -354,7 +341,7 @@ tr:hover td{background:#fafafa;}
     </div>
     <div class="card">
       <div class="card-header">
-        <h3><i class="fas fa-file-lines" style="color:var(--green);margin-right:6px;"></i>All Incident Reports<?= $brgy ? ' &mdash; '.htmlspecialchars($brgy) : '' ?></h3>
+        <h3><i class="fas fa-file-lines" style="color:var(--green);margin-right:6px;"></i>All Incident Reports</h3>
         <span class="card-meta" id="rptCount"><?= count($reports) ?> records</span>
       </div>
       <div class="reports-filter-bar">
@@ -411,7 +398,7 @@ tr:hover td{background:#fafafa;}
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
     <?php
     $mapped    = count($map_reports);
-    $unmapped  = $map_total_brgy - $mapped;
+    $unmapped  = $map_total_all - $mapped;
     $m_danger  = count(array_filter($map_reports, function($r){ return $r['status']==='dangerous'; }));
     $m_caution = count(array_filter($map_reports, function($r){ return $r['status']==='caution'; }));
     $m_safe    = count(array_filter($map_reports, function($r){ return $r['status']==='safe'; }));
@@ -448,7 +435,8 @@ tr:hover td{background:#fafafa;}
       return ['id'=>(int)$r['id'],'title'=>$r['title'],'category'=>$r['category'],
               'status'=>$r['status'],'barangay'=>$r['barangay']??$r['city']??'',
               'lat'=>(float)$r['latitude'],'lng'=>(float)$r['longitude'],
-              'date'=>date('M j, Y',strtotime($r['created_at'])),'desc'=>$r['description']??''];
+              'reporter'=>trim($r['first_name'].' '.$r['last_name']),
+              'date'=>date('M j, Y g:i A',strtotime($r['created_at'])),'desc'=>$r['description']??''];
     }, $map_reports)) ?>;
     var markerColors = {dangerous:'#dc2626',caution:'#d97706',safe:'#16a34a'};
     var catLabels = {crime:'Crime',accident:'Accident',flooding:'Flooding',fire:'Fire',health:'Health',infrastructure:'Infrastructure',other:'Other'};
@@ -469,6 +457,7 @@ tr:hover td{background:#fafafa;}
         '<span style="background:'+(r.status==='dangerous'?'#fef2f2':r.status==='caution'?'#fffbeb':'#f0fdf4')+';color:'+(r.status==='dangerous'?'#991b1b':r.status==='caution'?'#92400e':'#166534')+';padding:2px 9px;border-radius:20px;font-size:0.72rem;font-weight:700;">'+(r.status.charAt(0).toUpperCase()+r.status.slice(1))+'</span>'+
         '<span style="background:#f0fdf4;color:#166534;padding:2px 9px;border-radius:20px;font-size:0.72rem;font-weight:600;">'+(catLabels[r.category]||r.category)+'</span></div>'+
         (r.barangay?'<div style="font-size:0.78rem;color:#6b7280;margin-bottom:4px;"><b>Location:</b> '+r.barangay+'</div>':'')+
+        '<div style="font-size:0.78rem;color:#6b7280;margin-bottom:4px;"><b>Reported by:</b> '+r.reporter+'</div>'+
         (r.desc?'<div style="font-size:0.78rem;color:#374151;margin-top:6px;">'+r.desc.substring(0,120)+(r.desc.length>120?'…':'')+'</div>':'')+
         '<div style="font-size:0.72rem;color:#9ca3af;margin-top:7px;">'+r.date+' &middot; Report #'+r.id+'</div></div>',
         {maxWidth:260}
