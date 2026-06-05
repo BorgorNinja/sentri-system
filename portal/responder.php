@@ -69,9 +69,61 @@ if ($view === 'contacts') {
 
 $my_count = cq($conn,"SELECT COUNT(*) FROM reports WHERE assigned_to=? AND is_archived=0 AND status IN('dangerous','caution')",'i',[$uid]);
 
+// ── MAP DATA ────────────────────────────────────────────────────────────────
+$map_reports = [];
+if ($view === 'map') {
+    $s = $conn->prepare("SELECT r.id,r.title,r.category,r.status,r.barangay,r.city,r.latitude,r.longitude,r.created_at,r.description,u.first_name,u.last_name FROM reports r JOIN users u ON u.id=r.user_id WHERE r.is_archived=0 AND r.status IN('dangerous','caution') AND r.latitude IS NOT NULL AND r.longitude IS NOT NULL ORDER BY FIELD(r.status,'dangerous','caution'),r.created_at DESC LIMIT 500");
+    $s->execute(); $res=$s->get_result();
+    while($row=$res->fetch_assoc()) $map_reports[]=$row;
+    $s->close();
+}
+$map_total_active = cq($conn,"SELECT COUNT(*) FROM reports WHERE status IN('dangerous','caution') AND is_archived=0");
+
+// ── PROFILE POST ─────────────────────────────────────────────────────────────
+$profile_msg = '';
+if ($view === 'profile' && $_SERVER['REQUEST_METHOD']==='POST' && isset($_POST['save_profile'])) {
+    $p_fname = trim($_POST['first_name']   ?? '');
+    $p_lname = trim($_POST['last_name']    ?? '');
+    $p_phone = trim($_POST['phone']        ?? '');
+    $p_org   = trim($_POST['org_name']     ?? '');
+    $p_pos   = trim($_POST['position']     ?? '');
+    $p_muni  = trim($_POST['municipality'] ?? '');
+    $p_pw    = $_POST['new_password']      ?? '';
+    $p_pw2   = $_POST['confirm_password']  ?? '';
+    if ($p_pw && $p_pw !== $p_pw2) {
+        $profile_msg = 'error:Passwords do not match.';
+    } elseif (!$p_fname || !$p_lname) {
+        $profile_msg = 'error:Name fields are required.';
+    } else {
+        if ($p_pw) {
+            $h = password_hash($p_pw, PASSWORD_BCRYPT, ['cost'=>10]);
+            $su=$conn->prepare("UPDATE users SET first_name=?,last_name=?,phone_number=?,org_name=?,`position`=?,municipality=?,password=? WHERE id=?");
+            $su->bind_param("sssssssi",$p_fname,$p_lname,$p_phone,$p_org,$p_pos,$p_muni,$h,$uid);
+        } else {
+            $su=$conn->prepare("UPDATE users SET first_name=?,last_name=?,phone_number=?,org_name=?,`position`=?,municipality=? WHERE id=?");
+            $su->bind_param("ssssssi",$p_fname,$p_lname,$p_phone,$p_org,$p_pos,$p_muni,$uid);
+        }
+        $su->execute(); $su->close();
+        $_SESSION['first_name'] = htmlspecialchars($p_fname, ENT_QUOTES,'UTF-8');
+        $fname=$_SESSION['first_name']; $unit=$p_org?:$unit; $area=$p_muni?:$area; $pos=$p_pos?:$pos;
+        $profile_msg = 'success:Profile updated successfully.';
+    }
+    // Refresh profile vars
+    $stmt2=$conn->prepare("SELECT org_name,`position`,responder_type,barangay_name,municipality FROM users WHERE id=? LIMIT 1");
+    $stmt2->bind_param("i",$uid); $stmt2->execute();
+    $prof=$stmt2->get_result()->fetch_assoc(); $stmt2->close();
+}
+// Fetch phone for profile form
+$p_phone_val = '';
+if ($view === 'profile') {
+    $ph=$conn->prepare("SELECT phone_number FROM users WHERE id=? LIMIT 1");
+    $ph->bind_param("i",$uid); $ph->execute(); $ph->bind_result($p_phone_val); $ph->fetch(); $ph->close();
+}
+
 $nav_items = [
     'queue'    => ['icon'=>'fa-siren-on',         'label'=>'Dispatch Queue'],
     'assigned' => ['icon'=>'fa-clipboard-check',  'label'=>'My Assignments'],
+    'map'      => ['icon'=>'fa-map-location-dot', 'label'=>'Incident Map'],
     'resolved' => ['icon'=>'fa-circle-check',     'label'=>'Resolved by Me'],
     'contacts' => ['icon'=>'fa-address-book',     'label'=>'Emergency Contacts'],
     'profile'  => ['icon'=>'fa-id-card',          'label'=>'My Profile'],
@@ -79,6 +131,7 @@ $nav_items = [
 $page_titles = [
     'queue'    => 'Dispatch Queue',
     'assigned' => 'My Assignments',
+    'map'      => 'Incident Map',
     'resolved' => 'Resolved by Me',
     'contacts' => 'Emergency Contacts',
     'profile'  => 'My Profile',
@@ -389,19 +442,153 @@ tr:hover td{background:#fafafa;}
     </div>
 
   <?php elseif($view === 'profile'): ?>
-    <div class="card">
-      <div class="card-header"><h3><i class="fas fa-id-card" style="color:var(--red-light);margin-right:6px;"></i>My Profile</h3></div>
-      <div style="padding:24px;">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
-          <?php foreach(['Name'=>htmlspecialchars($fname),'Role'=>'First Responder','Unit Type'=>htmlspecialchars($rtype),'Position'=>htmlspecialchars($pos),'Unit Name'=>htmlspecialchars($unit),'Coverage Area'=>htmlspecialchars($area?:'Not set')] as $lbl=>$val): ?>
-          <div>
-            <div style="font-size:0.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:4px;"><?= $lbl ?></div>
-            <div style="font-size:0.9rem;font-weight:600;"><?= $val ?></div>
+    <?php list($msg_type,$msg_text) = $profile_msg ? explode(':',$profile_msg,2) : ['','']; ?>
+    <style>
+    .resp-profile-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+    .rpf-group label{display:block;font-size:0.78rem;font-weight:700;color:#374151;margin-bottom:5px;text-transform:uppercase;letter-spacing:0.5px;}
+    .rpf-group input{width:100%;padding:10px 13px;border:1.5px solid var(--border);border-radius:9px;font-size:0.9rem;font-family:'Inter',sans-serif;outline:none;background:#fafafa;color:var(--text);transition:all 0.18s;}
+    .rpf-group input:focus{border-color:#fca5a5;background:#fff;box-shadow:0 0 0 3px rgba(220,38,38,0.08);}
+    .rpf-group input[readonly]{background:#f3f4f6;color:var(--muted);cursor:not-allowed;}
+    .rpf-divider{margin:20px 0 16px;padding-bottom:10px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;}
+    .rpf-divider h4{font-size:0.82rem;font-weight:700;color:var(--red-dark);text-transform:uppercase;letter-spacing:1px;}
+    .btn-rpf-save{background:linear-gradient(135deg,#991b1b,#7f1d1d);color:#fff;border:none;padding:11px 26px;border-radius:10px;font-size:0.9rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;display:inline-flex;align-items:center;gap:8px;transition:all 0.2s;}
+    .btn-rpf-save:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(153,27,27,0.35);}
+    .rpf-toast{padding:11px 16px;border-radius:9px;font-size:0.84rem;font-weight:600;margin-bottom:18px;display:flex;align-items:center;gap:9px;}
+    .rpf-toast.success{background:#f0fdf4;color:#166534;border:1px solid #bbf7d0;}
+    .rpf-toast.error{background:#fef2f2;color:#991b1b;border:1px solid #fecaca;}
+    </style>
+    <div style="display:grid;grid-template-columns:300px 1fr;gap:18px;align-items:start;">
+      <!-- Identity card -->
+      <div class="card" style="padding:22px;text-align:center;">
+        <div style="width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,#991b1b,#450a0a);display:flex;align-items:center;justify-content:center;font-size:1.5rem;font-weight:800;color:#fca5a5;margin:0 auto 12px;border:3px solid rgba(239,68,68,0.35);"><?= strtoupper(substr($fname,0,1)) ?></div>
+        <div style="font-size:1.05rem;font-weight:800;"><?= htmlspecialchars($fname) ?></div>
+        <div style="font-size:0.8rem;color:var(--muted);margin-top:3px;"><?= htmlspecialchars($pos?:'First Responder') ?></div>
+        <div style="margin-top:10px;padding:7px 12px;border-radius:8px;font-size:0.78rem;font-weight:800;letter-spacing:1px;color:#fff;background:<?= $unit_color ?>;"><?= htmlspecialchars($rtype) ?></div>
+        <div style="margin-top:8px;font-size:0.8rem;color:var(--muted);font-weight:600;"><?= htmlspecialchars($unit?:'Unit not set') ?></div>
+        <?php if($area): ?><div style="margin-top:6px;font-size:0.78rem;color:var(--muted);"><i class="fas fa-location-dot" style="margin-right:3px;"></i><?= htmlspecialchars($area) ?></div><?php endif; ?>
+        <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border);display:grid;grid-template-columns:1fr 1fr;gap:8px;text-align:center;">
+          <div style="background:#fef2f2;border-radius:8px;padding:10px;"><div style="font-size:1.2rem;font-weight:800;color:#dc2626;"><?= $danger_count ?></div><div style="font-size:0.68rem;color:var(--muted);font-weight:600;">Dangerous</div></div>
+          <div style="background:#fffbeb;border-radius:8px;padding:10px;"><div style="font-size:1.2rem;font-weight:800;color:#d97706;"><?= $my_count ?></div><div style="font-size:0.68rem;color:var(--muted);font-weight:600;">My Active</div></div>
+        </div>
+      </div>
+      <!-- Edit form -->
+      <div class="card" style="padding:22px;">
+        <?php if($msg_text): ?><div class="rpf-toast <?= $msg_type ?>"><i class="fas fa-<?= $msg_type==='success'?'circle-check':'circle-xmark' ?>"></i><?= htmlspecialchars($msg_text) ?></div><?php endif; ?>
+        <form method="POST" action="responder.php?view=profile">
+          <input type="hidden" name="save_profile" value="1">
+          <div class="rpf-divider"><h4><i class="fas fa-user" style="margin-right:6px;"></i>Personal Info</h4></div>
+          <div class="resp-profile-grid" style="margin-bottom:14px;">
+            <div class="rpf-group"><label>First Name</label><input type="text" name="first_name" value="<?= htmlspecialchars($fname) ?>" required></div>
+            <div class="rpf-group"><label>Last Name</label><input type="text" name="last_name" value="<?= htmlspecialchars($prof['last_name']??'') ?>" required></div>
           </div>
-          <?php endforeach; ?>
+          <div class="rpf-group" style="margin-bottom:14px;"><label>Phone Number</label><input type="tel" name="phone" value="<?= htmlspecialchars($p_phone_val) ?>" placeholder="+63 9XX XXX XXXX" style="max-width:280px;"></div>
+          <div class="rpf-divider"><h4><i class="fas fa-truck-medical" style="margin-right:6px;"></i>Unit Info</h4></div>
+          <div class="resp-profile-grid" style="margin-bottom:14px;">
+            <div class="rpf-group"><label>Unit / Agency Name</label><input type="text" name="org_name" value="<?= htmlspecialchars($unit) ?>" placeholder="e.g. BFP Imus Station 1"></div>
+            <div class="rpf-group"><label>Position / Rank</label><input type="text" name="position" value="<?= htmlspecialchars($pos) ?>" placeholder="e.g. Fire Officer I"></div>
+          </div>
+          <div class="rpf-group" style="margin-bottom:14px;"><label>Coverage Area</label><input type="text" name="municipality" value="<?= htmlspecialchars($area) ?>" placeholder="City/Municipality" style="max-width:280px;"></div>
+          <div class="rpf-divider"><h4><i class="fas fa-lock" style="margin-right:6px;"></i>Change Password <span style="font-weight:400;color:var(--muted);text-transform:none;letter-spacing:0;">(leave blank to keep current)</span></h4></div>
+          <div class="resp-profile-grid" style="margin-bottom:20px;">
+            <div class="rpf-group"><label>New Password</label><input type="password" name="new_password" placeholder="Min. 8 characters" autocomplete="new-password"></div>
+            <div class="rpf-group"><label>Confirm Password</label><input type="password" name="confirm_password" placeholder="Re-enter password" autocomplete="new-password"></div>
+          </div>
+          <button type="submit" class="btn-rpf-save"><i class="fas fa-floppy-disk"></i> Save Changes</button>
+        </form>
+      </div>
+    </div>
+
+  <?php elseif($view === 'map'): ?>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+    <style>
+    .resp-map-wrap{position:relative;border-radius:14px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,0.1);border:1px solid var(--border);}
+    #respMap{height:510px;width:100%;background:#f5e8e8;}
+    .resp-map-controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:12px 16px;background:#fff;border-bottom:1px solid var(--border);border-radius:14px 14px 0 0;}
+    .resp-map-controls h3{font-size:0.88rem;font-weight:700;margin-right:4px;}
+    .resp-filter-btn{padding:5px 13px;border-radius:20px;border:1.5px solid var(--border);background:#fff;font-size:0.76rem;font-weight:700;cursor:pointer;transition:all 0.18s;font-family:'Inter',sans-serif;}
+    .resp-filter-btn.active-all{background:#991b1b;color:#fff;border-color:#991b1b;}
+    .resp-filter-btn.active-dangerous{background:#dc2626;color:#fff;border-color:#dc2626;}
+    .resp-filter-btn.active-caution{background:#d97706;color:#fff;border-color:#d97706;}
+    .resp-map-legend{position:absolute;bottom:16px;right:12px;background:rgba(255,255,255,0.95);border-radius:10px;padding:11px 14px;font-size:0.76rem;box-shadow:0 2px 12px rgba(0,0,0,0.15);z-index:400;border:1px solid var(--border);}
+    .resp-legend-row{display:flex;align-items:center;gap:7px;margin-bottom:5px;font-weight:600;}
+    .resp-legend-row:last-child{margin-bottom:0;}
+    .resp-legend-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0;}
+    .resp-map-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px;}
+    </style>
+    <?php
+    $rm_danger  = count(array_filter($map_reports, function($r){ return $r['status']==='dangerous'; }));
+    $rm_caution = count(array_filter($map_reports, function($r){ return $r['status']==='caution'; }));
+    ?>
+    <div class="resp-map-stats">
+      <div class="stat-card"><div class="stat-icon" style="background:#fef2f2;color:#dc2626;"><i class="fas fa-map-pin"></i></div><div><div class="stat-num"><?= count($map_reports) ?></div><div class="stat-lbl">Mapped Active</div></div></div>
+      <div class="stat-card"><div class="stat-icon" style="background:#fef2f2;color:#dc2626;"><i class="fas fa-triangle-exclamation"></i></div><div><div class="stat-num"><?= $rm_danger ?></div><div class="stat-lbl">Dangerous</div></div></div>
+      <div class="stat-card"><div class="stat-icon" style="background:#fffbeb;color:#d97706;"><i class="fas fa-circle-exclamation"></i></div><div><div class="stat-num"><?= $rm_caution ?></div><div class="stat-lbl">Caution</div></div></div>
+    </div>
+    <div class="resp-map-wrap">
+      <div class="resp-map-controls">
+        <h3><i class="fas fa-map-location-dot" style="color:var(--red-light);margin-right:6px;"></i>Active Incident Map</h3>
+        <button class="resp-filter-btn active-all" onclick="filterRespMap('all',this)">All Active</button>
+        <button class="resp-filter-btn" onclick="filterRespMap('dangerous',this)"><i class="fas fa-circle" style="color:#dc2626;font-size:0.6rem;"></i> Dangerous</button>
+        <button class="resp-filter-btn" onclick="filterRespMap('caution',this)"><i class="fas fa-circle" style="color:#d97706;font-size:0.6rem;"></i> Caution</button>
+        <div style="margin-left:auto;font-size:0.74rem;color:var(--muted);">© OpenStreetMap</div>
+      </div>
+      <div style="position:relative;">
+        <div id="respMap"></div>
+        <div class="resp-map-legend">
+          <div class="resp-legend-row"><div class="resp-legend-dot" style="background:#dc2626;"></div>Dangerous</div>
+          <div class="resp-legend-row"><div class="resp-legend-dot" style="background:#d97706;"></div>Caution</div>
         </div>
       </div>
     </div>
+    <script>
+    var respMapReports = <?= json_encode(array_map(function($r){
+      return ['id'=>(int)$r['id'],'title'=>$r['title'],'category'=>$r['category'],
+              'status'=>$r['status'],'location'=>($r['barangay']??$r['city']??''),
+              'lat'=>(float)$r['latitude'],'lng'=>(float)$r['longitude'],
+              'reporter'=>trim($r['first_name'].' '.$r['last_name']),
+              'date'=>date('M j, g:ia',strtotime($r['created_at'])),
+              'desc'=>$r['description']??''];
+    }, $map_reports)) ?>;
+    var rmc = {dangerous:'#dc2626',caution:'#d97706'};
+    var catL = {crime:'Crime',accident:'Accident',flooding:'Flooding',fire:'Fire',health:'Health',infrastructure:'Infrastructure',other:'Other'};
+    function makeRespIcon(color){
+      return L.divIcon({className:'',html:'<div style="width:15px;height:15px;border-radius:50%;background:'+color+';border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.4);"></div>',iconSize:[15,15],iconAnchor:[7,7]});
+    }
+    var rmap = L.map('respMap');
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(rmap);
+    var rMarkers=[];
+    respMapReports.forEach(function(r){
+      var c=rmc[r.status]||'#888';
+      var m=L.marker([r.lat,r.lng],{icon:makeRespIcon(c)});
+      m.rd=r;
+      var mapsLink='https://maps.google.com/?q='+r.lat+','+r.lng;
+      m.bindPopup(
+        '<div style="min-width:200px;font-family:Inter,sans-serif;">'+
+        '<div style="font-weight:800;font-size:0.9rem;margin-bottom:6px;">'+r.title+'</div>'+
+        '<div style="margin-bottom:7px;"><span style="background:'+(r.status==='dangerous'?'#fef2f2':'#fffbeb')+';color:'+(r.status==='dangerous'?'#991b1b':'#92400e')+';padding:2px 9px;border-radius:20px;font-size:0.72rem;font-weight:700;">'+(r.status.charAt(0).toUpperCase()+r.status.slice(1))+'</span></div>'+
+        (r.location?'<div style="font-size:0.78rem;color:#6b7280;margin-bottom:3px;"><b>Location:</b> '+r.location+'</div>':'')+
+        '<div style="font-size:0.78rem;color:#6b7280;margin-bottom:3px;"><b>Category:</b> '+(catL[r.category]||r.category)+'</div>'+
+        '<div style="font-size:0.78rem;color:#6b7280;margin-bottom:6px;"><b>Reported:</b> '+r.date+'</div>'+
+        (r.desc?'<div style="font-size:0.78rem;color:#374151;margin-bottom:8px;">'+r.desc.substring(0,100)+(r.desc.length>100?'…':'')+'</div>':'')+
+        '<a href="'+mapsLink+'" target="_blank" style="font-size:0.8rem;color:#2563eb;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:4px;"><i class="fas fa-directions"></i> Get Directions</a>'+
+        '</div>',{maxWidth:240}
+      );
+      m.addTo(rmap); rMarkers.push(m);
+    });
+    if(rMarkers.length>0){var rg=L.featureGroup(rMarkers);rmap.fitBounds(rg.getBounds().pad(0.2));}
+    else{rmap.setView([14.5995,120.9842],12);}
+    function filterRespMap(s,btn){
+      document.querySelectorAll('.resp-filter-btn').forEach(function(b){b.className='resp-filter-btn';});
+      btn.classList.add('active-'+s);
+      rMarkers.forEach(function(m){
+        var show=(s==='all'||m.rd.status===s);
+        if(show){if(!rmap.hasLayer(m))m.addTo(rmap);}else{if(rmap.hasLayer(m))rmap.removeLayer(m);}
+      });
+    }
+    // Auto-refresh map every 2 minutes
+    setTimeout(function(){location.reload();},120000);
+    </script>
 
   <?php else: ?>
     <div class="card"><div class="coming-soon"><i class="fas <?= $nav_items[$view]['icon'] ?? 'fa-gear' ?>"></i><h3><?= htmlspecialchars($page_titles[$view] ?? ucfirst($view)) ?></h3><p>This section is under development.</p></div></div>
