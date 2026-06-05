@@ -115,7 +115,7 @@ switch ($action) {
 
     // ── ADMIN: create contact ─────────────────────────────────────────────
     case 'create':
-        if ($role !== 'admin') { echo json_encode(['status'=>'error','message'=>'Admin required.']); exit; }
+        if (!in_array($role, ['admin','lgu','barangay'])) { echo json_encode(['status'=>'error','message'=>'Insufficient permissions.']); exit; }
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') { echo json_encode(['status'=>'error','message'=>'POST required.']); exit; }
         ensureContactsTables($conn);
 
@@ -144,7 +144,7 @@ switch ($action) {
 
     // ── ADMIN: update contact ─────────────────────────────────────────────
     case 'update':
-        if ($role !== 'admin') { echo json_encode(['status'=>'error','message'=>'Admin required.']); exit; }
+        if (!in_array($role, ['admin','lgu','barangay'])) { echo json_encode(['status'=>'error','message'=>'Insufficient permissions.']); exit; }
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') { echo json_encode(['status'=>'error','message'=>'POST required.']); exit; }
         ensureContactsTables($conn);
 
@@ -176,7 +176,7 @@ switch ($action) {
 
     // ── ADMIN: delete contact ─────────────────────────────────────────────
     case 'delete':
-        if ($role !== 'admin') { echo json_encode(['status'=>'error','message'=>'Admin required.']); exit; }
+        if (!in_array($role, ['admin','lgu','barangay'])) { echo json_encode(['status'=>'error','message'=>'Insufficient permissions.']); exit; }
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') { echo json_encode(['status'=>'error','message'=>'POST required.']); exit; }
         $id = (int)($_POST['id'] ?? 0);
         if (!$id) { echo json_encode(['status'=>'error','message'=>'Invalid ID.']); exit; }
