@@ -655,7 +655,7 @@ tr:hover td{background:#fafafa;}
       <?php else: ?>
       <div class="table-wrap">
         <table>
-          <thead><tr><th>#</th><th>Title</th><th>Category</th><th>Status</th><th>Barangay</th><th>Reported By</th><th>Date</th></tr></thead>
+          <thead><tr><th>#</th><th>Title</th><th>Category</th><th>Status</th><th>Barangay</th><th>Reported By</th><th>Date</th><th>Actions</th></tr></thead>
           <tbody>
           <?php foreach($all_reports as $r): ?>
             <tr>
@@ -666,6 +666,9 @@ tr:hover td{background:#fafafa;}
               <td style="font-size:0.78rem;"><?= htmlspecialchars($r['barangay'] ?? $r['city']) ?></td>
               <td style="font-size:0.78rem;color:var(--muted);"><?= htmlspecialchars($r['first_name'].' '.$r['last_name']) ?></td>
               <td style="font-size:0.74rem;color:var(--muted);white-space:nowrap;"><?= date('M j, Y', strtotime($r['created_at'])) ?></td>
+              <td>
+                <button onclick="lguViewReport(<?= $r['id'] ?>,'<?= addslashes(htmlspecialchars($r['title'])) ?>','<?= $r['category'] ?>','<?= $r['status'] ?>','<?= addslashes(htmlspecialchars($r['barangay']??$r['city'])) ?>','<?= addslashes(htmlspecialchars($r['first_name'].' '.$r['last_name'])) ?>','<?= date('M j, Y', strtotime($r['created_at'])) ?>','<?= addslashes(htmlspecialchars('')) ?>')" style="background:#eff6ff;color:#2563eb;border:none;padding:5px 10px;border-radius:7px;font-size:0.76rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;"><i class="fas fa-pen-to-square"></i> Manage</button>
+              </td>
             </tr>
           <?php endforeach; ?>
           </tbody>
@@ -683,7 +686,10 @@ tr:hover td{background:#fafafa;}
     <div class="card">
       <div class="card-header">
         <h3><i class="fas fa-address-book" style="color:var(--navy);margin-right:6px;"></i>Emergency Contacts</h3>
-        <span class="card-meta"><?= count($contacts) ?> contacts</span>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span class="card-meta"><?= count($contacts) ?> contacts</span>
+          <button onclick="openLguAddContact()" style="background:var(--navy);color:#fff;border:none;padding:6px 13px;border-radius:8px;font-size:0.78rem;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:5px;font-family:'Inter',sans-serif;"><i class="fas fa-plus"></i> Add</button>
+        </div>
       </div>
       <?php if(empty($contacts)): ?>
         <div class="empty"><i class="fas fa-address-book"></i>No emergency contacts found.</div>
@@ -702,6 +708,7 @@ tr:hover td{background:#fafafa;}
             </div>
           </div>
           <span class="contact-type" style="background:<?= $tc[0] ?>;color:<?= $tc[1] ?>;"><?= strtoupper($c['type']) ?></span>
+          <button onclick="lguDeleteContact(<?= $c['id'] ?>,'<?= addslashes(htmlspecialchars($c['name'])) ?>')" style="flex-shrink:0;background:#fef2f2;color:#dc2626;border:1.5px solid #fecaca;padding:4px 10px;border-radius:7px;font-size:0.74rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;"><i class="fas fa-trash"></i></button>
         </div>
       <?php endforeach; endif; ?>
     </div>
@@ -1068,5 +1075,216 @@ function closeSidebar(){
   document.body.style.overflow='';
 }
 </script>
+function openSidebar(){
+  document.getElementById('sidebar').classList.add('open');
+  document.getElementById('overlay').classList.add('show');
+  document.body.style.overflow='hidden';
+}
+function closeSidebar(){
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('overlay').classList.remove('show');
+  document.body.style.overflow='';
+}
+
+// ── Report Actions ──────────────────────────────────────────────────────────
+var _lguRptId = null;
+function lguViewReport(id,title,category,status,barangay,reporter,date,desc){
+  _lguRptId = id;
+  document.getElementById('lguModalTitle').textContent = title;
+  var pill = {dangerous:'<span class="pill pill-dangerous">Dangerous</span>',caution:'<span class="pill pill-caution">Caution</span>',safe:'<span class="pill pill-safe">Safe</span>'};
+  document.getElementById('lguModalBody').innerHTML =
+    '<div class="detail-row"><div class="detail-lbl">Status</div><div class="detail-val">'+(pill[status]||status)+'</div></div>'+
+    '<div class="detail-row"><div class="detail-lbl">Category</div><div class="detail-val">'+category.charAt(0).toUpperCase()+category.slice(1)+'</div></div>'+
+    '<div class="detail-row"><div class="detail-lbl">Location</div><div class="detail-val">'+barangay+'</div></div>'+
+    '<div class="detail-row"><div class="detail-lbl">Reported By</div><div class="detail-val">'+reporter+'</div></div>'+
+    '<div class="detail-row"><div class="detail-lbl">Date</div><div class="detail-val">'+date+'</div></div>'+
+    (desc?'<div class="detail-row"><div class="detail-lbl">Description</div><div class="detail-val" style="line-height:1.6;">'+desc+'</div></div>':'');
+  document.getElementById('lguRptStatusSel').value = status;
+  document.getElementById('lguReportModal').classList.add('show');
+}
+function closeLguModal(){ document.getElementById('lguReportModal').classList.remove('show'); }
+document.addEventListener('DOMContentLoaded',function(){
+  document.getElementById('lguReportModal').addEventListener('click',function(e){if(e.target===this)closeLguModal();});
+  document.getElementById('lguContactModal').addEventListener('click',function(e){if(e.target===this)closeLguContactModal();});
+  document.getElementById('lguDispatchModal').addEventListener('click',function(e){if(e.target===this)closeLguDispatch();});
+});
+
+document.addEventListener('DOMContentLoaded',function(){
+  document.getElementById('lguModalResolveBtn').onclick = async function(){
+    if(!_lguRptId) return;
+    if(!confirm('Mark this report as resolved?')) return;
+    var fd=new FormData(); fd.append('action','resolve_report'); fd.append('report_id',_lguRptId);
+    var res=await fetch('../api/reports.php',{method:'POST',body:fd});
+    var data=await res.json();
+    if(data.status==='success'){closeLguModal();location.reload();}else alert(data.message);
+  };
+  document.getElementById('lguModalStatusBtn').onclick = async function(){
+    var newStatus = document.getElementById('lguRptStatusSel').value;
+    if(!newStatus||!_lguRptId) return;
+    if(!confirm('Change status to '+newStatus+'?')) return;
+    var fd=new FormData(); fd.append('action','update_report_status'); fd.append('report_id',_lguRptId); fd.append('status',newStatus);
+    var res=await fetch('../api/reports.php',{method:'POST',body:fd});
+    var data=await res.json();
+    if(data.status==='success'){closeLguModal();location.reload();}else alert(data.message);
+  };
+  document.getElementById('lguModalDispatchBtn').onclick = function(){
+    if(!_lguRptId) return;
+    closeLguModal();
+    openLguDispatch(_lguRptId);
+  };
+});
+
+// ── Dispatch Modal ───────────────────────────────────────────────────────────
+function openLguDispatch(reportId){
+  document.getElementById('lguDispatchRptId').value = reportId;
+  document.getElementById('lguDispatchModal').classList.add('show');
+}
+function closeLguDispatch(){ document.getElementById('lguDispatchModal').classList.remove('show'); }
+async function submitDispatch(){
+  var reportId    = document.getElementById('lguDispatchRptId').value;
+  var responderId = document.getElementById('lguDispatchResponderSel').value;
+  var err         = document.getElementById('lguDispatchErr');
+  if(!responderId){ err.textContent='Please select a responder.'; err.style.display='block'; return; }
+  var btn = document.getElementById('lguDispatchBtn'); btn.disabled=true; btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Dispatching…';
+  var fd=new FormData(); fd.append('action','lgu_dispatch'); fd.append('report_id',reportId); fd.append('responder_id',responderId);
+  try {
+    var res=await fetch('../api/reports.php',{method:'POST',body:fd});
+    var data=await res.json();
+    if(data.status==='success'){closeLguDispatch();location.reload();}
+    else{err.textContent=data.message||'Dispatch failed.';err.style.display='block';btn.disabled=false;btn.innerHTML='<i class="fas fa-paper-plane"></i> Dispatch';}
+  }catch(e){err.textContent='Request failed.';err.style.display='block';btn.disabled=false;btn.innerHTML='<i class="fas fa-paper-plane"></i> Dispatch';}
+}
+
+// ── Contact Management ───────────────────────────────────────────────────────
+function openLguAddContact(){ document.getElementById('lguContactModal').classList.add('show'); }
+function closeLguContactModal(){ document.getElementById('lguContactModal').classList.remove('show'); document.getElementById('lgu_cn_error').style.display='none'; }
+async function lguSaveContact(){
+  var name=document.getElementById('lgu_cn_name').value.trim();
+  var type=document.getElementById('lgu_cn_type').value;
+  var city=document.getElementById('lgu_cn_city').value.trim();
+  var phone=document.getElementById('lgu_cn_phone').value.trim();
+  var email=document.getElementById('lgu_cn_email').value.trim();
+  var err=document.getElementById('lgu_cn_error');
+  if(!name||!city){err.textContent='Name and city are required.';err.style.display='block';return;}
+  var btn=document.getElementById('lgu_cn_saveBtn');btn.disabled=true;btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Saving…';
+  var fd=new FormData();fd.append('action','create');fd.append('name',name);fd.append('type',type);
+  fd.append('city',city);fd.append('contact_number',phone);fd.append('contact_email',email);
+  try{
+    var res=await fetch('../api/contacts.php',{method:'POST',body:fd});
+    var data=await res.json();
+    if(data.status==='success'){closeLguContactModal();location.reload();}
+    else{err.textContent=data.message||'Save failed.';err.style.display='block';btn.disabled=false;btn.innerHTML='<i class="fas fa-floppy-disk"></i> Save Contact';}
+  }catch(e){err.textContent='Request failed.';err.style.display='block';btn.disabled=false;btn.innerHTML='<i class="fas fa-floppy-disk"></i> Save Contact';}
+}
+async function lguDeleteContact(id, name){
+  if(!confirm('Remove contact: '+name+'?')) return;
+  var fd=new FormData(); fd.append('action','delete'); fd.append('id',id);
+  var res=await fetch('../api/contacts.php',{method:'POST',body:fd});
+  var data=await res.json();
+  if(data.status==='success') location.reload(); else alert(data.message||'Delete failed.');
+}
+</script>
+
+<!-- ── LGU REPORT ACTION MODAL ── -->
+<style>
+.lgu-modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:300;align-items:center;justify-content:center;padding:20px;}
+.lgu-modal-bg.show{display:flex;}
+.lgu-modal{background:#fff;border-radius:16px;width:100%;max-width:540px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.3);}
+.lgu-modal-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.lgu-modal-header h3{font-size:0.95rem;font-weight:800;}
+.lgu-modal-close{background:none;border:none;font-size:1.2rem;cursor:pointer;color:var(--muted);padding:4px 6px;border-radius:6px;}
+.lgu-modal-close:hover{background:#f3f4f6;}
+.lgu-modal-body{padding:18px 20px;}
+.detail-row{margin-bottom:12px;}
+.detail-lbl{font-size:0.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:3px;}
+.detail-val{font-size:0.88rem;color:var(--text);}
+.lgu-modal-actions{padding:14px 20px;border-top:1px solid var(--border);display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+.btn-lgu{padding:8px 15px;border-radius:9px;font-size:0.82rem;font-weight:700;border:none;cursor:pointer;display:inline-flex;align-items:center;gap:7px;font-family:'Inter',sans-serif;transition:all 0.18s;}
+.btn-lgu-resolve{background:#16a34a;color:#fff;}.btn-lgu-resolve:hover{background:#166534;}
+.btn-lgu-dispatch{background:#0a3d62;color:#fff;}.btn-lgu-dispatch:hover{background:#062444;}
+.lgu-cn-grid{display:grid;gap:11px;}
+.lgu-cn-label{font-size:0.75rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.8px;display:block;margin-bottom:4px;}
+.lgu-cn-input{width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:0.88rem;font-family:'Inter',sans-serif;outline:none;background:#fafafa;}
+.lgu-cn-input:focus{border-color:#93c5fd;background:#fff;}
+</style>
+
+<div class="lgu-modal-bg" id="lguReportModal">
+  <div class="lgu-modal">
+    <div class="lgu-modal-header">
+      <h3 id="lguModalTitle">Incident Report</h3>
+      <button class="lgu-modal-close" onclick="closeLguModal()"><i class="fas fa-xmark"></i></button>
+    </div>
+    <div class="lgu-modal-body" id="lguModalBody"></div>
+    <div class="lgu-modal-actions">
+      <button class="btn-lgu btn-lgu-resolve" id="lguModalResolveBtn"><i class="fas fa-circle-check"></i> Resolve</button>
+      <button class="btn-lgu btn-lgu-dispatch" id="lguModalDispatchBtn"><i class="fas fa-paper-plane"></i> Dispatch Responder</button>
+      <select id="lguRptStatusSel" style="padding:8px 12px;border-radius:9px;border:1.5px solid var(--border);font-size:0.82rem;font-weight:600;font-family:'Inter',sans-serif;background:#fff;cursor:pointer;">
+        <option value="">— Set Status —</option>
+        <option value="dangerous">⛔ Dangerous</option>
+        <option value="caution">⚠️ Caution</option>
+        <option value="safe">✅ Safe</option>
+      </select>
+      <button class="btn-lgu" style="background:#f0f7ff;color:var(--navy);border:1.5px solid #bfdbfe;" id="lguModalStatusBtn"><i class="fas fa-pen"></i> Apply Status</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── LGU DISPATCH MODAL ── -->
+<div class="lgu-modal-bg" id="lguDispatchModal">
+  <div class="lgu-modal" style="max-width:420px;">
+    <div class="lgu-modal-header">
+      <h3><i class="fas fa-paper-plane" style="color:var(--navy);margin-right:6px;"></i>Dispatch Responder</h3>
+      <button class="lgu-modal-close" onclick="closeLguDispatch()"><i class="fas fa-xmark"></i></button>
+    </div>
+    <div class="lgu-modal-body">
+      <input type="hidden" id="lguDispatchRptId">
+      <p style="font-size:0.85rem;color:var(--muted);margin-bottom:14px;">Select an approved responder unit to assign to this incident.</p>
+      <label class="lgu-cn-label">Responder Unit</label>
+      <select id="lguDispatchResponderSel" class="lgu-cn-input" style="background:#fff;">
+        <option value="">— Select Responder —</option>
+        <?php
+        $resp_opts = $conn->query("SELECT id, CONCAT(first_name,' ',last_name) as name, org_name, responder_type FROM users WHERE role='first_responder' AND is_approved=1 ORDER BY responder_type, org_name");
+        if($resp_opts) while($ro=$resp_opts->fetch_assoc()):
+        ?>
+        <option value="<?= $ro['id'] ?>"><?= htmlspecialchars(strtoupper($ro['responder_type']??'UNIT').' — '.($ro['org_name']?:$ro['name'])) ?></option>
+        <?php endwhile; ?>
+      </select>
+      <div id="lguDispatchErr" style="display:none;margin-top:10px;background:#fef2f2;color:#991b1b;border:1px solid #fecaca;border-radius:8px;padding:9px 12px;font-size:0.82rem;font-weight:600;"></div>
+    </div>
+    <div class="lgu-modal-actions">
+      <button class="btn-lgu btn-lgu-dispatch" id="lguDispatchBtn" onclick="submitDispatch()"><i class="fas fa-paper-plane"></i> Dispatch</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── LGU ADD CONTACT MODAL ── -->
+<div class="lgu-modal-bg" id="lguContactModal">
+  <div class="lgu-modal" style="max-width:460px;">
+    <div class="lgu-modal-header">
+      <h3><i class="fas fa-address-book" style="color:var(--navy);margin-right:6px;"></i>Add Emergency Contact</h3>
+      <button class="lgu-modal-close" onclick="closeLguContactModal()"><i class="fas fa-xmark"></i></button>
+    </div>
+    <div class="lgu-modal-body">
+      <div class="lgu-cn-grid">
+        <div><label class="lgu-cn-label">Name *</label><input id="lgu_cn_name" type="text" class="lgu-cn-input" placeholder="e.g. Imus City Police Station"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <div><label class="lgu-cn-label">Type *</label>
+          <select id="lgu_cn_type" class="lgu-cn-input" style="background:#fff;">
+            <option value="lgu">LGU</option><option value="hospital">Hospital</option>
+            <option value="police">Police</option><option value="fire">Fire</option>
+            <option value="barangay">Barangay</option><option value="traffic">Traffic</option><option value="other">Other</option>
+          </select></div>
+          <div><label class="lgu-cn-label">City *</label><input id="lgu_cn_city" type="text" class="lgu-cn-input" placeholder="City/Municipality"></div>
+        </div>
+        <div><label class="lgu-cn-label">Contact Number</label><input id="lgu_cn_phone" type="tel" class="lgu-cn-input" placeholder="+63 9XX XXX XXXX"></div>
+        <div><label class="lgu-cn-label">Email</label><input id="lgu_cn_email" type="email" class="lgu-cn-input" placeholder="contact@example.com"></div>
+        <div id="lgu_cn_error" style="display:none;background:#fef2f2;color:#991b1b;border:1px solid #fecaca;border-radius:8px;padding:9px 12px;font-size:0.82rem;font-weight:600;"></div>
+      </div>
+    </div>
+    <div class="lgu-modal-actions">
+      <button class="btn-lgu btn-lgu-dispatch" id="lgu_cn_saveBtn" onclick="lguSaveContact()"><i class="fas fa-floppy-disk"></i> Save Contact</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
