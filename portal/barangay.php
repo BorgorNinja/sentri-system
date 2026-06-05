@@ -271,6 +271,12 @@ tr:hover td{background:#fafafa;}
     <div class="modal-actions">
       <button class="btn-action btn-resolve-full" id="modalResolveBtn"><i class="fas fa-circle-check"></i> Mark Resolved</button>
       <button class="btn-action btn-escalate-full" id="modalEscalateBtn"><i class="fas fa-arrow-up-from-bracket"></i> Escalate to LGU</button>
+      <select id="modalStatusSelect" style="padding:8px 12px;border-radius:9px;border:1.5px solid var(--border);font-size:0.82rem;font-weight:600;font-family:'Inter',sans-serif;cursor:pointer;background:#fff;" onchange="changeStatus(this.value)">
+        <option value="">— Change Status —</option>
+        <option value="dangerous">⛔ Mark Dangerous</option>
+        <option value="caution">⚠️ Mark Caution</option>
+        <option value="safe">✅ Mark Safe</option>
+      </select>
     </div>
   </div>
 </div>
@@ -358,6 +364,9 @@ tr:hover td{background:#fafafa;}
   <?php elseif($view === 'contacts'): ?>
     <div class="card">
       <div class="card-header"><h3><i class="fas fa-address-book" style="color:var(--green);margin-right:6px;"></i>Emergency Contacts</h3><span class="card-meta"><?= count($contacts) ?> contacts</span></div>
+      <div style="padding:12px 18px;border-bottom:1px solid var(--border);display:flex;justify-content:flex-end;">
+        <button onclick="openAddContact()" style="background:var(--green);color:#fff;border:none;padding:7px 15px;border-radius:8px;font-size:0.8rem;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px;font-family:'Inter',sans-serif;"><i class="fas fa-plus"></i> Add Contact</button>
+      </div>
       <?php if(empty($contacts)): ?><div class="empty"><i class="fas fa-address-book"></i><p>No emergency contacts on file.</p></div>
       <?php else: foreach($contacts as $c): $tc=$type_colors[$c['type']]??['#f5f3ff','#7c3aed']; $ti=$type_icons[$c['type']]??'fa-phone'; ?>
         <div class="contact-row">
@@ -501,6 +510,19 @@ tr:hover td{background:#fafafa;}
 </div>
 
 <script>
+async function changeStatus(newStatus){
+  if(!newStatus || !currentReportId) return;
+  if(!confirm('Change report status to ' + newStatus + '?')) { document.getElementById('modalStatusSelect').value=''; return; }
+  try {
+    var fd=new FormData(); fd.append('action','update_report_status');
+    fd.append('report_id',currentReportId); fd.append('status',newStatus);
+    var res=await fetch('../api/reports.php',{method:'POST',body:fd});
+    var data=await res.json();
+    if(data.status==='success'){ closeModal(); location.reload(); }
+    else { alert(data.message||'Error.'); document.getElementById('modalStatusSelect').value=''; }
+  } catch(e) { document.getElementById('modalStatusSelect').value=''; }
+}
+
 function openSidebar(){document.getElementById('sidebar').classList.add('open');document.getElementById('overlay').classList.add('show');document.body.style.overflow='hidden';}
 function closeSidebar(){document.getElementById('sidebar').classList.remove('open');document.getElementById('overlay').classList.remove('show');document.body.style.overflow='';}
 function closeModal(){document.getElementById('reportModal').classList.remove('show');}
@@ -541,11 +563,21 @@ document.getElementById('modalEscalateBtn').onclick = async function(){
   if(!currentReportId) return;
   if(!confirm('Escalate this report to LGU for urgent attention?')) return;
   var btn = this; btn.disabled=true; btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Escalating…';
-  var fd=new FormData(); fd.append('action','resolve_report'); // mark as reviewed
-  // Escalation note: no dedicated API endpoint; we surface via flagging
-  btn.innerHTML='<i class="fas fa-check"></i> Escalated to LGU';
-  btn.style.background='#d97706';
-  setTimeout(function(){ closeModal(); }, 1200);
+  try {
+    var fd=new FormData(); fd.append('action','escalate_report'); fd.append('report_id',currentReportId);
+    var res=await fetch('../api/reports.php',{method:'POST',body:fd});
+    var data=await res.json();
+    if(data.status==='success'){
+      btn.innerHTML='<i class="fas fa-check"></i> Escalated to LGU';
+      btn.style.background='#d97706';
+      setTimeout(function(){ closeModal(); location.reload(); }, 1000);
+    } else {
+      alert(data.message||'Escalation failed.'); btn.disabled=false;
+      btn.innerHTML='<i class="fas fa-arrow-up-from-bracket"></i> Escalate to LGU';
+    }
+  } catch(e) {
+    btn.disabled=false; btn.innerHTML='<i class="fas fa-arrow-up-from-bracket"></i> Escalate to LGU';
+  }
 };
 
 // Client-side filter for reports table
@@ -572,6 +604,64 @@ function applyRptFilters(){
   var cnt = document.getElementById('rptCount');
   if(cnt) cnt.textContent = visible + ' records';
 }
+</script>
+
+<!-- ADD CONTACT MODAL -->
+<div class="modal-bg" id="contactModal">
+  <div class="modal" style="max-width:480px;">
+    <div class="modal-header">
+      <h3><i class="fas fa-address-book" style="color:var(--green);margin-right:6px;"></i>Add Emergency Contact</h3>
+      <button class="modal-close" onclick="closeContactModal()"><i class="fas fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <div style="display:grid;gap:12px;">
+        <div><label style="font-size:0.75rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.8px;display:block;margin-bottom:4px;">Name *</label>
+        <input id="cn_name" type="text" placeholder="e.g. Barangay Health Center" style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:0.88rem;font-family:'Inter',sans-serif;outline:none;"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <div><label style="font-size:0.75rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.8px;display:block;margin-bottom:4px;">Type *</label>
+          <select id="cn_type" style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:0.88rem;font-family:'Inter',sans-serif;outline:none;background:#fff;">
+            <option value="barangay">Barangay</option><option value="hospital">Hospital</option>
+            <option value="police">Police</option><option value="fire">Fire</option>
+            <option value="lgu">LGU</option><option value="traffic">Traffic</option><option value="other">Other</option>
+          </select></div>
+          <div><label style="font-size:0.75rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.8px;display:block;margin-bottom:4px;">City *</label>
+          <input id="cn_city" type="text" placeholder="City/Municipality" style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:0.88rem;font-family:'Inter',sans-serif;outline:none;"></div>
+        </div>
+        <div><label style="font-size:0.75rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.8px;display:block;margin-bottom:4px;">Contact Number</label>
+        <input id="cn_phone" type="tel" placeholder="+63 9XX XXX XXXX" style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:0.88rem;font-family:'Inter',sans-serif;outline:none;"></div>
+        <div><label style="font-size:0.75rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.8px;display:block;margin-bottom:4px;">Email</label>
+        <input id="cn_email" type="email" placeholder="contact@example.com" style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:0.88rem;font-family:'Inter',sans-serif;outline:none;"></div>
+        <div id="cn_error" style="display:none;background:#fef2f2;color:#991b1b;border:1px solid #fecaca;border-radius:8px;padding:9px 12px;font-size:0.82rem;font-weight:600;"></div>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-action btn-resolve-full" id="cn_saveBtn" onclick="saveContact()"><i class="fas fa-floppy-disk"></i> Save Contact</button>
+    </div>
+  </div>
+</div>
+
+<script>
+function openAddContact(){ document.getElementById('contactModal').classList.add('show'); }
+function closeContactModal(){ document.getElementById('contactModal').classList.remove('show'); document.getElementById('cn_error').style.display='none'; }
+async function saveContact(){
+  var name=document.getElementById('cn_name').value.trim();
+  var type=document.getElementById('cn_type').value;
+  var city=document.getElementById('cn_city').value.trim();
+  var phone=document.getElementById('cn_phone').value.trim();
+  var email=document.getElementById('cn_email').value.trim();
+  var err=document.getElementById('cn_error');
+  if(!name||!city){ err.textContent='Name and city are required.'; err.style.display='block'; return; }
+  var btn=document.getElementById('cn_saveBtn'); btn.disabled=true; btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Saving…';
+  var fd=new FormData(); fd.append('action','create'); fd.append('name',name); fd.append('type',type);
+  fd.append('city',city); fd.append('contact_number',phone); fd.append('contact_email',email);
+  try {
+    var res=await fetch('../api/contacts.php',{method:'POST',body:fd});
+    var data=await res.json();
+    if(data.status==='success'){ closeContactModal(); location.reload(); }
+    else { err.textContent=data.message||'Save failed.'; err.style.display='block'; btn.disabled=false; btn.innerHTML='<i class="fas fa-floppy-disk"></i> Save Contact'; }
+  } catch(e){ err.textContent='Request failed.'; err.style.display='block'; btn.disabled=false; btn.innerHTML='<i class="fas fa-floppy-disk"></i> Save Contact'; }
+}
+document.getElementById('contactModal').addEventListener('click',function(e){if(e.target===this)closeContactModal();});
 </script>
 </body>
 </html>
