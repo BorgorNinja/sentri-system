@@ -1,9 +1,22 @@
 <?php
 ini_set('display_errors', 0);
 error_reporting(E_ALL);
-ob_start();
 session_start();
 header('Content-Type: application/json');
+
+// Global safety net: if anything dies unexpectedly, always return valid JSON
+set_exception_handler(function($e) {
+    if (!headers_sent()) header('Content-Type: application/json');
+    echo json_encode(['status'=>'error','message'=>'Server error: '.$e->getMessage()]);
+    exit;
+});
+register_shutdown_function(function() {
+    $err = error_get_last();
+    if ($err && in_array($err['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR])) {
+        if (!headers_sent()) header('Content-Type: application/json');
+        echo json_encode(['status'=>'error','message'=>'Fatal server error. Check server logs.']);
+    }
+});
 
 if (!isset($_SESSION['user_id'])) {
     echo json_encode(['status'=>'error','message'=>'Unauthorized. Please log in.']); exit;
@@ -460,11 +473,17 @@ switch ($action) {
         if (!in_array($role, ['first_responder','barangay','lgu','admin'], true)) { echo json_encode(['status'=>'error','message'=>'Unauthorized.']); exit; }
         $report_id = (int)($_POST['report_id'] ?? 0);
         if (!$report_id) { echo json_encode(['status'=>'error','message'=>'Invalid report ID.']); exit; }
-        $stmt = $conn->prepare("UPDATE reports SET status='safe', resolved_at=NOW() WHERE id=?");
+        $stmt = $conn->prepare("UPDATE reports SET status='safe', resolved_at=NOW() WHERE id=? AND is_archived=0");
         $stmt->bind_param("i", $report_id);
         $stmt->execute();
-        echo json_encode(['status'=>'success','message'=>'Report marked as resolved.']);
         $stmt->close();
+        // Audit log
+        $r_res = $conn->query("SELECT title FROM reports WHERE id=$report_id")->fetch_assoc();
+        $r_title = $conn->real_escape_string($r_res['title'] ?? 'Unknown');
+        $r_by    = (int)$_SESSION['user_id'];
+        $r_name  = $conn->real_escape_string(($_SESSION['first_name'] ?? '') . ' ' . ($_SESSION['last_name'] ?? ''));
+        $conn->query("INSERT INTO report_audit_logs (report_id,report_title,action,performed_by,performed_by_name) VALUES ($report_id,'$r_title','resolved',$r_by,'$r_name')");
+        echo json_encode(['status'=>'success','message'=>'Report marked as resolved.']);
         break;
 
 
@@ -556,5 +575,3 @@ switch ($action) {
         echo json_encode(['status'=>'error','message'=>'Unknown action.']);
 }
 $conn->close();
-ob_end_flush();
-
