@@ -7,6 +7,7 @@ require_once __DIR__ . '/../config/db.php';
 $uid   = (int)$_SESSION['user_id'];
 $fname = $_SESSION['first_name'];
 $view  = $_GET['view'] ?? 'queue';
+$has_assigned_to = sentri_table_has_column($conn, 'reports', 'assigned_to');
 
 $stmt = $conn->prepare("SELECT org_name,`position`,responder_type,barangay_name,municipality FROM users WHERE id=? LIMIT 1");
 $stmt->bind_param("i",$uid); $stmt->execute();
@@ -37,10 +38,11 @@ $danger_count  = cq($conn,"SELECT COUNT(*) FROM reports WHERE status='dangerous'
 $caution_count = cq($conn,"SELECT COUNT(*) FROM reports WHERE status='caution' AND is_archived=0");
 
 // Per-view data
-$queue = $assigned = $contacts = $resolved = [];
+$queue = $assigned = $contacts = $resolved = $community_reports = [];
 
 if ($view === 'queue' || $view === 'overview') {
-    $s = $conn->prepare("SELECT r.id,r.title,r.category,r.status,r.barangay,r.city,r.latitude,r.longitude,r.created_at,r.description,r.assigned_to,u.first_name,u.last_name FROM reports r JOIN users u ON u.id=r.user_id WHERE r.is_archived=0 AND r.status IN('dangerous','caution') ORDER BY FIELD(r.status,'dangerous','caution'),r.created_at DESC LIMIT 60");
+    $assigned_col = $has_assigned_to ? "r.assigned_to," : "NULL AS assigned_to,";
+    $s = $conn->prepare("SELECT r.id,r.title,r.category,r.status,r.barangay,r.city,r.latitude,r.longitude,r.created_at,r.description,{$assigned_col}u.first_name,u.last_name FROM reports r JOIN users u ON u.id=r.user_id WHERE r.is_archived=0 AND r.status IN('dangerous','caution') ORDER BY FIELD(r.status,'dangerous','caution'),r.created_at DESC LIMIT 60");
     if (!$s) { die("DB Error (queue): " . $conn->error); }
     $s->execute(); $res=$s->get_result();
     while($row=$res->fetch_assoc()) $queue[]=$row;
@@ -48,18 +50,30 @@ if ($view === 'queue' || $view === 'overview') {
 }
 
 if ($view === 'assigned') {
-    $s = $conn->prepare("SELECT r.id,r.title,r.category,r.status,r.barangay,r.city,r.latitude,r.longitude,r.created_at,r.description,u.first_name,u.last_name FROM reports r JOIN users u ON u.id=r.user_id WHERE r.assigned_to=? AND r.is_archived=0 ORDER BY r.created_at DESC");
-    if (!$s) { die("DB Error (assigned): " . $conn->error); }
-    $s->bind_param("i",$uid); $s->execute(); $res=$s->get_result();
-    while($row=$res->fetch_assoc()) $assigned[]=$row;
-    $s->close();
+    if ($has_assigned_to) {
+        $s = $conn->prepare("SELECT r.id,r.title,r.category,r.status,r.barangay,r.city,r.latitude,r.longitude,r.created_at,r.description,u.first_name,u.last_name FROM reports r JOIN users u ON u.id=r.user_id WHERE r.assigned_to=? AND r.is_archived=0 ORDER BY r.created_at DESC");
+        if (!$s) { die("DB Error (assigned): " . $conn->error); }
+        $s->bind_param("i",$uid); $s->execute(); $res=$s->get_result();
+        while($row=$res->fetch_assoc()) $assigned[]=$row;
+        $s->close();
+    }
 }
 
 if ($view === 'resolved') {
-    $s = $conn->prepare("SELECT r.id,r.title,r.category,r.status,r.barangay,r.city,r.created_at,r.resolved_at,u.first_name,u.last_name FROM reports r JOIN users u ON u.id=r.user_id WHERE r.assigned_to=? AND r.status='safe' ORDER BY r.resolved_at DESC LIMIT 50");
-    if (!$s) { die("DB Error (resolved): " . $conn->error); }
-    $s->bind_param("i",$uid); $s->execute(); $res=$s->get_result();
-    while($row=$res->fetch_assoc()) $resolved[]=$row;
+    if ($has_assigned_to) {
+        $s = $conn->prepare("SELECT r.id,r.title,r.category,r.status,r.barangay,r.city,r.created_at,r.resolved_at,u.first_name,u.last_name FROM reports r JOIN users u ON u.id=r.user_id WHERE r.assigned_to=? AND r.status='safe' ORDER BY r.resolved_at DESC LIMIT 50");
+        if (!$s) { die("DB Error (resolved): " . $conn->error); }
+        $s->bind_param("i",$uid); $s->execute(); $res=$s->get_result();
+        while($row=$res->fetch_assoc()) $resolved[]=$row;
+        $s->close();
+    }
+}
+
+if ($view === 'community') {
+    $s = $conn->prepare("SELECT r.id,r.user_id,r.title,r.description,r.location_name,r.barangay,r.city,r.province,r.latitude,r.longitude,r.radius_m,r.status,r.category,r.upvotes,r.downvotes,r.created_at,u.first_name,u.last_name,u.role FROM reports r JOIN users u ON u.id=r.user_id WHERE r.is_archived=0 AND u.role IN('community','user') ORDER BY FIELD(r.status,'dangerous','caution','safe'), r.created_at DESC LIMIT 120");
+    if (!$s) { die("DB Error (community): " . $conn->error); }
+    $s->execute(); $res=$s->get_result();
+    while($row=$res->fetch_assoc()) $community_reports[]=$row;
     $s->close();
 }
 
@@ -71,7 +85,8 @@ if ($view === 'contacts') {
     $s->close();
 }
 
-$my_count = cq($conn,"SELECT COUNT(*) FROM reports WHERE assigned_to=? AND is_archived=0 AND status IN('dangerous','caution')",'i',[$uid]);
+$my_count = $has_assigned_to ? cq($conn,"SELECT COUNT(*) FROM reports WHERE assigned_to=? AND is_archived=0 AND status IN('dangerous','caution')",'i',[$uid]) : 0;
+$community_count = cq($conn,"SELECT COUNT(*) FROM reports r JOIN users u ON u.id=r.user_id WHERE r.is_archived=0 AND u.role IN('community','user')");
 
 // ── MAP DATA ────────────────────────────────────────────────────────────────
 $map_reports = [];
@@ -125,20 +140,22 @@ if ($view === 'profile') {
 }
 
 $nav_items = [
-    'queue'    => ['icon'=>'fa-siren-on',         'label'=>'Dispatch Queue'],
-    'assigned' => ['icon'=>'fa-clipboard-check',  'label'=>'My Assignments'],
-    'map'      => ['icon'=>'fa-map-location-dot', 'label'=>'Incident Map'],
-    'resolved' => ['icon'=>'fa-circle-check',     'label'=>'Resolved by Me'],
-    'contacts' => ['icon'=>'fa-address-book',     'label'=>'Emergency Contacts'],
-    'profile'  => ['icon'=>'fa-id-card',          'label'=>'My Profile'],
+    'queue'     => ['icon'=>'fa-siren-on',         'label'=>'Dispatch Queue'],
+    'community' => ['icon'=>'fa-users',            'label'=>'Community Reports'],
+    'assigned'  => ['icon'=>'fa-clipboard-check',  'label'=>'My Assignments'],
+    'map'       => ['icon'=>'fa-map-location-dot', 'label'=>'Incident Map'],
+    'resolved'  => ['icon'=>'fa-circle-check',     'label'=>'Resolved by Me'],
+    'contacts'  => ['icon'=>'fa-address-book',     'label'=>'Emergency Contacts'],
+    'profile'   => ['icon'=>'fa-id-card',          'label'=>'My Profile'],
 ];
 $page_titles = [
-    'queue'    => 'Dispatch Queue',
-    'assigned' => 'My Assignments',
-    'map'      => 'Incident Map',
-    'resolved' => 'Resolved by Me',
-    'contacts' => 'Emergency Contacts',
-    'profile'  => 'My Profile',
+    'queue'     => 'Dispatch Queue',
+    'community' => 'Community Reports',
+    'assigned'  => 'My Assignments',
+    'map'       => 'Incident Map',
+    'resolved'  => 'Resolved by Me',
+    'contacts'  => 'Emergency Contacts',
+    'profile'   => 'My Profile',
 ];
 ?>
 <!DOCTYPE html>
@@ -254,10 +271,10 @@ tr:hover td{background:#fafafa;}
 .coming-soon h3{font-size:1rem;font-weight:700;color:var(--text);margin-bottom:6px;}
 .coming-soon p{font-size:0.85rem;color:var(--muted);}
 /* OVERLAY */
-.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:150;}
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:1100;}
 .overlay.show{display:block;}
 /* RESPONSIVE */
-@media(max-width:860px){.sidebar{transform:translateX(-100%);}.sidebar.open{transform:translateX(0);}.sb-close{display:flex;}.main{margin-left:0;}.ham-btn{display:flex;}.stat-row{grid-template-columns:1fr 1fr;}.content{padding:16px;}.topbar{padding:0 16px;}}
+@media(max-width:860px){.sidebar{width:100vw;max-width:100vw;transform:translateX(-100%);z-index:1200;}.sidebar.open{transform:translateX(0);}.sb-close{display:flex;}.main{margin-left:0;}.ham-btn{display:flex;}.stat-row{grid-template-columns:1fr 1fr;}.content{padding:16px;}.topbar{padding:0 16px;}}
 @media(max-width:480px){.stat-row{grid-template-columns:1fr;}.badge-resp,.page-sub{display:none;}}
 </style>
 </head>
@@ -284,6 +301,7 @@ tr:hover td{background:#fafafa;}
       <a href="responder.php?view=<?= $key ?>" class="<?= $view===$key?'active':'' ?>">
         <i class="fas <?= $item['icon'] ?>"></i> <?= $item['label'] ?>
         <?php if($key==='assigned' && $my_count > 0): ?><span class="sb-badge"><?= $my_count ?></span><?php endif; ?>
+        <?php if($key==='community' && $community_count > 0): ?><span class="sb-badge"><?= $community_count ?></span><?php endif; ?>
       </a>
     <?php endforeach; ?>
   </nav>
@@ -360,6 +378,56 @@ tr:hover td{background:#fafafa;}
               <span style="font-size:0.72rem;color:var(--muted);font-weight:600;">Assigned</span>
             <?php else: ?>
               <button class="btn-dispatch" onclick="assign(<?= $r['id'] ?>,this)"><i class="fas fa-hand-pointer"></i> Assign to Me</button>
+            <?php endif; ?>
+          </div>
+        </div>
+      <?php endforeach; endif; ?>
+    </div>
+
+  <?php elseif($view === 'community'): ?>
+    <div class="stat-row">
+      <div class="stat-card"><div class="stat-icon" style="background:#f0f7ff;color:#0a3d62;"><i class="fas fa-users"></i></div><div><div class="stat-num"><?= $community_count ?></div><div class="stat-lbl">Community Posts</div></div></div>
+      <div class="stat-card"><div class="stat-icon" style="background:#fef2f2;color:#dc2626;"><i class="fas fa-triangle-exclamation"></i></div><div><div class="stat-num"><?= $danger_count ?></div><div class="stat-lbl">Dangerous</div></div></div>
+      <div class="stat-card"><div class="stat-icon" style="background:#fffbeb;color:#d97706;"><i class="fas fa-circle-exclamation"></i></div><div><div class="stat-num"><?= $caution_count ?></div><div class="stat-lbl">Caution</div></div></div>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <h3><i class="fas fa-users" style="color:#0a3d62;margin-right:6px;"></i>Community Reports</h3>
+        <span class="card-meta"><?= count($community_reports) ?> reports</span>
+      </div>
+      <?php if(empty($community_reports)): ?>
+        <div class="empty"><i class="fas fa-people-group" style="color:#0a3d62;opacity:0.35;"></i><p>No community reports yet.</p></div>
+      <?php else: foreach($community_reports as $r):
+        $is_mine = $has_assigned_to ? ((int)($r['assigned_to'] ?? 0) === $uid) : false;
+        $is_assigned = $has_assigned_to && !empty($r['assigned_to']);
+        $ibg = $r['status']==='dangerous' ? '#fef2f2' : ($r['status']==='caution' ? '#fffbeb' : '#f0fdf4');
+        $iclr = $r['status']==='dangerous' ? '#dc2626' : ($r['status']==='caution' ? '#d97706' : '#16a34a');
+        $reporter = trim(($r['first_name'] ?? '').' '.($r['last_name'] ?? ''));
+      ?>
+        <div class="incident-row">
+          <div class="inc-icon" style="background:<?= $ibg ?>;color:<?= $iclr ?>;"><i class="fas <?= $cat_icons[$r['category']] ?? 'fa-circle-exclamation' ?>"></i></div>
+          <div class="inc-body">
+            <div class="inc-title"><?= htmlspecialchars($r['title']) ?></div>
+            <div class="inc-meta">
+              <span class="pill pill-<?= $r['status'] ?>"><?= ucfirst($r['status']) ?></span>
+              <span><i class="fas fa-user"></i> <?= htmlspecialchars($reporter ?: 'Community User') ?></span>
+              <span><i class="fas fa-location-dot"></i> <?= htmlspecialchars($r['barangay'] ?? $r['city'] ?? '') ?></span>
+              <span><?= date('M j, g:ia', strtotime($r['created_at'])) ?></span>
+              <?php if(!empty($r['latitude']) && !empty($r['longitude'])): ?>
+              <a class="map-link" href="https://maps.google.com/?q=<?= $r['latitude'] ?>,<?= $r['longitude'] ?>" target="_blank"><i class="fas fa-map-pin"></i> View Map</a>
+              <?php endif; ?>
+            </div>
+            <?php if(!empty($r['description'])): ?><div style="font-size:0.76rem;color:var(--muted);margin-top:2px;"><?= htmlspecialchars(mb_strimwidth($r['description'],0,120,'…')) ?></div><?php endif; ?>
+          </div>
+          <div class="inc-actions">
+            <?php if($is_mine): ?>
+              <span class="btn-assigned"><i class="fas fa-check"></i> Assigned to Me</span>
+            <?php elseif($is_assigned): ?>
+              <span style="font-size:0.72rem;color:var(--muted);font-weight:600;">Assigned</span>
+            <?php elseif($has_assigned_to && in_array($r['status'], ['dangerous','caution'], true)): ?>
+              <button class="btn-dispatch" onclick="assign(<?= $r['id'] ?>,this)"><i class="fas fa-hand-pointer"></i> Assign to Me</button>
+            <?php else: ?>
+              <span style="font-size:0.72rem;color:var(--muted);font-weight:600;">Open</span>
             <?php endif; ?>
           </div>
         </div>
@@ -602,8 +670,8 @@ tr:hover td{background:#fafafa;}
 </div>
 
 <script>
-function openSidebar(){document.getElementById('sidebar').classList.add('open');document.getElementById('overlay').classList.add('show');document.body.style.overflow='hidden';}
-function closeSidebar(){document.getElementById('sidebar').classList.remove('open');document.getElementById('overlay').classList.remove('show');document.body.style.overflow='';}
+function openSidebar(){document.getElementById('sidebar').classList.add('open');document.getElementById('overlay').classList.add('show');document.body.classList.add('sidebar-open');document.body.style.overflow='hidden';}
+function closeSidebar(){document.getElementById('sidebar').classList.remove('open');document.getElementById('overlay').classList.remove('show');document.body.classList.remove('sidebar-open');document.body.style.overflow='';}
 
 async function assign(id,btn){
   btn.disabled=true; btn.innerHTML='<i class="fas fa-spinner fa-spin"></i>';

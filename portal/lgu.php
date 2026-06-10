@@ -7,6 +7,7 @@ require_once __DIR__ . '/../config/db.php';
 $uid   = (int)$_SESSION['user_id'];
 $fname = $_SESSION['first_name'];
 $view  = $_GET['view'] ?? 'overview';
+$has_assigned_to = sentri_table_has_column($conn, 'reports', 'assigned_to');
 
 $stmt = $conn->prepare("SELECT email,last_name,org_name,`position`,barangay_name,municipality FROM users WHERE id=? LIMIT 1");
 $stmt->bind_param("i",$uid); $stmt->execute();
@@ -107,17 +108,29 @@ if ($view === 'profile' && $_SERVER['REQUEST_METHOD']==='POST' && isset($_POST['
 // ── RESPONDERS ────────────────────────────────────────────────────────────
 $responders = [];
 if ($view === 'responders') {
-    $s=$conn->prepare("
-        SELECT u.id,u.first_name,u.last_name,u.email,u.phone_number,
-               u.org_name,u.`position`,u.responder_type,u.municipality,
-               u.barangay_name,u.is_approved,
-               COUNT(r.id) as active_count
-        FROM users u
-        LEFT JOIN reports r ON r.assigned_to=u.id AND r.is_archived=0 AND r.status IN('dangerous','caution')
-        WHERE u.role='first_responder'
-        GROUP BY u.id
-        ORDER BY u.is_approved ASC, u.responder_type, u.org_name
-    ");
+    if ($has_assigned_to) {
+        $s=$conn->prepare("
+            SELECT u.id,u.first_name,u.last_name,u.email,u.phone_number,
+                   u.org_name,u.`position`,u.responder_type,u.municipality,
+                   u.barangay_name,u.is_approved,
+                   COUNT(r.id) as active_count
+            FROM users u
+            LEFT JOIN reports r ON r.assigned_to=u.id AND r.is_archived=0 AND r.status IN('dangerous','caution')
+            WHERE u.role='first_responder'
+            GROUP BY u.id
+            ORDER BY u.is_approved ASC, u.responder_type, u.org_name
+        ");
+    } else {
+        $s=$conn->prepare("
+            SELECT u.id,u.first_name,u.last_name,u.email,u.phone_number,
+                   u.org_name,u.`position`,u.responder_type,u.municipality,
+                   u.barangay_name,u.is_approved,
+                   0 as active_count
+            FROM users u
+            WHERE u.role='first_responder'
+            ORDER BY u.is_approved ASC, u.responder_type, u.org_name
+        ");
+    }
     $s->execute(); $res=$s->get_result();
     while($row=$res->fetch_assoc()){ $row['active_count']=(int)$row['active_count']; $responders[]=$row; }
     $s->close();
@@ -188,17 +201,29 @@ if ($view === 'profile' && $_SERVER['REQUEST_METHOD']==='POST' && isset($_POST['
 
 $responders = [];
 if ($view === 'responders') {
-    $s = $conn->prepare("
-        SELECT u.id,u.first_name,u.last_name,u.email,u.phone_number,
-               u.org_name,u.`position`,u.responder_type,u.municipality,
-               u.barangay_name,u.is_approved,
-               COUNT(r.id) as active_count
-        FROM users u
-        LEFT JOIN reports r ON r.assigned_to=u.id AND r.is_archived=0 AND r.status IN('dangerous','caution')
-        WHERE u.role='first_responder'
-        GROUP BY u.id
-        ORDER BY u.is_approved ASC, u.responder_type, u.org_name
-    ");
+    if ($has_assigned_to) {
+        $s = $conn->prepare("
+            SELECT u.id,u.first_name,u.last_name,u.email,u.phone_number,
+                   u.org_name,u.`position`,u.responder_type,u.municipality,
+                   u.barangay_name,u.is_approved,
+                   COUNT(r.id) as active_count
+            FROM users u
+            LEFT JOIN reports r ON r.assigned_to=u.id AND r.is_archived=0 AND r.status IN('dangerous','caution')
+            WHERE u.role='first_responder'
+            GROUP BY u.id
+            ORDER BY u.is_approved ASC, u.responder_type, u.org_name
+        ");
+    } else {
+        $s = $conn->prepare("
+            SELECT u.id,u.first_name,u.last_name,u.email,u.phone_number,
+                   u.org_name,u.`position`,u.responder_type,u.municipality,
+                   u.barangay_name,u.is_approved,
+                   0 as active_count
+            FROM users u
+            WHERE u.role='first_responder'
+            ORDER BY u.is_approved ASC, u.responder_type, u.org_name
+        ");
+    }
     $s->execute(); $res=$s->get_result();
     while($row=$res->fetch_assoc()) { $row['active_count']=(int)$row['active_count']; $responders[]=$row; }
     $s->close();
@@ -473,8 +498,8 @@ tr:hover td{background:#fafafa;}
   .two-col{grid-template-columns:1fr;}
 }
 @media(max-width:860px){
-  :root{--sidebar-w:256px;}
-  .sidebar{transform:translateX(-100%);}
+  :root{--sidebar-w:100vw;}
+  .sidebar{width:100vw;max-width:100vw;transform:translateX(-100%);}
   .sidebar.open{transform:translateX(0);}
   .sb-close{display:flex;}
   .main{margin-left:0;}
@@ -1074,18 +1099,6 @@ function closeSidebar(){
   document.getElementById('overlay').classList.remove('show');
   document.body.style.overflow='';
 }
-</script>
-function openSidebar(){
-  document.getElementById('sidebar').classList.add('open');
-  document.getElementById('overlay').classList.add('show');
-  document.body.style.overflow='hidden';
-}
-function closeSidebar(){
-  document.getElementById('sidebar').classList.remove('open');
-  document.getElementById('overlay').classList.remove('show');
-  document.body.style.overflow='';
-}
-
 // ── Report Actions ──────────────────────────────────────────────────────────
 var _lguRptId = null;
 function lguViewReport(id,title,category,status,barangay,reporter,date,desc){

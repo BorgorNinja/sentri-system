@@ -27,6 +27,7 @@ require __DIR__ . '/../config/db.php';
 $user_id = (int)($_SESSION['user_id'] ?? 0);
 $role    = $_SESSION['role'] ?? 'user';
 $action  = trim($_REQUEST['action'] ?? '');
+$has_assigned_to = sentri_table_has_column($conn, 'reports', 'assigned_to');
 
 // ── Ensure geo columns exist (compatible with all MySQL versions) ─────────
 // Uses INFORMATION_SCHEMA instead of "IF NOT EXISTS" which requires MySQL 8+
@@ -449,6 +450,10 @@ switch ($action) {
         if (!in_array($role, ['first_responder','admin'], true)) { echo json_encode(['status'=>'error','message'=>'Unauthorized.']); exit; }
         $report_id = (int)($_POST['report_id'] ?? 0);
         if (!$report_id) { echo json_encode(['status'=>'error','message'=>'Invalid report ID.']); exit; }
+        if (!$has_assigned_to) {
+            echo json_encode(['status'=>'error','message'=>'Dispatch schema is missing. Run the database migration for reports.assigned_to.']);
+            exit;
+        }
         $stmt = $conn->prepare("UPDATE reports SET assigned_to=? WHERE id=? AND assigned_to IS NULL");
         $stmt->bind_param("ii", $user_id, $report_id);
         $stmt->execute();
@@ -539,6 +544,10 @@ switch ($action) {
         $chk_resp->bind_param("i", $responder_id); $chk_resp->execute(); $chk_resp->store_result();
         if ($chk_resp->num_rows === 0) { echo json_encode(['status'=>'error','message'=>'Responder not found or not approved.']); exit; }
         $chk_resp->close();
+        if (!$has_assigned_to) {
+            echo json_encode(['status'=>'error','message'=>'Dispatch schema is missing. Run the database migration for reports.assigned_to.']);
+            break;
+        }
         $dis = $conn->prepare("UPDATE reports SET assigned_to=? WHERE id=? AND is_archived=0");
         $dis->bind_param("ii", $responder_id, $report_id);
         $dis->execute();

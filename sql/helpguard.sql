@@ -40,6 +40,8 @@ CREATE TABLE `reports` (
   `upvotes`       int(11)                                                                  NOT NULL DEFAULT 0,
   `downvotes`     int(11)                                                                  NOT NULL DEFAULT 0,
   `is_archived`   tinyint(1)                                                               NOT NULL DEFAULT 0,
+  `assigned_to`   int(11)                                                                  DEFAULT NULL COMMENT 'user_id of assigned responder',
+  `resolved_at`   timestamp                                                                DEFAULT NULL,
   `created_at`    timestamp                                                                NOT NULL DEFAULT current_timestamp(),
   `updated_at`    timestamp                                                                NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   PRIMARY KEY (`id`),
