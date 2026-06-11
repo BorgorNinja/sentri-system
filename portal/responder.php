@@ -796,6 +796,7 @@ function stopNavTracking(){
   if(navWatchId!==null){ navigator.geolocation.clearWatch(navWatchId); navWatchId=null; }
   window.removeEventListener('deviceorientationabsolute',onNavOrientation);
   window.removeEventListener('deviceorientation',onNavOrientation);
+  if(navOrigMarker && navMap){ navMap.removeLayer(navOrigMarker); }
   navDest=null; navReportId=null; navArrived=false; navOrigMarker=null;
 }
 function closeNavModal(){
