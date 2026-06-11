@@ -508,7 +508,7 @@ switch ($action) {
         $report_id = (int)($_POST['report_id'] ?? 0);
         if (!$report_id) { echo json_encode(['status'=>'error','message'=>'Invalid report ID.']); exit; }
         if ($role === 'first_responder') {
-            $stmt = $conn->prepare("UPDATE reports SET status='safe', responded_at=COALESCE(responded_at,NOW()), resolved_at=NOW() WHERE id=? AND assigned_to=? AND is_archived=0 AND status='dangerous'");
+            $stmt = $conn->prepare("UPDATE reports SET responded_at=COALESCE(responded_at,NOW()), resolved_at=NOW() WHERE id=? AND assigned_to=? AND is_archived=0 AND status='dangerous'");
             $stmt->bind_param("ii", $report_id, $user_id);
         } else {
             $stmt = $conn->prepare("UPDATE reports SET status='safe', resolved_at=NOW() WHERE id=? AND is_archived=0");
