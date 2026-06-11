@@ -58,7 +58,7 @@ $caution_count = cq($conn,"SELECT COUNT(*) FROM reports WHERE status='caution' A
 $queue = $assigned = $contacts = $resolved = $community_reports = [];
 
 if ($view === 'queue' || $view === 'overview') {
-    $s = $conn->prepare("SELECT r.id,r.title,r.category,r.status,r.barangay,r.city,r.latitude,r.longitude,r.created_at,r.description,{$assigned_col}{$accepted_col}{$responded_col}u.first_name,u.last_name FROM reports r JOIN users u ON u.id=r.user_id WHERE r.is_archived=0 AND r.status IN('dangerous','caution') ORDER BY FIELD(r.status,'dangerous','caution'),r.created_at DESC LIMIT 60");
+    $s = $conn->prepare("SELECT r.id,r.title,r.category,r.status,r.barangay,r.city,r.latitude,r.longitude,r.created_at,r.description,r.resolved_at,{$assigned_col}{$accepted_col}{$responded_col}u.first_name,u.last_name FROM reports r JOIN users u ON u.id=r.user_id WHERE r.is_archived=0 AND r.status IN('dangerous','caution') ORDER BY FIELD(r.status,'dangerous','caution'),r.created_at DESC LIMIT 60");
     if (!$s) { die("DB Error (queue): " . $conn->error); }
     $s->execute(); $res=$s->get_result();
     while($row=$res->fetch_assoc()) $queue[]=$row;
@@ -67,7 +67,7 @@ if ($view === 'queue' || $view === 'overview') {
 
 if ($view === 'assigned') {
     if ($has_assigned_to) {
-        $s = $conn->prepare("SELECT r.id,r.title,r.category,r.status,r.barangay,r.city,r.latitude,r.longitude,r.created_at,r.description,{$accepted_col}{$responded_col}u.first_name,u.last_name FROM reports r JOIN users u ON u.id=r.user_id WHERE r.assigned_to=? AND r.is_archived=0 ORDER BY r.created_at DESC");
+        $s = $conn->prepare("SELECT r.id,r.title,r.category,r.status,r.barangay,r.city,r.latitude,r.longitude,r.created_at,r.description,r.resolved_at,{$accepted_col}{$responded_col}u.first_name,u.last_name FROM reports r JOIN users u ON u.id=r.user_id WHERE r.assigned_to=? AND r.is_archived=0 ORDER BY r.created_at DESC");
         if (!$s) { die("DB Error (assigned): " . $conn->error); }
         $s->bind_param("i",$uid); $s->execute(); $res=$s->get_result();
         while($row=$res->fetch_assoc()) $assigned[]=$row;
@@ -77,7 +77,7 @@ if ($view === 'assigned') {
 
 if ($view === 'resolved') {
     if ($has_assigned_to) {
-        $s = $conn->prepare("SELECT r.id,r.title,r.category,r.status,r.barangay,r.city,r.created_at,r.resolved_at,{$responded_col}u.first_name,u.last_name FROM reports r JOIN users u ON r.user_id=u.id WHERE r.assigned_to=? AND r.status='safe' ORDER BY r.resolved_at DESC LIMIT 50");
+        $s = $conn->prepare("SELECT r.id,r.title,r.category,r.status,r.barangay,r.city,r.created_at,r.resolved_at,{$responded_col}u.first_name,u.last_name FROM reports r JOIN users u ON r.user_id=u.id WHERE r.assigned_to=? AND r.resolved_at IS NOT NULL ORDER BY r.resolved_at DESC LIMIT 50");
         if (!$s) { die("DB Error (resolved): " . $conn->error); }
         $s->bind_param("i",$uid); $s->execute(); $res=$s->get_result();
         while($row=$res->fetch_assoc()) $resolved[]=$row;
@@ -86,7 +86,7 @@ if ($view === 'resolved') {
 }
 
 if ($view === 'community') {
-    $s = $conn->prepare("SELECT r.id,r.user_id,r.title,r.description,r.location_name,r.barangay,r.city,r.province,r.latitude,r.longitude,r.radius_m,r.status,r.category,r.upvotes,r.downvotes,r.created_at,u.first_name,u.last_name,u.role FROM reports r JOIN users u ON u.id=r.user_id WHERE r.is_archived=0 AND u.role IN('community','user') ORDER BY FIELD(r.status,'dangerous','caution','safe'), r.created_at DESC LIMIT 120");
+    $s = $conn->prepare("SELECT r.id,r.user_id,r.title,r.description,r.location_name,r.barangay,r.city,r.province,r.latitude,r.longitude,r.radius_m,r.status,r.category,r.upvotes,r.downvotes,r.created_at,r.resolved_at,u.first_name,u.last_name,u.role FROM reports r JOIN users u ON u.id=r.user_id WHERE r.is_archived=0 AND u.role IN('community','user') ORDER BY FIELD(r.status,'dangerous','caution','safe'), r.created_at DESC LIMIT 120");
     if (!$s) { die("DB Error (community): " . $conn->error); }
     $s->execute(); $res=$s->get_result();
     while($row=$res->fetch_assoc()) $community_reports[]=$row;
@@ -412,6 +412,7 @@ tr:hover td{background:#fafafa;}
             <div class="inc-title"><?= htmlspecialchars($r['title']) ?></div>
             <div class="inc-meta">
               <span class="pill pill-<?= $r['status'] ?>"><?= ucfirst($r['status']) ?></span>
+              <?php if(!empty($r['resolved_at'])): ?><span class="pill" style="background:#f0fdf4;color:#166534;">Resolved</span><?php else: ?><span class="pill" style="background:#fef2f2;color:#991b1b;">Unresolved</span><?php endif; ?>
               <span><i class="fas fa-location-dot"></i> <?= htmlspecialchars($r['barangay'] ?? $r['city'] ?? '') ?></span>
               <span><?= date('M j, g:ia', strtotime($r['created_at'])) ?></span>
               <?php if($r['latitude']): ?>
@@ -432,7 +433,6 @@ tr:hover td{background:#fafafa;}
               <?php if(empty($r['responded_at'])): ?>
                 <button class="btn-resolve-sm" onclick="markResponded(<?= $r['id'] ?>,this)"><i class="fas fa-bell"></i> Responded to LGU</button>
               <?php endif; ?>
-              <button class="btn-resolve-sm" onclick="resolve(<?= $r['id'] ?>,this)"><i class="fas fa-circle-check"></i> Resolve</button>
             <?php elseif($is_assigned): ?>
               <span style="font-size:0.72rem;color:var(--muted);font-weight:600;">Assigned by LGU</span>
             <?php else: ?>
@@ -469,6 +469,7 @@ tr:hover td{background:#fafafa;}
             <div class="inc-title"><?= htmlspecialchars($r['title']) ?></div>
             <div class="inc-meta">
               <span class="pill pill-<?= $r['status'] ?>"><?= ucfirst($r['status']) ?></span>
+              <?php if(!empty($r['resolved_at'])): ?><span class="pill" style="background:#f0fdf4;color:#166534;">Resolved</span><?php else: ?><span class="pill" style="background:#fef2f2;color:#991b1b;">Unresolved</span><?php endif; ?>
               <span><i class="fas fa-user"></i> <?= htmlspecialchars($reporter ?: 'Community User') ?></span>
               <span><i class="fas fa-location-dot"></i> <?= htmlspecialchars($r['barangay'] ?? $r['city'] ?? '') ?></span>
               <span><?= date('M j, g:ia', strtotime($r['created_at'])) ?></span>
@@ -506,6 +507,7 @@ tr:hover td{background:#fafafa;}
             <div class="inc-title"><?= htmlspecialchars($r['title']) ?></div>
             <div class="inc-meta">
               <span class="pill pill-<?= $r['status'] ?>"><?= ucfirst($r['status']) ?></span>
+              <?php if(!empty($r['resolved_at'])): ?><span class="pill" style="background:#f0fdf4;color:#166534;">Resolved</span><?php else: ?><span class="pill" style="background:#fef2f2;color:#991b1b;">Unresolved</span><?php endif; ?>
               <span><i class="fas fa-location-dot"></i> <?= htmlspecialchars($r['barangay'] ?? $r['city'] ?? '') ?></span>
               <span><?= date('M j, g:ia', strtotime($r['created_at'])) ?></span>
               <?php if($r['latitude']): ?>
@@ -829,7 +831,7 @@ function viewOnMap(lat, lng, title){
 }
 async function markArrivedSilently(reportId){
   try{
-    var fd=new FormData(); fd.append('action','report_responded'); fd.append('report_id',reportId);
+    var fd=new FormData(); fd.append('action','resolve_report'); fd.append('report_id',reportId);
     await fetch('../api/reports.php',{method:'POST',body:fd});
   }catch(e){}
 }
@@ -952,17 +954,6 @@ async function markResponded(id,btn){
   }catch(e){ btn.disabled=false; btn.innerHTML='<i class="fas fa-bell"></i> Responded to LGU'; }
 }
 
-async function resolve(id,btn){
-  if(!confirm('Mark this incident as resolved?')) return;
-  btn.disabled=true; btn.innerHTML='<i class="fas fa-spinner fa-spin"></i>';
-  try{
-    var fd=new FormData(); fd.append('action','resolve_report'); fd.append('report_id',id);
-    var res=await fetch('../api/reports.php',{method:'POST',body:fd});
-    var data=await res.json();
-    if(data.status==='success') location.reload();
-    else{ alert(data.message||'Error.'); btn.disabled=false; btn.innerHTML='<i class="fas fa-circle-check"></i> Resolve'; }
-  }catch(e){ btn.disabled=false; btn.innerHTML='<i class="fas fa-circle-check"></i> Resolve'; }
-}
 
 // Auto-refresh queue every 90 seconds
 <?php if($view === 'queue'): ?>
