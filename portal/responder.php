@@ -301,7 +301,10 @@ tr:hover td{background:#fafafa;}
 .nav-modal-head{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border);}
 .nav-modal-head h3{font-size:0.94rem;font-weight:800;}
 .nav-modal-close{background:none;border:none;font-size:1.1rem;cursor:pointer;color:var(--muted);}
-#navModalMap{height:400px;width:100%;background:#f5e8e8;}
+#navModalMap{height:400px;width:100%;background:#f5e8e8;overflow:hidden;position:relative;}
+#navMapInner{position:absolute;top:50%;left:50%;width:145%;height:145%;margin-top:-72.5%;margin-left:-72.5%;transition:transform 0.2s linear;transform-origin:50% 50%;}
+.nav-arrow-icon{width:0;height:0;border-left:9px solid transparent;border-right:9px solid transparent;border-bottom:22px solid #2563eb;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.4));transition:transform 0.2s linear;}
+.nav-modal-info .nav-arrived{color:#16a34a;font-weight:800;}
 .nav-modal-info{padding:10px 16px;font-size:0.8rem;color:var(--muted);border-top:1px solid var(--border);display:flex;gap:16px;flex-wrap:wrap;}
 .nav-modal-info b{color:#222;}
 </style>
@@ -424,7 +427,7 @@ tr:hover td{background:#fafafa;}
                 <button class="btn-dispatch" onclick="acceptAssignment(<?= $r['id'] ?>,this)"><i class="fas fa-hand-pointer"></i> Accept Assignment</button>
               <?php endif; ?>
               <?php if(!empty($r['latitude']) && !empty($r['longitude'])): ?>
-                <button class="btn-dispatch" onclick="openNavigation(<?= (float)$r['latitude'] ?>, <?= (float)$r['longitude'] ?>)"><i class="fas fa-route"></i> Navigate</button>
+                <button class="btn-dispatch" onclick="openNavigation(<?= (float)$r['latitude'] ?>, <?= (float)$r['longitude'] ?>, <?= $r['id'] ?>)"><i class="fas fa-route"></i> Navigate</button>
               <?php endif; ?>
               <?php if(empty($r['responded_at'])): ?>
                 <button class="btn-resolve-sm" onclick="markResponded(<?= $r['id'] ?>,this)"><i class="fas fa-bell"></i> Responded to LGU</button>
@@ -515,7 +518,7 @@ tr:hover td{background:#fafafa;}
               <button class="btn-dispatch" onclick="acceptAssignment(<?= $r['id'] ?>,this)"><i class="fas fa-hand-pointer"></i> Accept Assignment</button>
             <?php endif; ?>
             <?php if(!empty($r['latitude']) && !empty($r['longitude'])): ?>
-              <button class="btn-dispatch" onclick="openNavigation(<?= (float)$r['latitude'] ?>, <?= (float)$r['longitude'] ?>)"><i class="fas fa-route"></i> Navigate</button>
+              <button class="btn-dispatch" onclick="openNavigation(<?= (float)$r['latitude'] ?>, <?= (float)$r['longitude'] ?>, <?= $r['id'] ?>)"><i class="fas fa-route"></i> Navigate</button>
             <?php endif; ?>
             <?php if(empty($r['responded_at'])): ?>
               <button class="btn-resolve-sm" onclick="markResponded(<?= $r['id'] ?>,this)"><i class="fas fa-bell"></i> Responded to LGU</button>
@@ -703,7 +706,7 @@ tr:hover td{background:#fafafa;}
         '<div style="font-size:0.78rem;color:#6b7280;margin-bottom:3px;"><b>Category:</b> '+(catL[r.category]||r.category)+'</div>'+
         '<div style="font-size:0.78rem;color:#6b7280;margin-bottom:6px;"><b>Reported:</b> '+r.date+'</div>'+
         (r.desc?'<div style="font-size:0.78rem;color:#374151;margin-bottom:8px;">'+r.desc.substring(0,100)+(r.desc.length>100?'…':'')+'</div>':'')+
-        '<a href="javascript:void(0)" onclick="closeNavModal();openNavigation('+r.lat+','+r.lng+')" style="font-size:0.8rem;color:#2563eb;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:4px;"><i class="fas fa-directions"></i> Get Directions</a>'+
+        '<a href="javascript:void(0)" onclick="closeNavModal();openNavigation('+r.lat+','+r.lng+',\''+r.id+'\')" style="font-size:0.8rem;color:#2563eb;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:4px;"><i class="fas fa-directions"></i> Get Directions</a>'+
         '</div>',{maxWidth:240}
       );
       m.addTo(rmap); rMarkers.push(m);
@@ -771,16 +774,44 @@ async function captureMyGps(btn){
   }, {enableHighAccuracy:true, timeout:12000, maximumAge:0});
 }
 
-var navMap=null, navLayer=null;
+var navMap=null, navLayer=null, navWatchId=null, navHeading=0, navOrigMarker=null, navArrived=false, navDest=null, navReportId=null;
+var ARRIVAL_RADIUS_M = 40;
 function ensureNavMap(){
   if(!navMap){
-    navMap = L.map('navModalMap');
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(navMap);
+    navMap = L.map('navMapInner',{zoomControl:false,attributionControl:true});
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'\u00a9 OpenStreetMap'}).addTo(navMap);
   }
   if(navLayer){ navMap.removeLayer(navLayer); navLayer=null; }
+  document.getElementById('navMapInner').style.transform='rotate(0deg)';
+}
+function haversine(lat1,lon1,lat2,lon2){
+  var R=6371000, toRad=function(d){return d*Math.PI/180;};
+  var dLat=toRad(lat2-lat1), dLon=toRad(lon2-lon1);
+  var a=Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLon/2)*Math.sin(dLon/2);
+  return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+}
+function stopNavTracking(){
+  if(navWatchId!==null){ navigator.geolocation.clearWatch(navWatchId); navWatchId=null; }
+  window.removeEventListener('deviceorientationabsolute',onNavOrientation);
+  window.removeEventListener('deviceorientation',onNavOrientation);
+  navDest=null; navReportId=null; navArrived=false; navOrigMarker=null;
 }
 function closeNavModal(){
   document.getElementById('navModalOverlay').classList.remove('show');
+  stopNavTracking();
+}
+function onNavOrientation(e){
+  var heading = (typeof e.webkitCompassHeading !== 'undefined') ? e.webkitCompassHeading : (e.alpha!==null ? (360-e.alpha) : null);
+  if(heading===null) return;
+  navHeading = heading;
+  applyNavRotation();
+}
+function applyNavRotation(){
+  document.getElementById('navMapInner').style.transform='rotate('+(-navHeading)+'deg)';
+  if(navOrigMarker){
+    var el=navOrigMarker.getElement();
+    if(el){ var arrow=el.querySelector('.nav-arrow-icon'); if(arrow) arrow.style.transform='rotate('+navHeading+'deg)'; }
+  }
 }
 function viewOnMap(lat, lng, title){
   if(lat===null||lng===null||typeof lat==='undefined'||typeof lng==='undefined'||lat===''||lng===''){
@@ -796,50 +827,106 @@ function viewOnMap(lat, lng, title){
     navMap.invalidateSize();
   },50);
 }
-function openNavigation(lat, lng){
+async function markArrivedSilently(reportId){
+  try{
+    var fd=new FormData(); fd.append('action','report_responded'); fd.append('report_id',reportId);
+    await fetch('../api/reports.php',{method:'POST',body:fd});
+  }catch(e){}
+}
+function drawNavRoute(group){
+  var url = 'https://router.project-osrm.org/route/v1/driving/'+responderGps.lng+','+responderGps.lat+';'+navDest.lng+','+navDest.lat+'?overview=full&geometries=geojson';
+  fetch(url).then(function(r){return r.json();}).then(function(data){
+    if(navLayer) navMap.removeLayer(navLayer);
+    if(data.routes && data.routes[0]){
+      var route = data.routes[0];
+      var coords = route.geometry.coordinates.map(function(c){return [c[1],c[0]];});
+      var line = L.polyline(coords,{color:'#2563eb',weight:5,opacity:0.8}).addTo(navMap);
+      navLayer = L.featureGroup(group.concat([line]));
+      var km = (route.distance/1000).toFixed(1);
+      var mins = Math.round(route.duration/60);
+      document.getElementById('navModalInfo').innerHTML = '<span><b>Distance:</b> '+km+' km</span><span><b>ETA:</b> '+mins+' min</span>';
+    } else {
+      navLayer = L.featureGroup(group);
+      document.getElementById('navModalInfo').innerHTML = '<span>Route unavailable.</span>';
+    }
+  }).catch(function(){
+    navLayer = L.featureGroup(group);
+    document.getElementById('navModalInfo').innerHTML = '<span>Route unavailable.</span>';
+  });
+}
+function onNavPosition(pos){
+  var lat=pos.coords.latitude, lng=pos.coords.longitude;
+  responderGps.lat=lat; responderGps.lng=lng;
+  if(pos.coords.heading!==null && !isNaN(pos.coords.heading)){
+    navHeading = pos.coords.heading;
+    applyNavRotation();
+  }
+  var arrowIcon = L.divIcon({className:'',html:'<div class="nav-arrow-icon" style="transform:rotate('+navHeading+'deg);"></div>',iconSize:[18,22],iconAnchor:[9,16]});
+  if(!navOrigMarker){
+    navOrigMarker = L.marker([lat,lng],{icon:arrowIcon}).addTo(navMap).bindPopup('Your Location');
+  } else {
+    navOrigMarker.setLatLng([lat,lng]);
+    navOrigMarker.setIcon(arrowIcon);
+  }
+  navMap.setView([lat,lng], navMap.getZoom() < 15 ? 16 : navMap.getZoom());
+  if(navDest){
+    var destMarker = navOrigMarker._destRef;
+    var group=[navOrigMarker]; if(destMarker) group.push(destMarker);
+    drawNavRoute(group);
+    var dist = haversine(lat,lng,navDest.lat,navDest.lng);
+    if(dist <= ARRIVAL_RADIUS_M && !navArrived){
+      navArrived = true;
+      document.getElementById('navModalInfo').innerHTML = '<span class="nav-arrived"><i class="fas fa-flag-checkered"></i> You have arrived! Marking as responded\u2026</span>';
+      var rid = navReportId;
+      stopNavTracking();
+      markArrivedSilently(rid).then(function(){
+        setTimeout(function(){ closeNavModal(); location.reload(); }, 1200);
+      });
+    }
+  }
+}
+function openNavigation(lat, lng, reportId){
   if(lat === null || lng === null || typeof lat === 'undefined' || typeof lng === 'undefined' || lat === '' || lng === ''){
     alert('This report has no GPS coordinates.');
     return;
   }
   document.getElementById('navModalTitle').textContent = 'Navigate to Incident';
-  document.getElementById('navModalInfo').innerHTML = '<span>Loading route…</span>';
+  document.getElementById('navModalInfo').innerHTML = '<span>Loading route\u2026</span>';
   document.getElementById('navModalOverlay').classList.add('show');
+  navDest = {lat:lat,lng:lng}; navReportId = reportId; navArrived=false;
   setTimeout(function(){
     ensureNavMap();
     navMap.setView([lat,lng],15);
     var destIcon = L.divIcon({className:'',html:'<div style="width:16px;height:16px;border-radius:50%;background:#dc2626;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.4);"></div>',iconSize:[16,16],iconAnchor:[8,8]});
     var destMarker = L.marker([lat,lng],{icon:destIcon}).addTo(navMap).bindPopup('Incident Location');
     var group = [destMarker];
-    if(responderGps.lat !== null && responderGps.lng !== null){
-      var origIcon = L.divIcon({className:'',html:'<div style="width:16px;height:16px;border-radius:50%;background:#2563eb;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.4);"></div>',iconSize:[16,16],iconAnchor:[8,8]});
-      var origMarker = L.marker([responderGps.lat,responderGps.lng],{icon:origIcon}).addTo(navMap).bindPopup('Your Location');
-      group.push(origMarker);
-      navLayer = L.featureGroup(group);
-      navMap.fitBounds(navLayer.getBounds().pad(0.25));
-      // Fetch route from OSRM (OpenStreetMap routing)
-      var url = 'https://router.project-osrm.org/route/v1/driving/'+responderGps.lng+','+responderGps.lat+';'+lng+','+lat+'?overview=full&geometries=geojson';
-      fetch(url).then(function(r){return r.json();}).then(function(data){
-        if(data.routes && data.routes[0]){
-          var route = data.routes[0];
-          var coords = route.geometry.coordinates.map(function(c){return [c[1],c[0]];});
-          var line = L.polyline(coords,{color:'#2563eb',weight:5,opacity:0.8}).addTo(navMap);
-          var fg = L.featureGroup(group.concat([line]));
-          navMap.fitBounds(fg.getBounds().pad(0.1));
-          var km = (route.distance/1000).toFixed(1);
-          var mins = Math.round(route.duration/60);
-          document.getElementById('navModalInfo').innerHTML = '<span><b>Distance:</b> '+km+' km</span><span><b>ETA:</b> '+mins+' min</span>';
-        } else {
-          document.getElementById('navModalInfo').innerHTML = '<span>Route unavailable.</span>';
-        }
-      }).catch(function(){
-        document.getElementById('navModalInfo').innerHTML = '<span>Route unavailable.</span>';
-      });
-    } else {
-      navLayer = L.featureGroup(group);
-      navMap.fitBounds(navLayer.getBounds().pad(0.25));
-      document.getElementById('navModalInfo').innerHTML = '<span>Enable "My Location" on your profile to see turn-by-turn distance.</span>';
-    }
+    navLayer = L.featureGroup(group);
+    navMap.fitBounds(navLayer.getBounds().pad(0.25));
     navMap.invalidateSize();
+
+    if(!navigator.geolocation){
+      document.getElementById('navModalInfo').innerHTML = '<span>Geolocation not supported on this device.</span>';
+      return;
+    }
+    if(window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission === 'function'){
+      DeviceOrientationEvent.requestPermission().then(function(state){
+        if(state==='granted') window.addEventListener('deviceorientation', onNavOrientation, true);
+      }).catch(function(){});
+    } else {
+      window.addEventListener('deviceorientationabsolute', onNavOrientation, true);
+      window.addEventListener('deviceorientation', onNavOrientation, true);
+    }
+    navWatchId = navigator.geolocation.watchPosition(function(pos){
+      onNavPosition(pos);
+      if(navOrigMarker) navOrigMarker._destRef = destMarker;
+    }, function(){
+      document.getElementById('navModalInfo').innerHTML = '<span>Location access denied \u2014 showing static route.</span>';
+      if(responderGps.lat!==null && responderGps.lng!==null){
+        var origIcon = L.divIcon({className:'',html:'<div style="width:16px;height:16px;border-radius:50%;background:#2563eb;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.4);"></div>',iconSize:[16,16],iconAnchor:[8,8]});
+        var origMarker = L.marker([responderGps.lat,responderGps.lng],{icon:origIcon}).addTo(navMap).bindPopup('Your Location');
+        drawNavRoute([destMarker, origMarker]);
+      }
+    }, {enableHighAccuracy:true, timeout:15000, maximumAge:5000});
   },50);
 }
 
@@ -889,7 +976,7 @@ setTimeout(function(){location.reload();}, 90000);
       <h3 id="navModalTitle"><i class="fas fa-route" style="margin-right:6px;color:var(--red-light);"></i>Navigation</h3>
       <button class="nav-modal-close" onclick="closeNavModal()"><i class="fas fa-times"></i></button>
     </div>
-    <div id="navModalMap"></div>
+    <div id="navModalMap"><div id="navMapInner"></div></div>
     <div class="nav-modal-info" id="navModalInfo"></div>
   </div>
 </div>
