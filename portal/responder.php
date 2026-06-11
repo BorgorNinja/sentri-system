@@ -293,7 +293,20 @@ tr:hover td{background:#fafafa;}
 @media(max-width:860px){.sidebar{width:100dvw;max-width:100dvw;transform:translate3d(-100%,0,0);z-index:1200;left:0;right:0;}.sidebar.open{transform:translate3d(0,0,0);}.sb-close{display:flex;}.main{margin-left:0;}.ham-btn{display:flex;}.stat-row{grid-template-columns:1fr 1fr;}.content{padding:16px;}.topbar{padding:0 16px;}}
 @media(max-width:860px){body.sidebar-open .main{display:none;}body.sidebar-open .overlay{z-index:1190;}}
 @media(max-width:480px){.stat-row{grid-template-columns:1fr;}.badge-resp,.page-sub{display:none;}}
+
+/* In-app navigation modal */
+.nav-modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:2000;align-items:center;justify-content:center;}
+.nav-modal-overlay.show{display:flex;}
+.nav-modal{background:#fff;border-radius:14px;width:min(720px,94vw);max-height:92vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 10px 40px rgba(0,0,0,0.3);}
+.nav-modal-head{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border);}
+.nav-modal-head h3{font-size:0.94rem;font-weight:800;}
+.nav-modal-close{background:none;border:none;font-size:1.1rem;cursor:pointer;color:var(--muted);}
+#navModalMap{height:400px;width:100%;background:#f5e8e8;}
+.nav-modal-info{padding:10px 16px;font-size:0.8rem;color:var(--muted);border-top:1px solid var(--border);display:flex;gap:16px;flex-wrap:wrap;}
+.nav-modal-info b{color:#222;}
 </style>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 </head>
 <body>
 <div class="overlay" id="overlay" onclick="closeSidebar()"></div>
@@ -399,7 +412,7 @@ tr:hover td{background:#fafafa;}
               <span><i class="fas fa-location-dot"></i> <?= htmlspecialchars($r['barangay'] ?? $r['city'] ?? '') ?></span>
               <span><?= date('M j, g:ia', strtotime($r['created_at'])) ?></span>
               <?php if($r['latitude']): ?>
-              <a class="map-link" href="https://maps.google.com/?q=<?= $r['latitude'] ?>,<?= $r['longitude'] ?>" target="_blank"><i class="fas fa-map-pin"></i> View Map</a>
+              <a class="map-link" href="javascript:void(0)" onclick="viewOnMap(<?= (float)$r['latitude'] ?>, <?= (float)$r['longitude'] ?>, '<?= htmlspecialchars(addslashes($r['title']), ENT_QUOTES) ?>')"><i class="fas fa-map-pin"></i> View Map</a>
               <?php endif; ?>
             </div>
             <?php if($r['description']): ?><div style="font-size:0.76rem;color:var(--muted);margin-top:2px;"><?= htmlspecialchars(mb_strimwidth($r['description'],0,100,'…')) ?></div><?php endif; ?>
@@ -457,7 +470,7 @@ tr:hover td{background:#fafafa;}
               <span><i class="fas fa-location-dot"></i> <?= htmlspecialchars($r['barangay'] ?? $r['city'] ?? '') ?></span>
               <span><?= date('M j, g:ia', strtotime($r['created_at'])) ?></span>
               <?php if(!empty($r['latitude']) && !empty($r['longitude'])): ?>
-              <a class="map-link" href="https://maps.google.com/?q=<?= $r['latitude'] ?>,<?= $r['longitude'] ?>" target="_blank"><i class="fas fa-map-pin"></i> View Map</a>
+              <a class="map-link" href="javascript:void(0)" onclick="viewOnMap(<?= (float)$r['latitude'] ?>, <?= (float)$r['longitude'] ?>, '<?= htmlspecialchars(addslashes($r['title']), ENT_QUOTES) ?>')"><i class="fas fa-map-pin"></i> View Map</a>
               <?php endif; ?>
             </div>
             <?php if(!empty($r['description'])): ?><div style="font-size:0.76rem;color:var(--muted);margin-top:2px;"><?= htmlspecialchars(mb_strimwidth($r['description'],0,120,'…')) ?></div><?php endif; ?>
@@ -493,7 +506,7 @@ tr:hover td{background:#fafafa;}
               <span><i class="fas fa-location-dot"></i> <?= htmlspecialchars($r['barangay'] ?? $r['city'] ?? '') ?></span>
               <span><?= date('M j, g:ia', strtotime($r['created_at'])) ?></span>
               <?php if($r['latitude']): ?>
-              <a class="map-link" href="https://maps.google.com/?q=<?= $r['latitude'] ?>,<?= $r['longitude'] ?>" target="_blank"><i class="fas fa-map-pin"></i> View Map</a>
+              <a class="map-link" href="javascript:void(0)" onclick="viewOnMap(<?= (float)$r['latitude'] ?>, <?= (float)$r['longitude'] ?>, '<?= htmlspecialchars(addslashes($r['title']), ENT_QUOTES) ?>')"><i class="fas fa-map-pin"></i> View Map</a>
               <?php endif; ?>
             </div>
           </div>
@@ -621,8 +634,6 @@ tr:hover td{background:#fafafa;}
     </div>
 
   <?php elseif($view === 'map'): ?>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
     <style>
     .resp-map-wrap{position:relative;border-radius:14px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,0.1);border:1px solid var(--border);}
     #respMap{height:510px;width:100%;background:#f5e8e8;}
@@ -684,7 +695,6 @@ tr:hover td{background:#fafafa;}
       var c=rmc[r.status]||'#888';
       var m=L.marker([r.lat,r.lng],{icon:makeRespIcon(c)});
       m.rd=r;
-      var mapsLink='https://maps.google.com/?q='+r.lat+','+r.lng;
       m.bindPopup(
         '<div style="min-width:200px;font-family:Inter,sans-serif;">'+
         '<div style="font-weight:800;font-size:0.9rem;margin-bottom:6px;">'+r.title+'</div>'+
@@ -693,7 +703,7 @@ tr:hover td{background:#fafafa;}
         '<div style="font-size:0.78rem;color:#6b7280;margin-bottom:3px;"><b>Category:</b> '+(catL[r.category]||r.category)+'</div>'+
         '<div style="font-size:0.78rem;color:#6b7280;margin-bottom:6px;"><b>Reported:</b> '+r.date+'</div>'+
         (r.desc?'<div style="font-size:0.78rem;color:#374151;margin-bottom:8px;">'+r.desc.substring(0,100)+(r.desc.length>100?'…':'')+'</div>':'')+
-        '<a href="'+mapsLink+'" target="_blank" style="font-size:0.8rem;color:#2563eb;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:4px;"><i class="fas fa-directions"></i> Get Directions</a>'+
+        '<a href="javascript:void(0)" onclick="closeNavModal();openNavigation('+r.lat+','+r.lng+')" style="font-size:0.8rem;color:#2563eb;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:4px;"><i class="fas fa-directions"></i> Get Directions</a>'+
         '</div>',{maxWidth:240}
       );
       m.addTo(rmap); rMarkers.push(m);
@@ -761,16 +771,76 @@ async function captureMyGps(btn){
   }, {enableHighAccuracy:true, timeout:12000, maximumAge:0});
 }
 
+var navMap=null, navLayer=null;
+function ensureNavMap(){
+  if(!navMap){
+    navMap = L.map('navModalMap');
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(navMap);
+  }
+  if(navLayer){ navMap.removeLayer(navLayer); navLayer=null; }
+}
+function closeNavModal(){
+  document.getElementById('navModalOverlay').classList.remove('show');
+}
+function viewOnMap(lat, lng, title){
+  if(lat===null||lng===null||typeof lat==='undefined'||typeof lng==='undefined'||lat===''||lng===''){
+    alert('This report has no GPS coordinates.'); return;
+  }
+  document.getElementById('navModalTitle').textContent = title || 'Incident Location';
+  document.getElementById('navModalInfo').innerHTML = '';
+  document.getElementById('navModalOverlay').classList.add('show');
+  setTimeout(function(){
+    ensureNavMap();
+    navMap.setView([lat,lng],16);
+    navLayer = L.marker([lat,lng]).addTo(navMap);
+    navMap.invalidateSize();
+  },50);
+}
 function openNavigation(lat, lng){
   if(lat === null || lng === null || typeof lat === 'undefined' || typeof lng === 'undefined' || lat === '' || lng === ''){
     alert('This report has no GPS coordinates.');
     return;
   }
-  var url = 'https://www.google.com/maps/dir/?api=1&destination=' + encodeURIComponent(lat + ',' + lng);
-  if (responderGps.lat !== null && responderGps.lng !== null) {
-    url += '&origin=' + encodeURIComponent(responderGps.lat + ',' + responderGps.lng);
-  }
-  window.open(url, '_blank');
+  document.getElementById('navModalTitle').textContent = 'Navigate to Incident';
+  document.getElementById('navModalInfo').innerHTML = '<span>Loading route…</span>';
+  document.getElementById('navModalOverlay').classList.add('show');
+  setTimeout(function(){
+    ensureNavMap();
+    navMap.setView([lat,lng],15);
+    var destIcon = L.divIcon({className:'',html:'<div style="width:16px;height:16px;border-radius:50%;background:#dc2626;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.4);"></div>',iconSize:[16,16],iconAnchor:[8,8]});
+    var destMarker = L.marker([lat,lng],{icon:destIcon}).addTo(navMap).bindPopup('Incident Location');
+    var group = [destMarker];
+    if(responderGps.lat !== null && responderGps.lng !== null){
+      var origIcon = L.divIcon({className:'',html:'<div style="width:16px;height:16px;border-radius:50%;background:#2563eb;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.4);"></div>',iconSize:[16,16],iconAnchor:[8,8]});
+      var origMarker = L.marker([responderGps.lat,responderGps.lng],{icon:origIcon}).addTo(navMap).bindPopup('Your Location');
+      group.push(origMarker);
+      navLayer = L.featureGroup(group);
+      navMap.fitBounds(navLayer.getBounds().pad(0.25));
+      // Fetch route from OSRM (OpenStreetMap routing)
+      var url = 'https://router.project-osrm.org/route/v1/driving/'+responderGps.lng+','+responderGps.lat+';'+lng+','+lat+'?overview=full&geometries=geojson';
+      fetch(url).then(function(r){return r.json();}).then(function(data){
+        if(data.routes && data.routes[0]){
+          var route = data.routes[0];
+          var coords = route.geometry.coordinates.map(function(c){return [c[1],c[0]];});
+          var line = L.polyline(coords,{color:'#2563eb',weight:5,opacity:0.8}).addTo(navMap);
+          var fg = L.featureGroup(group.concat([line]));
+          navMap.fitBounds(fg.getBounds().pad(0.1));
+          var km = (route.distance/1000).toFixed(1);
+          var mins = Math.round(route.duration/60);
+          document.getElementById('navModalInfo').innerHTML = '<span><b>Distance:</b> '+km+' km</span><span><b>ETA:</b> '+mins+' min</span>';
+        } else {
+          document.getElementById('navModalInfo').innerHTML = '<span>Route unavailable.</span>';
+        }
+      }).catch(function(){
+        document.getElementById('navModalInfo').innerHTML = '<span>Route unavailable.</span>';
+      });
+    } else {
+      navLayer = L.featureGroup(group);
+      navMap.fitBounds(navLayer.getBounds().pad(0.25));
+      document.getElementById('navModalInfo').innerHTML = '<span>Enable "My Location" on your profile to see turn-by-turn distance.</span>';
+    }
+    navMap.invalidateSize();
+  },50);
 }
 
 async function acceptAssignment(id,btn){
@@ -812,5 +882,16 @@ async function resolve(id,btn){
 setTimeout(function(){location.reload();}, 90000);
 <?php endif; ?>
 </script>
+
+<div class="nav-modal-overlay" id="navModalOverlay">
+  <div class="nav-modal">
+    <div class="nav-modal-head">
+      <h3 id="navModalTitle"><i class="fas fa-route" style="margin-right:6px;color:var(--red-light);"></i>Navigation</h3>
+      <button class="nav-modal-close" onclick="closeNavModal()"><i class="fas fa-times"></i></button>
+    </div>
+    <div id="navModalMap"></div>
+    <div class="nav-modal-info" id="navModalInfo"></div>
+  </div>
+</div>
 </body>
 </html>
