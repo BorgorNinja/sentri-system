@@ -17,7 +17,7 @@ sentri-system/
 ├── forgot_password.php    # Password reset request
 ├── reset_password.php     # Password reset (via token)
 ├── verify_email.php       # Email verification handler + resend endpoint
-├── install.php            # One-time DB installer — delete after use
+├── install.php            # One-time DB installer - delete after use
 │
 ├── config/
 │   ├── db.php             # Database connection (MySQLi, socket + TCP fallback)
@@ -25,7 +25,7 @@ sentri-system/
 │   └── .htaccess          # Blocks direct web access to config/
 │
 ├── core/
-│   ├── SenTriMailer.php   # Minimal Gmail SMTP mailer — dynamic APP_URL, no Composer
+│   ├── SenTriMailer.php   # Minimal Gmail SMTP mailer - dynamic APP_URL, no Composer
 │   └── HelpGuardMailer.php
 │
 ├── api/
@@ -92,7 +92,7 @@ sentri-system/
 
 ---
 
-## Email Verification Links — Dynamic APP_URL
+## Email Verification Links - Dynamic APP_URL
 
 Email links (account verification, password reset) are built using `APP_URL`
 defined in `config/email.php`.
@@ -122,7 +122,7 @@ You only need to set `APP_URL` explicitly when:
 
 Example in `config/email.php`:
 ```php
-// Production domain — remove this line to use auto-detection
+// Production domain - remove this line to use auto-detection
 define('APP_URL', 'https://sentri.example.com');
 ```
 
@@ -134,19 +134,20 @@ Leave it as `http://localhost` to keep auto-detection active everywhere.
 
 ### Community (Registered Users)
 - Submit geo-tagged incident reports with title, category, severity status, and location pin
-- Attach up to 3 photos per report (JPG, PNG, WEBP — max 5 MB each)
+- Attach up to 3 photos per report (JPG, PNG, WEBP - max 5 MB each)
 - Adjustable affected radius slider (50 m to 3 km)
 - Upvote / downvote reports for community credibility scoring
 - Interactive Leaflet.js map with colour-coded severity overlays
+- In-app GTA-style heading-up navigation to report locations (no Google Maps redirect), with auto-arrival detection
 - Filter feed by status, category, or keyword
 - Dark / light mode toggle
 
 ### Role-Based Portals
-- **Community** — report submission, feed browsing, map view
-- **Barangay Official** — barangay-scoped report management
-- **LGU** — city/municipal-level report oversight
-- **First Responder** — BFP / PNP / EMS response view (with responder type)
-- **Admin** — full moderation, user management, audit log, security monitor
+- **Community** - report submission, feed browsing, map view
+- **Barangay Official** - barangay-scoped report management
+- **LGU** - city/municipal-level report oversight
+- **First Responder** - BFP / PNP / EMS response view (with responder type)
+- **Admin** - full moderation, user management, audit log, security monitor
 
 Official roles (Barangay, LGU, First Responder) skip email verification and go
 through administrator approval instead.
@@ -154,9 +155,9 @@ through administrator approval instead.
 ### Admin Panel
 - Moderate reports (archive / restore / delete)
 - Manage user accounts and roles; approve pending official accounts
-- Emergency Contacts directory — LGU offices, hospitals, traffic, police, fire
-- Reports Audit Log — full create/edit/delete history
-- Security Monitor tab — failed login tracking, suspicious activity
+- Emergency Contacts directory - LGU offices, hospitals, traffic, police, fire
+- Reports Audit Log - full create/edit/delete history
+- Security Monitor tab - failed login tracking, suspicious activity
 
 ### Automatic Notifications
 When a **Dangerous** report is submitted, `api/contacts.php` emails all active
@@ -174,7 +175,7 @@ emergency contacts whose city (and optionally barangay) matches the report locat
 | Map Engine   | Leaflet.js 1.9.4 + OpenStreetMap        |
 | Geocoding    | Nominatim (server-proxied)              |
 | Icons        | Font Awesome 6.5                        |
-| Typography   | Google Fonts — Inter / Poppins          |
+| Typography   | Google Fonts - Inter / Poppins          |
 | Auth         | PHP native sessions + bcrypt (cost 12)  |
 | Email        | Gmail SMTP via SenTriMailer (no Composer) |
 | Web Server   | Apache or Nginx + PHP-FPM               |
@@ -185,7 +186,7 @@ emergency contacts whose city (and optionally barangay) matches the report locat
 
 | Table                  | Purpose                                         |
 |------------------------|-------------------------------------------------|
-| users                  | Accounts — roles: community / barangay / lgu / first_responder / admin |
+| users                  | Accounts - roles: community / barangay / lgu / first_responder / admin |
 | reports                | Incident reports with geo fields                |
 | report_images          | Photo attachments linked to reports             |
 | report_votes           | Upvote / downvote records (1 per user/report)   |
@@ -217,13 +218,21 @@ emergency contacts whose city (and optionally barangay) matches the report locat
 
 | Date       | Change |
 |------------|--------|
-| 2026-06-03 | **fix:** `SenTriMailer` now auto-detects `APP_URL` dynamically — email links work on any port, domain, or subdirectory without touching config |
+| 2026-06-11 | feat: Live GTA-style heading-up in-app navigation (Leaflet/OSM) replacing Google Maps redirects; auto-arrival detection |
+| 2026-06-11 | feat: Auto-arrival resolves report without flipping status to Safe; added Resolved/Unresolved badge |
+| 2026-06-11 | fix: Duplicate responder marker on repeat navigation |
+| 2026-06-10 | fix: responder.php and lgu.php errors (prepared statement handling, fatal error on line 44) |
+| 2026-06-09 | feat: Barangay portal toast notifications, state-aware modal buttons, escalate button + escalated badge in report table |
+| 2026-06-09 | fix: Removed ob_start/ob_end_flush causing 500 on action requests; added shutdown error handler; audit-log resolve_report |
+| 2026-06-08 | fix: Resolved vulnerability assessment crash (normalized scan shape, guarded statusMap lookups) |
+| 2026-06-08 | fix: dashboard.php / community role routing redirect to portal/community.php (backward compat) |
+| 2026-06-03 | **fix:** `SenTriMailer` now auto-detects `APP_URL` dynamically - email links work on any port, domain, or subdirectory without touching config |
 | 2026-06-03 | **fix:** `install.php` creates full `users` schema with all community columns and correct role ENUM |
 | 2026-06-02 | **fix:** Auto-migrations moved before POST handler in `signup.php`; free result sets to fix `bind_param` error |
 | 2026-05-30 | **feat:** Security Monitor tab added to `admin.php` + `api/security.php` endpoint |
 | 2026-05-30 | **fix:** `signup.php` extra `'s'` parameter bug in `bind_param` |
 | 2026-05-30 | **feat:** `getFailedAttemptsCount()` helper added to `login.php` |
-| 2026-05-29 | **feat:** `sql/migrations/006_roles.sql` — expanded role ENUM + community columns |
+| 2026-05-29 | **feat:** `sql/migrations/006_roles.sql` - expanded role ENUM + community columns |
 | 2026-05-29 | **feat:** Role-based portal pages (`portal/community.php`, `barangay.php`, `lgu.php`, `responder.php`) |
 | 2026-05-29 | **feat:** Reports Audit Log tab in `admin.php`; audit trail on delete/restore |
 | 2026-04-27 | **fix:** Map bleeding over sidebar (Leaflet stacking context isolation) |
