@@ -1,5 +1,5 @@
 <?php
-session_start();
+session_start(['cookie_httponly'=>true,'cookie_samesite'=>'Lax','cookie_secure'=>!empty($_SERVER['HTTPS'])]);
 require_once __DIR__ . '/../config/auth.php';
 require_role(['barangay']);
 require_once __DIR__ . '/../config/db.php';
@@ -468,11 +468,11 @@ tr:hover td{background:#fafafa;}
     </div>
     <script>
     var mapReports = <?= json_encode(array_map(function($r){
-      return ['id'=>(int)$r['id'],'title'=>$r['title'],'category'=>$r['category'],
-              'status'=>$r['status'],'barangay'=>$r['barangay']??$r['city']??'',
+      return ['id'=>(int)$r['id'],'title'=>htmlspecialchars($r['title'],ENT_QUOTES),'category'=>$r['category'],
+              'status'=>$r['status'],'barangay'=>htmlspecialchars($r['barangay']??$r['city']??'',ENT_QUOTES),
               'lat'=>(float)$r['latitude'],'lng'=>(float)$r['longitude'],
-              'reporter'=>trim($r['first_name'].' '.$r['last_name']),
-              'date'=>date('M j, Y g:i A',strtotime($r['created_at'])),'desc'=>$r['description']??''];
+              'reporter'=>htmlspecialchars(trim($r['first_name'].' '.$r['last_name']),ENT_QUOTES),
+              'date'=>date('M j, Y g:i A',strtotime($r['created_at'])),'desc'=>htmlspecialchars($r['description']??'',ENT_QUOTES)];
     }, $map_reports)) ?>;
     var markerColors = {dangerous:'#dc2626',caution:'#d97706',safe:'#16a34a'};
     var catLabels = {crime:'Crime',accident:'Accident',flooding:'Flooding',fire:'Fire',health:'Health',infrastructure:'Infrastructure',other:'Other'};
