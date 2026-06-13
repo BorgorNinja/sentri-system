@@ -1,0 +1,26 @@
+# ── SenTri Security Headers & Hardening ──────────────────────────────────────
+
+# Security headers
+<IfModule mod_headers.c>
+    Header always set X-Frame-Options "SAMEORIGIN"
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-XSS-Protection "1; mode=block"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    Header always set Permissions-Policy "geolocation=(self), camera=(), microphone=()"
+    # Uncomment once running on HTTPS:
+    # Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains"
+</IfModule>
+
+# Block direct access to sensitive file types (source dumps, SQL, backups, env files)
+<FilesMatch "\.(sql|zip|tar|gz|bak|env|sh|log|ini)$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order deny,allow
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+# Block access to .git and other VCS metadata if ever deployed
+RedirectMatch 404 /\.git
