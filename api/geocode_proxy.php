@@ -3,7 +3,7 @@
  * SenTri – Nominatim Reverse Geocode Proxy
  * Routes Nominatim requests server-side to bypass browser CORS restrictions.
  */
-session_start();
+session_start(['cookie_httponly'=>true,'cookie_samesite'=>'Lax','cookie_secure'=>!empty($_SERVER['HTTPS'])]);
 header('Content-Type: application/json');
 
 if (!isset($_SESSION['user_id'])) {
