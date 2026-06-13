@@ -6,7 +6,7 @@
 ini_set('display_errors', 0);
 error_reporting(E_ALL);
 ob_start();
-session_start();
+session_start(['cookie_httponly'=>true,'cookie_samesite'=>'Lax','cookie_secure'=>!empty($_SERVER['HTTPS'])]);
 header('Content-Type: application/json');
 
 if (!isset($_SESSION['user_id'])) {
