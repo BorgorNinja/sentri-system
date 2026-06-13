@@ -1,5 +1,5 @@
 <?php
-session_start();
+session_start(['cookie_httponly'=>true,'cookie_samesite'=>'Lax','cookie_secure'=>!empty($_SERVER['HTTPS'])]);
 if (isset($_SESSION['user_id'])) {
     require_once __DIR__ . '/config/auth.php';
     redirect_to_portal();
