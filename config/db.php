@@ -1,4 +1,7 @@
 <?php
+// Bootstrap security headers before any output or redirect.
+require_once __DIR__ . '/headers.php';
+
 $servername = "localhost";
 $db_user    = "root";
 $db_pass    = "";
@@ -84,7 +87,6 @@ if (!function_exists('sentri_ensure_report_dispatch_schema')) {
             }
         }
 
-        // Keep the dispatch lookup performant on existing installations.
         $hasIndex = false;
         if ($idx = $conn->query("SHOW INDEX FROM `reports` WHERE Key_name = 'idx_assigned'")) {
             $hasIndex = $idx->num_rows > 0;
@@ -135,4 +137,3 @@ if (!function_exists('sentri_ensure_audit_log_schema')) {
 
 sentri_ensure_report_dispatch_schema($conn);
 sentri_ensure_audit_log_schema($conn);
-?>
