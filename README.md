@@ -82,7 +82,7 @@ sentri-system/
    This creates the `sentri` database and all tables automatically, including
    all community columns and the full role ENUM.
 
-4. **Delete `install.php`** immediately after successful installation.
+4. The installer **automatically locks itself** after a successful run via . You do not need to delete  — it will refuse to run again. To re-run setup on a fresh DB, delete  first.
 
 5. Access the system:
    - Community:    `http://localhost/sentri-system/`
