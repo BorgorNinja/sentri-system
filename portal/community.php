@@ -1005,7 +1005,7 @@ document.getElementById('reportForm').addEventListener('submit',async function(e
   const city=document.getElementById('r_city').value.trim();
   if(!status){showMsg(msgEl,'error','Choose a severity level — Step 1.');return;}
   if(!cat){showMsg(msgEl,'error','Choose an incident type — Step 2.');return;}
-  if(!desc){showMsg(msgEl,'error','Describe what's happening — Step 3.');return;}
+  if(!desc){showMsg(msgEl,'error','Describe what is happening — Step 3.');return;}
   if(!city){showMsg(msgEl,'error','Enter your city or municipality — Step 4.');return;}
   // Auto-generate title
   let title=document.getElementById('r_title').value.trim();
