@@ -1,0 +1,30 @@
+# SenTri — Git Ignore Rules
+
+# Server / Apache logs — never commit these
+access_log
+error_log
+*.log
+
+# PHP config with credentials — never commit
+config/email.php
+
+# Uploaded user files — runtime only
+uploads/reports/*
+!uploads/reports/.gitkeep
+
+# Editor and OS artifacts
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Composer (if ever added)
+vendor/
+composer.lock
+
+# Environment overrides
+.env
+.env.local
+
