@@ -25,7 +25,7 @@ define('MAIL_USERNAME',  'sican.isaac201419@gmail.com');       // ← CHANGE THI
 define('MAIL_PASSWORD',  'ylxtkntytawtqjti');           // ← CHANGE THIS
 
 // ── Sender name & address shown to recipients ──
-define('MAIL_FROM',      '1999aryastark1999@gmail.com');       // ← CHANGE THIS
+define('MAIL_FROM',      'sican.isaac201419@gmail.com');       // ← CHANGE THIS
 define('MAIL_FROM_NAME', 'SenTri');
 
 // ─── Application URL (no trailing slash) ─────────────────────────────────────
