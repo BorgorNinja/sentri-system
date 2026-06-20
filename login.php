@@ -347,6 +347,47 @@ body{min-height:100vh;background:var(--navy-dark);display:flex;flex-direction:co
 .site-footer p{font-size:0.76rem;color:rgba(255,255,255,0.35);}
 @media(max-width:840px){.portal-grid{grid-template-columns:repeat(3,1fr);}.hero-badge{display:none;}.gov-links{display:none;}.form-card{padding:26px 20px;}.form-wrap{padding:0 20px 40px;}.portal-section{padding:20px 20px 0;}}
 @media(max-width:520px){.portal-grid{grid-template-columns:repeat(2,1fr);}.hero-inner h2{font-size:1.4rem;}.hero-stats{gap:16px;}}
+
+/* ── Motion ── */
+@keyframes fadeSlideDown{from{opacity:0;transform:translateY(-14px);}to{opacity:1;transform:translateY(0);}}
+@keyframes fadeSlideUp{from{opacity:0;transform:translateY(22px);}to{opacity:1;transform:translateY(0);}}
+@keyframes cardPop{from{opacity:0;transform:translateY(16px) scale(.93);}to{opacity:1;transform:translateY(0) scale(1);}}
+@keyframes iconSwap{0%{opacity:0;transform:scale(.5) rotate(-12deg);}100%{opacity:1;transform:scale(1) rotate(0);}}
+@keyframes pulseRing{0%{box-shadow:0 0 0 0 rgba(243,156,18,.45);}100%{box-shadow:0 0 0 12px rgba(243,156,18,0);}}
+@keyframes msgError{0%{opacity:0;transform:translateY(-8px);}45%{opacity:1;transform:translateY(0);}55%{transform:translateX(-6px);}65%{transform:translateX(6px);}75%{transform:translateX(-4px);}85%{transform:translateX(4px);}100%{transform:translateX(0);}}
+@keyframes msgSuccess{from{opacity:0;transform:translateY(-8px);}to{opacity:1;transform:translateY(0);}}
+@keyframes formFade{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+
+.gov-bar{animation:fadeSlideDown .5s ease both;}
+.hero-inner>div:first-child{animation:fadeSlideUp .6s ease .08s both;}
+.hero-badge{animation:fadeSlideUp .6s ease .2s both;}
+.page-notice .notice{animation:fadeSlideDown .45s ease both;}
+.form-card{animation:fadeSlideUp .55s ease .3s both;}
+.site-footer{animation:fadeSlideUp .5s ease .5s both;}
+
+.portal-card{opacity:0;animation:cardPop .5s cubic-bezier(.34,1.56,.64,1) both;}
+.portal-card:nth-child(1){animation-delay:.3s;}
+.portal-card:nth-child(2){animation-delay:.36s;}
+.portal-card:nth-child(3){animation-delay:.42s;}
+.portal-card:nth-child(4){animation-delay:.48s;}
+.portal-card:nth-child(5){animation-delay:.54s;}
+.portal-card.justSelected{animation:pulseRing .5s ease-out;}
+.portal-card:focus-visible{outline:2.5px solid var(--gold);outline-offset:3px;}
+@supports not (animation-name:cardPop){.portal-card{opacity:1;}}
+
+.portal-icon{transition:transform .25s ease;}
+.portal-card:hover .portal-icon{transform:scale(1.08) rotate(-3deg);}
+
+.ph-icon i{animation:iconSwap .35s ease;}
+
+.btn-login:active:not(:disabled){transform:translateY(0) scale(.98);}
+
+#loginForm,#otpSection{animation:formFade .35s ease;}
+
+.msg.error{animation:msgError .5s ease;}
+.msg.success{animation:msgSuccess .35s ease;}
+
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;}.portal-card{opacity:1;}}
 </style>
 </head>
 <body>
@@ -379,11 +420,11 @@ body{min-height:100vh;background:var(--navy-dark);display:flex;flex-direction:co
   <div class="portal-section">
     <p class="portal-lbl">Choose Your Portal</p>
     <div class="portal-grid">
-      <div class="portal-card p-community selected" onclick="selectPortal('community',this)"><div class="portal-icon"><i class="fas fa-users"></i></div><div class="portal-name">Community</div><div class="portal-sub">Citizens</div></div>
-      <div class="portal-card p-barangay" onclick="selectPortal('barangay',this)"><div class="portal-icon"><i class="fas fa-house-flag"></i></div><div class="portal-name">Barangay</div><div class="portal-sub">Officials</div></div>
-      <div class="portal-card p-lgu" onclick="selectPortal('lgu',this)"><div class="portal-icon"><i class="fas fa-landmark"></i></div><div class="portal-name">LGU</div><div class="portal-sub">City / Municipal</div></div>
-      <div class="portal-card p-responder" onclick="selectPortal('first_responder',this)"><div class="portal-icon"><i class="fas fa-truck-medical"></i></div><div class="portal-name">First Responder</div><div class="portal-sub">BFP / PNP / EMS</div></div>
-      <div class="portal-card p-admin" onclick="selectPortal('admin',this)"><div class="portal-icon"><i class="fas fa-gear"></i></div><div class="portal-name">Admin</div><div class="portal-sub">System Access</div></div>
+      <div class="portal-card p-community selected" tabindex="0" onclick="selectPortal('community',this)"><div class="portal-icon"><i class="fas fa-users"></i></div><div class="portal-name">Community</div><div class="portal-sub">Citizens</div></div>
+      <div class="portal-card p-barangay" tabindex="0" onclick="selectPortal('barangay',this)"><div class="portal-icon"><i class="fas fa-house-flag"></i></div><div class="portal-name">Barangay</div><div class="portal-sub">Officials</div></div>
+      <div class="portal-card p-lgu" tabindex="0" onclick="selectPortal('lgu',this)"><div class="portal-icon"><i class="fas fa-landmark"></i></div><div class="portal-name">LGU</div><div class="portal-sub">City / Municipal</div></div>
+      <div class="portal-card p-responder" tabindex="0" onclick="selectPortal('first_responder',this)"><div class="portal-icon"><i class="fas fa-truck-medical"></i></div><div class="portal-name">First Responder</div><div class="portal-sub">BFP / PNP / EMS</div></div>
+      <div class="portal-card p-admin" tabindex="0" onclick="selectPortal('admin',this)"><div class="portal-icon"><i class="fas fa-gear"></i></div><div class="portal-name">Admin</div><div class="portal-sub">System Access</div></div>
     </div>
   </div>
 </section>
@@ -438,10 +479,15 @@ const portals={
 let current='community';
 let timerInterval = null;
 
+document.querySelectorAll('.portal-card').forEach(c=>{
+  c.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();c.click();}});
+});
+
 function selectPortal(key,el){
   current=key;
-  document.querySelectorAll('.portal-card').forEach(c=>c.classList.remove('selected'));
-  el.classList.add('selected');
+  document.querySelectorAll('.portal-card').forEach(c=>c.classList.remove('selected','justSelected'));
+  el.classList.add('selected','justSelected');
+  setTimeout(()=>el.classList.remove('justSelected'),500);
   const p=portals[key];
   const pi=document.getElementById('phIcon');
   pi.style.cssText=`background:${p.bg};color:${p.color};`;
