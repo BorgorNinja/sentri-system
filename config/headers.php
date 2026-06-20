@@ -20,9 +20,9 @@ if (!headers_sent()) {
     header(
         "Content-Security-Policy: " .
         "default-src 'self'; " .
-        "script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://unpkg.com; " .
-        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; " .
-        "font-src 'self' data: https://fonts.gstatic.com https://cdnjs.cloudflare.com; " .
+        "script-src 'self' 'unsafe-inline'; " .
+        "style-src 'self' 'unsafe-inline'; " .
+        "font-src 'self' data:; " .
         "img-src 'self' data: https: blob:; " .
         "connect-src 'self'; " .
         "frame-ancestors 'self'; " .
