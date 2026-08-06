@@ -2,6 +2,7 @@
 session_start(['cookie_httponly'=>true,'cookie_samesite'=>'Lax','cookie_secure'=>!empty($_SERVER['HTTPS'])]);
 require_once __DIR__ . '/../config/auth.php';
 require_role(['first_responder']);
+require_approved();
 require_once __DIR__ . '/../config/db.php';
 
 $uid   = (int)$_SESSION['user_id'];
@@ -180,6 +181,7 @@ $page_titles = [
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title><?= $page_titles[$view] ?? 'Responder Portal' ?> — SenTri</title>
+<?= csrf_meta_tag() ?>
 <link rel="stylesheet" href="../assets/vendor/fonts/fonts.css">
 <link rel="stylesheet" href="../assets/vendor/fontawesome/css/all.min.css">
 <style>
@@ -972,5 +974,6 @@ setTimeout(function(){location.reload();}, 90000);
     <div class="nav-modal-info" id="navModalInfo"></div>
   </div>
 </div>
+<?= csrf_script() ?>
 </body>
 </html>

@@ -23,6 +23,8 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 require __DIR__ . '/../config/db.php';
+require_once __DIR__ . '/../config/csrf.php';
+csrf_validate();
 
 $user_id = (int)($_SESSION['user_id'] ?? 0);
 $role    = $_SESSION['role'] ?? 'user';
@@ -248,11 +250,19 @@ switch ($action) {
         else{$d=$conn->prepare("UPDATE reports SET is_archived=1 WHERE id=? AND user_id=?");$d->bind_param("ii",$report_id,$user_id);}
         $d->execute();
         if($d->affected_rows>0){
-            $r=$conn->query("SELECT title FROM reports WHERE id=$report_id")->fetch_assoc();
-            $title=$conn->real_escape_string($r['title']??'Unknown');
-            $by_id=$_SESSION['user_id'];
-            $by_name=$conn->real_escape_string($_SESSION['first_name'].' '.($_SESSION['last_name']??''));
-            $conn->query("INSERT INTO report_audit_logs (report_id,report_title,action,performed_by,performed_by_name) VALUES ($report_id,'$title','archived',$by_id,'$by_name')");
+            $_r_stmt = $conn->prepare("SELECT title FROM reports WHERE id=? LIMIT 1");
+            $_r_stmt->bind_param('i', $report_id);
+            $_r_stmt->execute();
+            $_r_row = $_r_stmt->get_result()->fetch_assoc();
+            $_r_stmt->close();
+            $_audit = $conn->prepare("INSERT INTO report_audit_logs (report_id,report_title,action,performed_by,performed_by_name) VALUES (?,?,?,?,?)");
+            $_audit_title = $_r_row['title'] ?? 'Unknown';
+            $_audit_by = (int)$_SESSION['user_id'];
+            $_audit_name = ($_SESSION['first_name'] ?? '') . ' ' . ($_SESSION['last_name'] ?? '');
+            $_audit_action = 'archived';
+            $_audit->bind_param('issss', $report_id, $_audit_title, $_audit_action, $_audit_by, $_audit_name);
+            $_audit->execute();
+            $_audit->close();
             echo json_encode(['status'=>'success','message'=>'Report removed.']);
         } else { echo json_encode(['status'=>'error','message'=>'Could not delete.']); }
         $d->close();
@@ -263,11 +273,19 @@ switch ($action) {
         $report_id=(int)($_POST['report_id']??0);
         $u=$conn->prepare("UPDATE reports SET is_archived=0 WHERE id=?");$u->bind_param("i",$report_id);$u->execute();
         if($u->affected_rows>0){
-            $r=$conn->query("SELECT title FROM reports WHERE id=$report_id")->fetch_assoc();
-            $title=$conn->real_escape_string($r['title']??'Unknown');
-            $by_id=$_SESSION['user_id'];
-            $by_name=$conn->real_escape_string($_SESSION['first_name'].' '.($_SESSION['last_name']??''));
-            $conn->query("INSERT INTO report_audit_logs (report_id,report_title,action,performed_by,performed_by_name) VALUES ($report_id,'$title','restored',$by_id,'$by_name')");
+            $_r_stmt = $conn->prepare("SELECT title FROM reports WHERE id=? LIMIT 1");
+            $_r_stmt->bind_param('i', $report_id);
+            $_r_stmt->execute();
+            $_r_row = $_r_stmt->get_result()->fetch_assoc();
+            $_r_stmt->close();
+            $_audit = $conn->prepare("INSERT INTO report_audit_logs (report_id,report_title,action,performed_by,performed_by_name) VALUES (?,?,?,?,?)");
+            $_audit_title = $_r_row['title'] ?? 'Unknown';
+            $_audit_by = (int)$_SESSION['user_id'];
+            $_audit_name = ($_SESSION['first_name'] ?? '') . ' ' . ($_SESSION['last_name'] ?? '');
+            $_audit_action = 'restored';
+            $_audit->bind_param('issss', $report_id, $_audit_title, $_audit_action, $_audit_by, $_audit_name);
+            $_audit->execute();
+            $_audit->close();
         }
         echo json_encode(['status'=>'success','message'=>'Report restored.']); $u->close();
         break;
@@ -318,9 +336,9 @@ switch ($action) {
         $target=(int)($_POST['user_id']??0);
         if(!$target){echo json_encode(['status'=>'error','message'=>'Invalid user ID.']);exit;}
         if($target===$user_id){echo json_encode(['status'=>'error','message'=>'Cannot delete yourself.']);exit;}
-        $conn->query("DELETE FROM report_votes WHERE user_id=$target");
-        $conn->query("DELETE FROM report_votes WHERE report_id IN (SELECT id FROM reports WHERE user_id=$target)");
-        $conn->query("DELETE FROM reports WHERE user_id=$target");
+        $_del1 = $conn->prepare("DELETE FROM report_votes WHERE user_id=?"); $_del1->bind_param('i',$target); $_del1->execute(); $_del1->close();
+        $_del2 = $conn->prepare("DELETE FROM report_votes WHERE report_id IN (SELECT id FROM reports WHERE user_id=?)"); $_del2->bind_param('i',$target); $_del2->execute(); $_del2->close();
+        $_del3 = $conn->prepare("DELETE FROM reports WHERE user_id=?"); $_del3->bind_param('i',$target); $_del3->execute(); $_del3->close();
         $d=$conn->prepare("DELETE FROM users WHERE id=? AND role!='admin'");
         $d->bind_param("i",$target); $d->execute();
         if($d->affected_rows>0){echo json_encode(['status'=>'success','message'=>'User removed.']);}
@@ -431,8 +449,10 @@ switch ($action) {
     case 'get_report_images':
         $report_id = (int)($_GET['report_id'] ?? 0);
         if (!$report_id) { echo json_encode(['status'=>'error','message'=>'Invalid ID.']); exit; }
-        $res = $conn->query("SELECT id, file_name, original_name, mime_type, file_size, uploaded_at
-                             FROM report_images WHERE report_id=$report_id ORDER BY uploaded_at ASC");
+        $_img_stmt = $conn->prepare("SELECT id, file_name, original_name, mime_type, file_size, uploaded_at FROM report_images WHERE report_id=? ORDER BY uploaded_at ASC");
+        $_img_stmt->bind_param('i', $report_id);
+        $_img_stmt->execute();
+        $res = $_img_stmt->get_result();
         $images = [];
         if ($res) {
             while ($row = $res->fetch_assoc()) {
@@ -441,6 +461,7 @@ switch ($action) {
                 $row['url']       = 'uploads/reports/' . rawurlencode($row['file_name']);
                 $images[]         = $row;
             }
+            $_img_stmt->close();
         }
         echo json_encode(['status'=>'success','images'=>$images]);
         break;
@@ -460,10 +481,14 @@ switch ($action) {
         $stmt->execute();
         if ($stmt->affected_rows > 0) {
             $r_res = $conn->query("SELECT title FROM reports WHERE id=$report_id")->fetch_assoc();
-            $r_title = $conn->real_escape_string($r_res['title'] ?? 'Unknown');
-            $r_by    = (int)$_SESSION['user_id'];
-            $r_name  = $conn->real_escape_string(($_SESSION['first_name'] ?? '') . ' ' . ($_SESSION['last_name'] ?? ''));
-            $conn->query("INSERT INTO report_audit_logs (report_id,report_title,action,performed_by,performed_by_name) VALUES ($report_id,'$r_title','accepted',$r_by,'$r_name')");
+            $_audit = $conn->prepare("INSERT INTO report_audit_logs (report_id,report_title,action,performed_by,performed_by_name) VALUES (?,?,?,?,?)");
+            $_audit_title = $r_res['title'] ?? 'Unknown';
+            $_audit_by = (int)$_SESSION['user_id'];
+            $_audit_name = ($_SESSION['first_name'] ?? '') . ' ' . ($_SESSION['last_name'] ?? '');
+            $_audit_action = 'accepted';
+            $_audit->bind_param('issss', $report_id, $_audit_title, $_audit_action, $_audit_by, $_audit_name);
+            $_audit->execute();
+            $_audit->close();
             echo json_encode(['status'=>'success','message'=>'Assignment accepted.']);
         } else {
             $chk = $conn->prepare("SELECT assigned_to,status,is_archived FROM reports WHERE id=? LIMIT 1");
@@ -491,10 +516,14 @@ switch ($action) {
         $stmt->execute();
         if ($stmt->affected_rows > 0) {
             $r_res = $conn->query("SELECT title FROM reports WHERE id=$report_id")->fetch_assoc();
-            $r_title = $conn->real_escape_string($r_res['title'] ?? 'Unknown');
-            $r_by    = (int)$_SESSION['user_id'];
-            $r_name  = $conn->real_escape_string(($_SESSION['first_name'] ?? '') . ' ' . ($_SESSION['last_name'] ?? ''));
-            $conn->query("INSERT INTO report_audit_logs (report_id,report_title,action,performed_by,performed_by_name) VALUES ($report_id,'$r_title','responded',$r_by,'$r_name')");
+            $_audit = $conn->prepare("INSERT INTO report_audit_logs (report_id,report_title,action,performed_by,performed_by_name) VALUES (?,?,?,?,?)");
+            $_audit_title = $r_res['title'] ?? 'Unknown';
+            $_audit_by = (int)$_SESSION['user_id'];
+            $_audit_name = ($_SESSION['first_name'] ?? '') . ' ' . ($_SESSION['last_name'] ?? '');
+            $_audit_action = 'responded';
+            $_audit->bind_param('issss', $report_id, $_audit_title, $_audit_action, $_audit_by, $_audit_name);
+            $_audit->execute();
+            $_audit->close();
             echo json_encode(['status'=>'success','message'=>'Reported as responded to LGU.']);
         } else {
             echo json_encode(['status'=>'error','message'=>'This report must be assigned to you before you can mark it responded.']);
@@ -515,12 +544,16 @@ switch ($action) {
             $stmt->bind_param("i", $report_id);
         }
         $stmt->execute();
-        if ($stmt->affected_rows >= 0) {
+        if ($stmt->affected_rows > 0) {
             $r_res = $conn->query("SELECT title FROM reports WHERE id=$report_id")->fetch_assoc();
-            $r_title = $conn->real_escape_string($r_res['title'] ?? 'Unknown');
-            $r_by    = (int)$_SESSION['user_id'];
-            $r_name  = $conn->real_escape_string(($_SESSION['first_name'] ?? '') . ' ' . ($_SESSION['last_name'] ?? ''));
-            $conn->query("INSERT INTO report_audit_logs (report_id,report_title,action,performed_by,performed_by_name) VALUES ($report_id,'$r_title','resolved',$r_by,'$r_name')");
+            $_audit = $conn->prepare("INSERT INTO report_audit_logs (report_id,report_title,action,performed_by,performed_by_name) VALUES (?,?,?,?,?)");
+            $_audit_title = $r_res['title'] ?? 'Unknown';
+            $_audit_by = (int)$_SESSION['user_id'];
+            $_audit_name = ($_SESSION['first_name'] ?? '') . ' ' . ($_SESSION['last_name'] ?? '');
+            $_audit_action = 'resolved';
+            $_audit->bind_param('issss', $report_id, $_audit_title, $_audit_action, $_audit_by, $_audit_name);
+            $_audit->execute();
+            $_audit->close();
             echo json_encode(['status'=>'success','message'=>'Report marked as resolved.']);
         } else {
             echo json_encode(['status'=>'error','message'=>'Report not found or not assigned to you.']);
@@ -554,13 +587,17 @@ switch ($action) {
         $upd_esc = $conn->prepare("UPDATE reports SET escalated_to_lgu=1 WHERE id=? AND is_archived=0");
         $upd_esc->bind_param("i", $report_id);
         $upd_esc->execute();
-        if ($upd_esc->affected_rows > 0 || $upd_esc->affected_rows === 0) {
+        if ($upd_esc->affected_rows > 0) {
             // Log to audit
             $r_info = $conn->query("SELECT title FROM reports WHERE id=$report_id")->fetch_assoc();
-            $esc_title = $conn->real_escape_string($r_info['title'] ?? 'Unknown');
-            $esc_by    = (int)$_SESSION['user_id'];
-            $esc_name  = $conn->real_escape_string(($_SESSION['first_name'] ?? '') . ' ' . ($_SESSION['last_name'] ?? ''));
-            $conn->query("INSERT INTO report_audit_logs (report_id,report_title,action,performed_by,performed_by_name) VALUES ($report_id,'$esc_title','escalated_to_lgu',$esc_by,'$esc_name')");
+            $_audit = $conn->prepare("INSERT INTO report_audit_logs (report_id,report_title,action,performed_by,performed_by_name) VALUES (?,?,?,?,?)");
+            $_audit_title = $r_info['title'] ?? 'Unknown';
+            $_audit_by = (int)$_SESSION['user_id'];
+            $_audit_name = ($_SESSION['first_name'] ?? '') . ' ' . ($_SESSION['last_name'] ?? '');
+            $_audit_action = 'escalated_to_lgu';
+            $_audit->bind_param('issss', $report_id, $_audit_title, $_audit_action, $_audit_by, $_audit_name);
+            $_audit->execute();
+            $_audit->close();
             echo json_encode(['status'=>'success','message'=>'Report escalated to LGU.']);
         } else {
             echo json_encode(['status'=>'error','message'=>'Report not found.']);
@@ -609,12 +646,16 @@ switch ($action) {
         $s_upd = $conn->prepare("UPDATE reports SET status=? $res_at WHERE id=? AND is_archived=0");
         $s_upd->bind_param("si", $new_status, $report_id);
         $s_upd->execute();
-        if ($s_upd->affected_rows >= 0) {
+        if ($s_upd->affected_rows > 0) {
             $r_info2 = $conn->query("SELECT title FROM reports WHERE id=$report_id")->fetch_assoc();
-            $s_title = $conn->real_escape_string($r_info2['title'] ?? 'Unknown');
-            $s_by    = (int)$_SESSION['user_id'];
-            $s_name  = $conn->real_escape_string(($_SESSION['first_name'] ?? '') . ' ' . ($_SESSION['last_name'] ?? ''));
-            $conn->query("INSERT INTO report_audit_logs (report_id,report_title,action,performed_by,performed_by_name) VALUES ($report_id,'$s_title','status_changed_to_$new_status',$s_by,'$s_name')");
+            $_audit = $conn->prepare("INSERT INTO report_audit_logs (report_id,report_title,action,performed_by,performed_by_name) VALUES (?,?,?,?,?)");
+            $_audit_title = $r_info2['title'] ?? 'Unknown';
+            $_audit_by = (int)$_SESSION['user_id'];
+            $_audit_name = ($_SESSION['first_name'] ?? '') . ' ' . ($_SESSION['last_name'] ?? '');
+            $_audit_action = 'status_changed_to_' . $new_status;
+            $_audit->bind_param('issss', $report_id, $_audit_title, $_audit_action, $_audit_by, $_audit_name);
+            $_audit->execute();
+            $_audit->close();
             echo json_encode(['status'=>'success','message'=>"Status updated to $new_status."]);
         } else {
             echo json_encode(['status'=>'error','message'=>'Report not found.']);

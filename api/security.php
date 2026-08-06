@@ -1,6 +1,8 @@
 <?php
 session_start(['cookie_httponly'=>true,'cookie_samesite'=>'Lax','cookie_secure'=>!empty($_SERVER['HTTPS'])]);
 require __DIR__ . '/../config/db.php';
+require_once __DIR__ . '/../config/csrf.php';
+csrf_validate();
 
 header('Content-Type: application/json');
 
@@ -250,8 +252,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             echo json_encode(['status' => 'error', 'message' => 'No flagged account IDs provided.']);
             exit;
         }
-        $ids = implode(',', array_unique($flagIds));
-        $conn->query("DELETE FROM flagged_accounts WHERE id IN ($ids)");
+        $ids = array_unique($flagIds);
+        $placeholders = implode(',', array_fill(0, count($ids), '?'));
+        $types = str_repeat('i', count($ids));
+        $_del = $conn->prepare("DELETE FROM flagged_accounts WHERE id IN ($placeholders)");
+        $_del->bind_param($types, ...$ids);
+        $_del->execute();
+        $_del->close();
         echo json_encode(['status' => 'success']);
         exit;
     }

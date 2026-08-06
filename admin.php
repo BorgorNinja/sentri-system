@@ -3,6 +3,7 @@ session_start(['cookie_httponly'=>true,'cookie_samesite'=>'Lax','cookie_secure'=
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
     header("Location: login.php"); exit;
 }
+require_once __DIR__ . '/config/auth.php';
 require __DIR__ . '/config/db.php';
 
 $total_users    = $conn->query("SELECT COUNT(*) FROM users")->fetch_row()[0];
@@ -18,6 +19,7 @@ $first_name     = $_SESSION['first_name'];
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Admin Dashboard – SenTri</title>
+<?= csrf_meta_tag() ?>
 <link rel="stylesheet" href="assets/vendor/fonts/fonts.css">
 <link rel="stylesheet" href="assets/vendor/fontawesome/css/all.min.css">
 <style>
@@ -1765,6 +1767,7 @@ async function runVulnerabilityAssessment() {
 }
 
 </script>
+<?= csrf_script() ?>
 </body>
 </html>
 

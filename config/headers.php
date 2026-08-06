@@ -24,7 +24,7 @@ if (!headers_sent()) {
         "style-src 'self' 'unsafe-inline'; " .
         "font-src 'self' data:; " .
         "img-src 'self' data: https: blob:; " .
-        "connect-src 'self'; " .
+        "connect-src 'self' https://*.tile.openstreetmap.org https://nominatim.openstreetmap.org; " .
         "frame-ancestors 'self'; " .
         "object-src 'none'; " .
         "base-uri 'self'"

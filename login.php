@@ -8,6 +8,7 @@ if (isset($_SESSION['user_id'])) {
 }
 require __DIR__ . '/config/db.php';
 require_once __DIR__ . '/config/auth.php';
+require_once __DIR__ . '/config/csrf.php';
 
 function getFailedAttemptsCount($conn, $email, $minutes = 30) {
     $cutoff = date('Y-m-d H:i:s', strtotime("-{$minutes} minutes"));
@@ -87,6 +88,8 @@ function sendLoginOtpEmail($email, $name, $otp) {
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Note: Login forms are exempt from CSRF validation since they are
+    // the entry point. CSRF protection applies to authenticated actions.
     header('Content-Type: application/json');
     $action   = trim($_POST['action'] ?? '');
     $email    = trim($_POST['email']    ?? '');
@@ -137,8 +140,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         session_regenerate_id(true);
         $_SESSION = [
             'user_id'    => $user['id'],
-            'first_name' => htmlspecialchars($user['first_name'], ENT_QUOTES, 'UTF-8'),
-            'last_name'  => htmlspecialchars($user['last_name'], ENT_QUOTES, 'UTF-8'),
+            'first_name' => $user['first_name'],
+            'last_name'  => $user['last_name'],
             'role'       => $user['role'],
             'is_approved'=> (bool)$user['is_approved'],
         ];
@@ -187,11 +190,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if (empty($email)||empty($password)) { echo json_encode(['status'=>'error','message'=>'All fields are required.']); exit; }
 
-    if ($portal==='admin' && $email==='admin' && $password==='admin') {
-        session_regenerate_id(true);
-        $_SESSION = ['user_id'=>0,'first_name'=>'Admin','last_name'=>'','role'=>'admin','is_approved'=>true];
-        echo json_encode(['status'=>'success','redirect'=>'/admin.php']); exit;
-    }
+
 
     if (isLockedOut($conn, $email)) {
         echo json_encode(['status'=>'error','message'=>'Too many failed attempts. Please wait 30 seconds before trying again.','lockout'=>true]);
@@ -227,25 +226,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (!$approved && !in_array($role,['community','user','admin'])) {
                 echo json_encode(['status'=>'error','message'=>'Your account is pending administrator approval. You will be notified once approved.','pending'=>true]); exit;
             }
-            if ($portal === 'community') {
-                $otp = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
-                $_SESSION['otp_login'] = [
-                    'user_id'    => $id,
-                    'email'      => $email,
-                    'code'       => $otp,
-                    'expires_at' => date('Y-m-d H:i:s', strtotime('+10 minutes')),
-                    'portal'     => 'community',
-                ];
-                if (!sendLoginOtpEmail($email, $fn, $otp)) {
-                    unset($_SESSION['otp_login']);
-                    echo json_encode(['status' => 'error', 'message' => 'Unable to send OTP email. Please try again later.']);
-                    exit;
-                }
-                echo json_encode(['status' => 'otp_required', 'message' => 'A 6-digit login code was sent to your email. Enter it below to continue.', 'email' => $email]);
-                exit;
-            }
+            // Community users authenticate with email + password (same as other portals).
+            // To add optional TOTP-based 2FA later, check a user preference flag here.
             session_regenerate_id(true);
-            $_SESSION = ['user_id'=>$id,'first_name'=>htmlspecialchars($fn,ENT_QUOTES,'UTF-8'),'last_name'=>htmlspecialchars($ln,ENT_QUOTES,'UTF-8'),'role'=>$role,'is_approved'=>(bool)$approved];
+            $_SESSION = ['user_id'=>$id,'first_name'=>$fn,'last_name'=>$ln,'role'=>$role,'is_approved'=>(bool)$approved];
             $log_status='Success'; $log_uid=$id;
             $is_successful_login = true;
             require_once __DIR__.'/config/auth.php';

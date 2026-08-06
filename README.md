@@ -22,11 +22,11 @@ sentri-system/
 ├── config/
 │   ├── db.php             # Database connection (MySQLi, socket + TCP fallback)
 │   ├── email.php          # SMTP credentials + APP_URL override (see note below)
-│   └── .htaccess          # Blocks direct web access to config/
+│   ├── .htaccess          # Blocks direct web access to config/
+│   ├── csrf.php           # CSRF token generation and validation
 │
 ├── core/
-│   ├── SenTriMailer.php   # Minimal Gmail SMTP mailer - dynamic APP_URL, no Composer
-│   └── HelpGuardMailer.php
+│   └── SenTriMailer.php   # Minimal Gmail SMTP mailer - dynamic APP_URL, no Composer
 │
 ├── api/
 │   ├── reports.php        # Reports CRUD, voting, profile, GPS, image upload, audit log
@@ -245,6 +245,14 @@ emergency contacts whose city (and optionally barangay) matches the report locat
 ## Roadmap
 
 - [ ] Real-time proximity alerts via polling or WebSocket
-- [ ] SMS notification support (Semaphore / Vonage PH)
-- [ ] Auto-call integration for Dangerous reports (Twilio)
-- [ ] Mobile app wrapper (future)
+- [ ] Optional TOTP-based two-factor authentication (Google Authenticator)
+- [x] CSRF protection on all endpoints
+- [ ] Report editing and commenting
+- [ ] In-app notification system
+- [ ] Data export (CSV/PDF)
+- [ ] Report analytics and trend charts
+
+### Deferred (budget-dependent)
+- [ ] SMS notification support (Semaphore / Vonage PH) — requires paid API
+- [ ] Auto-call integration for Dangerous reports (Twilio) — requires paid API
+- [ ] Mobile app wrapper

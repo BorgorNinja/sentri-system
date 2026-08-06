@@ -2,6 +2,7 @@
 session_start(['cookie_httponly'=>true,'cookie_samesite'=>'Lax','cookie_secure'=>!empty($_SERVER['HTTPS'])]);
 require_once __DIR__ . '/../config/auth.php';
 require_role(['community','user']);
+require_approved();
 require_once __DIR__ . '/../config/db.php';
 
 $uid   = (int)$_SESSION['user_id'];
@@ -42,7 +43,7 @@ if($view==='profile'&&$_SERVER['REQUEST_METHOD']==='POST'&&isset($_POST['save_pr
     if($pw&&$pw!==$pw2)        {$profile_msg='error:Passwords do not match.';}
     elseif(!$pf||!$pl)          {$profile_msg='error:Name fields are required.';}
     else{
-        if($pw){$h=password_hash($pw,PASSWORD_BCRYPT,['cost'=>10]);$su=$conn->prepare("UPDATE users SET first_name=?,last_name=?,phone_number=?,municipality=?,barangay_name=?,password=? WHERE id=?");$su->bind_param("ssssssi",$pf,$pl,$pp,$pm,$pb,$h,$uid);}
+        if($pw){$h=password_hash($pw,PASSWORD_BCRYPT,['cost'=>12]);$su=$conn->prepare("UPDATE users SET first_name=?,last_name=?,phone_number=?,municipality=?,barangay_name=?,password=? WHERE id=?");$su->bind_param("ssssssi",$pf,$pl,$pp,$pm,$pb,$h,$uid);}
         else{$su=$conn->prepare("UPDATE users SET first_name=?,last_name=?,phone_number=?,municipality=?,barangay_name=? WHERE id=?");$su->bind_param("sssssi",$pf,$pl,$pp,$pm,$pb,$uid);}
         $su->execute();$su->close();
         $_SESSION['first_name']=htmlspecialchars($pf,ENT_QUOTES,'UTF-8');$_SESSION['last_name']=htmlspecialchars($pl,ENT_QUOTES,'UTF-8');
@@ -64,6 +65,7 @@ $page_titles=['overview'=>'Community Feed','my_reports'=>'My Reports','map'=>'In
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title><?= htmlspecialchars($page_titles[$view]??'Community Portal') ?> — SenTri</title>
+<?= csrf_meta_tag() ?>
 <link rel="stylesheet" href="../assets/vendor/fonts/fonts.css">
 <link rel="stylesheet" href="../assets/vendor/fontawesome/css/all.min.css">
 <link rel="stylesheet" href="../assets/vendor/leaflet/leaflet.css">
@@ -1092,5 +1094,6 @@ if(CURRENT_VIEW==='map')setTimeout(()=>renderMainMap(),300);
 if(document.fonts&&document.fonts.ready){document.fonts.ready.then(()=>{if(mainMap)mainMap.invalidateSize();if(inlineMap)inlineMap.invalidateSize();});}
 window.addEventListener('load',()=>{if(mainMap)mainMap.invalidateSize();if(inlineMap)inlineMap.invalidateSize();});
 </script>
+<?= csrf_script() ?>
 </body>
 </html>

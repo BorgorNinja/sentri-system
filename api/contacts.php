@@ -5,7 +5,6 @@
 
 ini_set('display_errors', 0);
 error_reporting(E_ALL);
-ob_start();
 session_start(['cookie_httponly'=>true,'cookie_samesite'=>'Lax','cookie_secure'=>!empty($_SERVER['HTTPS'])]);
 header('Content-Type: application/json');
 
@@ -14,6 +13,8 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 require __DIR__ . '/../config/db.php';
+require_once __DIR__ . '/../config/csrf.php';
+csrf_validate();
 
 $user_id = (int)$_SESSION['user_id'];
 $role    = $_SESSION['role'] ?? 'user';

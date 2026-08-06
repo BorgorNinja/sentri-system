@@ -1,5 +1,6 @@
 <?php
 // config/auth.php - Role guard and portal redirect helper
+require_once __DIR__ . '/csrf.php';
 
 function require_login() {
     if (!isset($_SESSION['user_id'])) {
