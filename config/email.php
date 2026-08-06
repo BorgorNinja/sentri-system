@@ -19,13 +19,13 @@ define('MAIL_HOST',      'smtp.gmail.com');
 define('MAIL_PORT',      587);                          // STARTTLS port
 
 // ── Your Gmail address ──
-define('MAIL_USERNAME',  'your-email@gmail.com');       // ← CHANGE THIS
+define('MAIL_USERNAME',  'sican.isaac201419@gmail.com');
 
 // ── Gmail App Password (16 chars, no spaces) ──
-define('MAIL_PASSWORD',  'your-16-char-app-password');  // ← CHANGE THIS
+define('MAIL_PASSWORD',  'ydufvhykjvjvzrxq');
 
 // ── Sender name & address shown to recipients ──
-define('MAIL_FROM',      'your-email@gmail.com');       // ← CHANGE THIS
+define('MAIL_FROM',      'sican.isaac201419@gmail.com');
 define('MAIL_FROM_NAME', 'SenTri');
 
 // ─── Application URL (no trailing slash) ─────────────────────────────────────
@@ -37,4 +37,4 @@ define('MAIL_FROM_NAME', 'SenTri');
 // If served from webroot:
 //   define('APP_URL', 'http://localhost');
 // Wrong APP_URL = password reset / verification links point to wrong address.
-define('APP_URL', 'http://localhost');        // ← CHANGE THIS TO MATCH YOUR INSTALL PATH
+define('APP_URL', 'https://sentri-system.duckdns.org');        // ← CHANGE THIS TO MATCH YOUR INSTALL PATH
