@@ -55,6 +55,11 @@ switch ($action) {
 
     case 'get_reports':
         ensureGeoColumns($conn);
+        $page = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
+        $limit = isset($_GET['limit']) ? max(1, (int)$_GET['limit']) : 200;
+        $offset = ($page - 1) * $limit;
+        $search = $_GET['search'] ?? '';
+        $search_sql = $search ? " AND (r.title LIKE '%" . $conn->real_escape_string($search) . "%' OR r.description LIKE '%" . $conn->real_escape_string($search) . "%') " : "";
         $sql = "
             SELECT r.id, r.user_id, r.title, r.description, r.location_name, r.barangay,
                    r.city, r.province, r.latitude, r.longitude, r.radius_m,
@@ -64,11 +69,11 @@ switch ($action) {
             FROM reports r
             INNER JOIN users u ON r.user_id = u.id
             LEFT JOIN report_votes v ON v.report_id = r.id AND v.user_id = ?
-            WHERE r.is_archived = 0
-            ORDER BY r.created_at DESC LIMIT 200";
+            WHERE r.is_archived = 0 $search_sql
+            ORDER BY r.created_at DESC LIMIT ? OFFSET ?";
         $stmt = $conn->prepare($sql);
         if (!$stmt) { echo json_encode(['status'=>'error','message'=>'DB error: '.$conn->error]); exit; }
-        $stmt->bind_param("i", $user_id);
+        $stmt->bind_param("iii", $user_id, $limit, $offset);
         $stmt->execute();
         $res = $stmt->get_result();
         $reports = [];
@@ -293,7 +298,12 @@ switch ($action) {
     case 'admin_get_reports':
         if($role!=='admin'){echo json_encode(['status'=>'error','message'=>'Admin required.']);exit;}
         ensureGeoColumns($conn);
-        $sql="SELECT r.id,r.user_id,r.title,r.status,r.category,r.city,r.location_name,r.latitude,r.longitude,r.radius_m,r.is_archived,r.upvotes,r.downvotes,r.created_at,CONCAT(u.first_name,' ',u.last_name) AS poster_name FROM reports r INNER JOIN users u ON r.user_id=u.id ORDER BY r.created_at DESC LIMIT 500";
+        $page = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
+        $limit = isset($_GET['limit']) ? max(1, (int)$_GET['limit']) : 500;
+        $offset = ($page - 1) * $limit;
+        $search = $_GET['search'] ?? '';
+        $search_sql = $search ? " WHERE (r.title LIKE '%" . $conn->real_escape_string($search) . "%') " : "";
+        $sql="SELECT r.id,r.user_id,r.title,r.status,r.category,r.city,r.location_name,r.latitude,r.longitude,r.radius_m,r.is_archived,r.upvotes,r.downvotes,r.created_at,CONCAT(u.first_name,' ',u.last_name) AS poster_name FROM reports r INNER JOIN users u ON r.user_id=u.id $search_sql ORDER BY r.created_at DESC LIMIT $limit OFFSET $offset";
         $res=$conn->query($sql); $reports=[];
         while($row=$res->fetch_assoc()){
             $row['id']=(int)$row['id'];$row['upvotes']=(int)$row['upvotes'];$row['downvotes']=(int)$row['downvotes'];$row['is_archived']=(int)$row['is_archived'];
@@ -662,6 +672,19 @@ switch ($action) {
         }
         $s_upd->close();
         break;
+
+    case 'export':
+        if ($role !== 'admin') { echo json_encode(['status'=>'error','message'=>'Admin required.']); exit; }
+        header('Content-Type: text/csv');
+        header('Content-Disposition: attachment; filename="reports_export.csv"');
+        $output = fopen('php://output', 'w');
+        fputcsv($output, ['ID', 'Title', 'Status', 'Category', 'City', 'Created At']);
+        $res = $conn->query("SELECT id, title, status, category, city, created_at FROM reports ORDER BY created_at DESC");
+        while ($row = $res->fetch_assoc()) {
+            fputcsv($output, $row);
+        }
+        fclose($output);
+        exit;
 
     default:
         echo json_encode(['status'=>'error','message'=>'Unknown action.']);
