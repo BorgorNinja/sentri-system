@@ -402,13 +402,28 @@ tr:hover td{background:#fafafa;}
       </div>
       <?php if(empty($queue)): ?>
         <div class="empty"><i class="fas fa-shield-check" style="color:#16a34a;opacity:0.4;"></i><p>No active incidents. All clear.</p></div>
-      <?php else: foreach($queue as $r):
+      <?php else: ?>
+      <div class="reports-filter-bar" style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:12px 16px;border-bottom:1px solid var(--border);background:#f8fafc;">
+        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+          <button class="filter-btn active-all" onclick="filterRespIncidents('all',this)">All</button>
+          <button class="filter-btn" onclick="filterRespIncidents('dangerous',this)"><i class="fas fa-circle" style="color:#dc2626;font-size:0.6rem;"></i> Dangerous</button>
+          <button class="filter-btn" onclick="filterRespIncidents('caution',this)"><i class="fas fa-circle" style="color:#d97706;font-size:0.6rem;"></i> Caution</button>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <div style="position:relative;">
+            <i class="fas fa-magnifying-glass" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:0.8rem;"></i>
+            <input type="text" id="respIncidentSearch" placeholder="Search incidents..." oninput="searchRespIncidents(this.value)" style="padding:6px 12px 6px 28px;border:1.5px solid var(--border);border-radius:8px;font-size:0.8rem;outline:none;font-family:'Inter',sans-serif;background:#fff;width:200px;">
+          </div>
+        </div>
+      </div>
+      <div class="incident-list">
+      <?php foreach($queue as $r):
         $is_mine = (int)$r['assigned_to'] === $uid;
         $is_assigned = $r['assigned_to'] !== null;
         $ibg = $r['status']==='dangerous' ? '#fef2f2' : '#fffbeb';
         $iclr = $r['status']==='dangerous' ? '#dc2626' : '#d97706';
       ?>
-        <div class="incident-row">
+        <div class="incident-row" data-status="<?= htmlspecialchars($r['status']) ?>">
           <div class="inc-icon" style="background:<?= $ibg ?>;color:<?= $iclr ?>;"><i class="fas <?= $cat_icons[$r['category']] ?? 'fa-circle-exclamation' ?>"></i></div>
           <div class="inc-body">
             <div class="inc-title"><?= htmlspecialchars($r['title']) ?></div>
@@ -442,7 +457,9 @@ tr:hover td{background:#fafafa;}
             <?php endif; ?>
           </div>
         </div>
-      <?php endforeach; endif; ?>
+      <?php endforeach; ?>
+      </div>
+      <?php endif; ?>
     </div>
 
   <?php elseif($view === 'community'): ?>
@@ -458,14 +475,30 @@ tr:hover td{background:#fafafa;}
       </div>
       <?php if(empty($community_reports)): ?>
         <div class="empty"><i class="fas fa-people-group" style="color:#0a3d62;opacity:0.35;"></i><p>No community reports yet.</p></div>
-      <?php else: foreach($community_reports as $r):
+      <?php else: ?>
+      <div class="reports-filter-bar" style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:12px 16px;border-bottom:1px solid var(--border);background:#f8fafc;">
+        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+          <button class="filter-btn active-all" onclick="filterRespIncidents('all',this)">All</button>
+          <button class="filter-btn" onclick="filterRespIncidents('dangerous',this)"><i class="fas fa-circle" style="color:#dc2626;font-size:0.6rem;"></i> Dangerous</button>
+          <button class="filter-btn" onclick="filterRespIncidents('caution',this)"><i class="fas fa-circle" style="color:#d97706;font-size:0.6rem;"></i> Caution</button>
+          <button class="filter-btn" onclick="filterRespIncidents('safe',this)"><i class="fas fa-circle" style="color:#16a34a;font-size:0.6rem;"></i> Safe</button>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <div style="position:relative;">
+            <i class="fas fa-magnifying-glass" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:0.8rem;"></i>
+            <input type="text" id="respCommunitySearch" placeholder="Search reports..." oninput="searchRespIncidents(this.value)" style="padding:6px 12px 6px 28px;border:1.5px solid var(--border);border-radius:8px;font-size:0.8rem;outline:none;font-family:'Inter',sans-serif;background:#fff;width:200px;">
+          </div>
+        </div>
+      </div>
+      <div class="incident-list">
+      <?php foreach($community_reports as $r):
         $is_mine = $has_assigned_to ? ((int)($r['assigned_to'] ?? 0) === $uid) : false;
         $is_assigned = $has_assigned_to && !empty($r['assigned_to']);
         $ibg = $r['status']==='dangerous' ? '#fef2f2' : ($r['status']==='caution' ? '#fffbeb' : '#f0fdf4');
         $iclr = $r['status']==='dangerous' ? '#dc2626' : ($r['status']==='caution' ? '#d97706' : '#16a34a');
         $reporter = trim(($r['first_name'] ?? '').' '.($r['last_name'] ?? ''));
       ?>
-        <div class="incident-row">
+        <div class="incident-row" data-status="<?= htmlspecialchars($r['status']) ?>">
           <div class="inc-icon" style="background:<?= $ibg ?>;color:<?= $iclr ?>;"><i class="fas <?= $cat_icons[$r['category']] ?? 'fa-circle-exclamation' ?>"></i></div>
           <div class="inc-body">
             <div class="inc-title"><?= htmlspecialchars($r['title']) ?></div>
@@ -957,6 +990,33 @@ async function markResponded(id,btn){
   }catch(e){ btn.disabled=false; btn.innerHTML='<i class="fas fa-bell"></i> Responded to LGU'; }
 }
 
+
+// ── Incident Filtering & Search ──────────────────────────────────────────────
+var currentRespFilter = 'all';
+var currentRespQuery = '';
+
+function applyRespFilters(){
+  var rows = document.querySelectorAll('.incident-row');
+  rows.forEach(function(row){
+    var st = row.getAttribute('data-status') || '';
+    var text = row.textContent.toLowerCase();
+    var matchStatus = (currentRespFilter === 'all' || st === currentRespFilter);
+    var matchQuery = (!currentRespQuery || text.indexOf(currentRespQuery) !== -1);
+    row.style.display = (matchStatus && matchQuery) ? '' : 'none';
+  });
+}
+
+function filterRespIncidents(status, btn){
+  currentRespFilter = status;
+  btn.parentElement.querySelectorAll('.filter-btn').forEach(function(b){ b.className = 'filter-btn'; });
+  btn.classList.add('active-' + status);
+  applyRespFilters();
+}
+
+function searchRespIncidents(query){
+  currentRespQuery = query.toLowerCase().trim();
+  applyRespFilters();
+}
 
 // Auto-refresh queue every 90 seconds
 <?php if($view === 'queue'): ?>

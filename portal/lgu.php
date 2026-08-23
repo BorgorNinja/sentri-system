@@ -681,12 +681,26 @@ tr:hover td{background:#fafafa;}
       <?php if(empty($all_reports)): ?>
         <div class="empty"><i class="fas fa-folder-open"></i>No reports found.</div>
       <?php else: ?>
+      <div class="reports-filter-bar" style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:12px 16px;border-bottom:1px solid var(--border);background:#f8fafc;">
+        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+          <button class="filter-btn active-all" onclick="filterTableReports('all',this)">All</button>
+          <button class="filter-btn" onclick="filterTableReports('dangerous',this)"><i class="fas fa-circle" style="color:#dc2626;font-size:0.6rem;"></i> Dangerous</button>
+          <button class="filter-btn" onclick="filterTableReports('caution',this)"><i class="fas fa-circle" style="color:#d97706;font-size:0.6rem;"></i> Caution</button>
+          <button class="filter-btn" onclick="filterTableReports('safe',this)"><i class="fas fa-circle" style="color:#16a34a;font-size:0.6rem;"></i> Safe</button>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <div style="position:relative;">
+            <i class="fas fa-magnifying-glass" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:0.8rem;"></i>
+            <input type="text" id="lguReportSearch" placeholder="Search reports or barangay..." oninput="searchTableReports(this.value)" style="padding:6px 12px 6px 28px;border:1.5px solid var(--border);border-radius:8px;font-size:0.8rem;outline:none;font-family:'Inter',sans-serif;background:#fff;width:220px;">
+          </div>
+        </div>
+      </div>
       <div class="table-wrap">
         <table>
           <thead><tr><th>#</th><th>Title</th><th>Category</th><th>Status</th><th>Barangay</th><th>Reported By</th><th>Date</th><th>Actions</th></tr></thead>
           <tbody>
           <?php foreach($all_reports as $r): ?>
-            <tr>
+            <tr data-status="<?= htmlspecialchars($r['status']) ?>">
               <td style="color:var(--muted);font-size:0.74rem;">#<?= $r['id'] ?></td>
               <td style="font-weight:600;max-width:200px;"><?= htmlspecialchars(mb_strimwidth($r['title'],0,55,'…')) ?></td>
               <td><span class="cat-chip"><i class="fas <?= $cat_icons[$r['category']] ?? 'fa-circle-exclamation' ?>"></i> <?= ucfirst($r['category']) ?></span></td>
@@ -1193,12 +1207,31 @@ async function lguSaveContact(){
     else{err.textContent=data.message||'Save failed.';err.style.display='block';btn.disabled=false;btn.innerHTML='<i class="fas fa-floppy-disk"></i> Save Contact';}
   }catch(e){err.textContent='Request failed.';err.style.display='block';btn.disabled=false;btn.innerHTML='<i class="fas fa-floppy-disk"></i> Save Contact';}
 }
-async function lguDeleteContact(id, name){
-  if(!confirm('Remove contact: '+name+'?')) return;
-  var fd=new FormData(); fd.append('action','delete'); fd.append('id',id);
-  var res=await fetch('../api/contacts.php',{method:'POST',body:fd});
-  var data=await res.json();
-  if(data.status==='success') location.reload(); else alert(data.message||'Delete failed.');
+// ── Table Filtering & Search ────────────────────────────────────────────────
+var currentTableFilter = 'all';
+var currentTableQuery = '';
+
+function applyTableFilters(){
+  var rows = document.querySelectorAll('.table-wrap table tbody tr');
+  rows.forEach(function(row){
+    var st = row.getAttribute('data-status') || '';
+    var text = row.textContent.toLowerCase();
+    var matchStatus = (currentTableFilter === 'all' || st === currentTableFilter);
+    var matchQuery = (!currentTableQuery || text.indexOf(currentTableQuery) !== -1);
+    row.style.display = (matchStatus && matchQuery) ? '' : 'none';
+  });
+}
+
+function filterTableReports(status, btn){
+  currentTableFilter = status;
+  btn.parentElement.querySelectorAll('.filter-btn').forEach(function(b){ b.className = 'filter-btn'; });
+  btn.classList.add('active-' + status);
+  applyTableFilters();
+}
+
+function searchTableReports(query){
+  currentTableQuery = query.toLowerCase().trim();
+  applyTableFilters();
 }
 </script>
 
