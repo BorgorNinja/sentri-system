@@ -83,7 +83,7 @@ body{background:var(--bg);color:var(--text);display:flex;min-height:100vh;overfl
 .brand-icon-s{width:36px;height:36px;background:rgba(255,255,255,.15);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;border:1px solid rgba(255,255,255,.2);}
 .brand-name-s{font-size:1.05rem;font-weight:800;}
 .brand-sub{font-size:.6rem;color:rgba(255,255,255,.5);letter-spacing:1px;text-transform:uppercase;}
-.toggle-btn{background:none;border:none;color:rgba(255,255,255,.7);cursor:pointer;font-size:1rem;padding:6px;border-radius:8px;transition:all .2s;}
+.toggle-btn{background:none;border:none;color:rgba(255,255,255,.7);cursor:pointer;font-size:1rem;padding:6px;border-radius:8px;transition:all .2s;display:none;}
 .toggle-btn:hover{background:rgba(255,255,255,.1);color:#fff;}
 .menu{padding:12px 10px;display:flex;flex-direction:column;gap:2px;}
 .menu a{display:flex;align-items:center;gap:11px;padding:11px 13px;text-decoration:none;color:rgba(255,255,255,.75);font-size:.875rem;font-weight:500;border-radius:10px;transition:all .2s;white-space:nowrap;}
@@ -140,7 +140,12 @@ body.dark .gps-chip.active{background:#1a2e24;}
 .stat-card{background:var(--card);border-radius:16px;padding:18px 20px;box-shadow:0 2px 12px rgba(0,0,0,.06);display:flex;align-items:center;gap:14px;animation:fadeInUp .5s both;transition:transform .2s,box-shadow .2s,background .3s;position:relative;overflow:hidden;}
 .stat-card:hover{transform:translateY(-3px);box-shadow:0 8px 28px rgba(0,0,0,.1);}
 .stat-card:nth-child(1){animation-delay:.05s;}.stat-card:nth-child(2){animation-delay:.1s;}.stat-card:nth-child(3){animation-delay:.15s;}.stat-card:nth-child(4){animation-delay:.2s;}
-.stat-icon{width:48px;height:48px;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:1.25rem;flex-shrink:0;}
+.stat-icon{width:48px;height:48px;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:1.25rem;flex-shrink:0;text-align:center;}
+.stat-icon i, .stat-icon svg, .stat-icon .svg-inline--fa,
+.my-reports-hdr .mh-icon i, .my-reports-hdr .mh-icon svg,
+.contacts-hdr .ch-icon i, .contacts-hdr .ch-icon svg,
+.contact-icon i, .contact-icon svg,
+.brand-icon-s i, .brand-icon-s svg {margin:0 auto;display:block;line-height:1;}
 .stat-icon.blue{background:#ebf2ff;color:var(--blue);}.stat-icon.red{background:#fff0f0;color:var(--red);}.stat-icon.green{background:#f0fff4;color:var(--green);}.stat-icon.orange{background:#fff8f0;color:var(--orange);}
 body.dark .stat-icon.blue{background:#1f3a5f;}body.dark .stat-icon.red{background:#3d1f1f;}body.dark .stat-icon.green{background:#1a2e24;}body.dark .stat-icon.orange{background:#2e2010;}
 .stat-card strong{display:block;font-size:1.5rem;font-weight:800;color:var(--text);}
@@ -194,8 +199,8 @@ body.dark .vote-btn.down.voted{background:#3d1f1f;border-color:var(--red);color:
 .pin-chip:hover{background:#dbeafe;}
 body.dark .pin-chip{background:#1f3a5f;color:var(--blue-accent);}
 .category-tag{font-size:.76rem;background:var(--bg);padding:5px 11px;border-radius:8px;color:var(--muted);}
-.empty{text-align:center;padding:60px 20px;color:#bbb;animation:fadeIn .4s ease;}
-.empty i{font-size:3rem;margin-bottom:14px;display:block;}
+.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;width:100%;padding:60px 20px;color:#bbb;animation:fadeIn .4s ease;}
+.empty i, .empty svg, .empty .svg-inline--fa{font-size:3rem;margin:0 auto 14px auto;display:block;}
 .loading{text-align:center;padding:50px;color:#888;font-size:.9rem;}
 .loading i{animation:spin 1s linear infinite;margin-right:8px;}
 
@@ -400,7 +405,7 @@ body.dark .detail-map-btn{background:#1f3a5f;color:var(--blue-accent);border-col
 /* ── Responsive ── */
 @media(max-width:900px){
   .sidebar{transform:translateX(calc(-1*var(--sidebar-w)));}.sidebar.mobile-open{transform:translateX(0);}
-  .main{margin-left:0;}.ham-btn{display:flex;}.stats-row{grid-template-columns:1fr 1fr;}.content{padding:16px;}
+  .main{margin-left:0;}.ham-btn{display:flex;}.toggle-btn{display:inline-flex;align-items:center;justify-content:center;}.stats-row{grid-template-columns:1fr 1fr;}.content{padding:16px;}
   .user-name{display:none;}.detail-meta-grid{grid-template-columns:1fr;}.profile-grid{grid-template-columns:1fr;}
   #incidentMap{height:420px;}
 }
@@ -540,7 +545,6 @@ body.dark .locate-btn-big{background:#1f3a5f;color:var(--blue-accent);}
     <div class="my-reports-hdr">
       <div class="mh-icon"><i class="fas fa-file-lines"></i></div>
       <div><h2>My Reports</h2><p>All <?= $my_count ?> report<?= $my_count!==1?'s':'' ?> you've submitted</p></div>
-      <button class="post-btn" onclick="openModal()" style="margin-left:auto;"><i class="fas fa-plus"></i> <span>New Report</span></button>
     </div>
     <div class="filters">
       <input type="text" id="searchInput" placeholder="Search my reports...">
@@ -840,7 +844,7 @@ function renderFeed(mineOnly=false){
   const feed=document.getElementById('feed');if(!feed)return;
   const list=getFiltered(mineOnly);
   if(!list.length){
-    feed.innerHTML=`<div class="empty"><i class="fas fa-binoculars"></i><p>${mineOnly?"You haven't posted any reports yet.":'No reports match your filters.'}</p>${mineOnly?'<button class="post-btn" onclick="openModal()" style="margin-top:14px;display:inline-flex;"><i class="fas fa-plus"></i>&nbsp;Post First Report</button>':''}</div>`;
+    feed.innerHTML=`<div class="empty"><i class="fas fa-binoculars"></i><p>${mineOnly?"You haven't posted any reports yet.":'No reports match your filters.'}</p></div>`;
     return;
   }
   feed.innerHTML=list.map((r,i)=>{

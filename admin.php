@@ -59,7 +59,7 @@ body{background:var(--bg);display:flex;min-height:100vh;color:var(--text);}
 .brand-icon{width:38px;height:38px;background:linear-gradient(135deg,var(--blue-light),var(--blue));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;box-shadow:0 4px 14px rgba(58,141,255,0.4);}
 .brand-name{font-size:1rem;font-weight:800;}
 .admin-badge{font-size:0.6rem;background:var(--admin);color:#fff;padding:2px 8px;border-radius:20px;font-weight:700;margin-left:4px;letter-spacing:0.5px;}
-.toggle-btn{background:none;border:none;color:rgba(255,255,255,0.6);cursor:pointer;font-size:1.1rem;padding:4px;transition:color 0.2s;}
+.toggle-btn{background:none;border:none;color:rgba(255,255,255,0.6);cursor:pointer;font-size:1.1rem;padding:4px;transition:color 0.2s;display:none;}
 .toggle-btn:hover{color:#fff;}
 
 .nav-section{padding:12px 12px 0;font-size:0.68rem;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:1px;font-weight:600;margin-bottom:6px;}
@@ -168,8 +168,8 @@ tr:hover td{background:#fafbff;transition:background 0.15s;}
 .act-btn.warn{background:#fff8f0;color:var(--orange);}
 .act-btn.warn:hover{background:var(--orange);color:#fff;}
 
-.empty{text-align:center;padding:50px 20px;color:#bbb;}
-.empty i{font-size:2.5rem;display:block;margin-bottom:12px;}
+.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;width:100%;padding:50px 20px;color:#bbb;}
+.empty > i, .empty > svg, .empty > .svg-inline--fa{font-size:2.5rem;display:block;margin:0 auto 12px auto;}
 .empty p{font-size:0.9rem;}
 .loading{text-align:center;padding:40px;color:#888;}
 .loading i{animation:spin 1s linear infinite;}
@@ -194,6 +194,7 @@ tr:hover td{background:#fafbff;transition:background 0.15s;}
   .main{margin-left:0;}
   .stats-row{grid-template-columns:1fr 1fr;}
   .ham-btn{display:flex;}
+  .toggle-btn{display:inline-flex;align-items:center;justify-content:center;}
   .tab-nav-btn span{display:none;}
   .tab-nav-btn{flex:none;padding:10px 14px;}
   .topbar{padding:12px 16px;}

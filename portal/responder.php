@@ -280,8 +280,8 @@ tr:hover td{background:#fafafa;}
 .contact-meta{font-size:0.75rem;color:var(--muted);line-height:1.6;}
 .contact-type-badge{display:inline-block;font-size:0.63rem;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;padding:2px 8px;border-radius:4px;margin-bottom:4px;}
 /* EMPTY */
-.empty{padding:48px 20px;text-align:center;color:var(--muted);}
-.empty i{font-size:2.2rem;display:block;margin-bottom:12px;opacity:0.3;}
+.empty{padding:48px 20px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;width:100%;color:var(--muted);}
+.empty > i, .empty > svg, .empty > .svg-inline--fa{font-size:2.2rem;display:block;margin:0 auto 12px auto;opacity:0.3;}
 .empty p{font-size:0.86rem;}
 /* COMING SOON */
 .coming-soon{padding:60px 24px;text-align:center;}

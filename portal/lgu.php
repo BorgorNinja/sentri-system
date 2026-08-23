@@ -460,8 +460,8 @@ tr:hover td{background:#fafafa;}
 .bar-count{font-size:0.74rem;font-weight:700;color:var(--muted);width:28px;text-align:right;flex-shrink:0;}
 
 /* ── EMPTY / PLACEHOLDER ── */
-.empty{padding:40px 20px;text-align:center;color:var(--muted);}
-.empty i{font-size:2rem;display:block;margin-bottom:10px;opacity:0.3;}
+.empty{padding:40px 20px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;width:100%;color:var(--muted);}
+.empty > i, .empty > svg, .empty > .svg-inline--fa{font-size:2rem;display:block;margin:0 auto 10px auto;opacity:0.3;}
 .coming-soon{
   padding:60px 24px;text-align:center;
 }
