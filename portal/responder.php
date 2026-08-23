@@ -990,6 +990,18 @@ async function markResponded(id,btn){
   }catch(e){ btn.disabled=false; btn.innerHTML='<i class="fas fa-bell"></i> Responded to LGU'; }
 }
 
+async function resolve(id,btn){
+  if(!confirm('Mark this incident as resolved?')) return;
+  btn.disabled=true; btn.innerHTML='<i class="fas fa-spinner fa-spin"></i>';
+  try{
+    var fd=new FormData(); fd.append('action','resolve_report'); fd.append('report_id',id);
+    var res=await fetch('../api/reports.php',{method:'POST',body:fd});
+    var data=await res.json();
+    if(data.status==='success') location.reload();
+    else{ alert(data.message||'Error resolving report.'); btn.disabled=false; btn.innerHTML='<i class="fas fa-circle-check"></i> Resolve'; }
+  }catch(e){ btn.disabled=false; btn.innerHTML='<i class="fas fa-circle-check"></i> Resolve'; }
+}
+
 
 // ── Incident Filtering & Search ──────────────────────────────────────────────
 var currentRespFilter = 'all';

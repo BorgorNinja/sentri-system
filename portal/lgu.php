@@ -637,7 +637,7 @@ tr:hover td{background:#fafafa;}
             <thead><tr><th>#</th><th>Title</th><th>Category</th><th>Barangay</th><th>Date</th></tr></thead>
             <tbody>
             <?php foreach($danger_reports as $r): ?>
-              <tr>
+              <tr style="cursor:pointer;" onclick="lguViewReport(<?= $r['id'] ?>,'<?= addslashes(htmlspecialchars($r['title'])) ?>','<?= $r['category'] ?>','<?= $r['status'] ?>','<?= addslashes(htmlspecialchars($r['barangay']??$r['city'])) ?>','<?= addslashes(htmlspecialchars(($r['first_name']??'').' '.($r['last_name']??''))) ?>','<?= date('M j, Y', strtotime($r['created_at'])) ?>','')">
                 <td style="color:var(--muted);font-size:0.74rem;">#<?= $r['id'] ?></td>
                 <td style="font-weight:600;max-width:180px;"><?= htmlspecialchars(mb_strimwidth($r['title'],0,50,'…')) ?></td>
                 <td><span class="cat-chip"><i class="fas <?= $cat_icons[$r['category']] ?? 'fa-circle-exclamation' ?>"></i> <?= ucfirst($r['category']) ?></span></td>
