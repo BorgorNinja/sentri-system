@@ -22,18 +22,17 @@
         <td style="font-size:0.74rem;color:var(--muted);white-space:nowrap;"><?= date('M j, Y',strtotime($r['created_at'])) ?></td>
         <td>
           <div style="display:flex;gap:5px;align-items:center;">
+            <?php
+              $r_title_js = htmlspecialchars(json_encode($r['title'] ?? ''), ENT_QUOTES, 'UTF-8');
+              $r_cat_js   = htmlspecialchars(json_encode($r['category'] ?? ''), ENT_QUOTES, 'UTF-8');
+              $r_stat_js  = htmlspecialchars(json_encode($r['status'] ?? ''), ENT_QUOTES, 'UTF-8');
+              $r_loc_js   = htmlspecialchars(json_encode($r['barangay'] ?? $r['city'] ?? ''), ENT_QUOTES, 'UTF-8');
+              $r_user_js  = htmlspecialchars(json_encode(($r['first_name'] ?? '') . ' ' . ($r['last_name'] ?? '')), ENT_QUOTES, 'UTF-8');
+              $r_date_js  = htmlspecialchars(json_encode(date('M j, Y', strtotime($r['created_at']))), ENT_QUOTES, 'UTF-8');
+              $r_desc_js  = htmlspecialchars(json_encode($r['description'] ?? ''), ENT_QUOTES, 'UTF-8');
+            ?>
             <button class="btn-icon btn-view" title="View Details"
-              onclick="viewReport(
-                <?= $r['id'] ?>,
-                '<?= addslashes(htmlspecialchars($r['title'])) ?>',
-                '<?= $r['category'] ?>',
-                '<?= $r['status'] ?>',
-                '<?= addslashes(htmlspecialchars($r['barangay']??$r['city']??'')) ?>',
-                '<?= addslashes(htmlspecialchars($r['first_name'].' '.$r['last_name'])) ?>',
-                '<?= date('M j, Y',strtotime($r['created_at'])) ?>',
-                '<?= addslashes(htmlspecialchars($r['description']??'')) ?>',
-                <?= $escalated ?>
-              )">
+              onclick="viewReport(<?= $r['id'] ?>, <?= $r_title_js ?>, <?= $r_cat_js ?>, <?= $r_stat_js ?>, <?= $r_loc_js ?>, <?= $r_user_js ?>, <?= $r_date_js ?>, <?= $r_desc_js ?>, <?= $escalated ?>)">
               <i class="fas fa-eye"></i>
             </button>
             <?php if($r['status'] !== 'safe'): ?>
