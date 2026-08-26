@@ -309,6 +309,11 @@ tr:hover td{background:#fafafa;}
 .nav-modal-info .nav-arrived{color:#16a34a;font-weight:800;}
 .nav-modal-info{padding:10px 16px;font-size:0.8rem;color:var(--muted);border-top:1px solid var(--border);display:flex;gap:16px;flex-wrap:wrap;}
 .nav-modal-info b{color:#222;}
+.telemetry-stepper{display:flex;align-items:center;gap:6px;margin-top:8px;font-size:0.72rem;background:#f8fafc;padding:6px 10px;border-radius:8px;border:1px solid var(--border);flex-wrap:wrap;}
+.step-chip{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:6px;font-weight:700;}
+.step-chip.done{background:#ecfdf5;color:#059669;border:1px solid #a7f3d0;}
+.step-chip.active{background:#fffbeb;color:#b45309;border:1px solid #fde68a;}
+.step-chip.pending{background:#f1f5f9;color:#94a3b8;border:1px solid #e2e8f0;}
 </style>
 <link rel="stylesheet" href="../assets/vendor/leaflet/leaflet.css">
 <script src="../assets/vendor/leaflet/leaflet.js"></script>
@@ -548,6 +553,21 @@ tr:hover td{background:#fafafa;}
               <?php if($r['latitude']): ?>
               <a class="map-link" href="javascript:void(0)" onclick="viewOnMap(<?= (float)$r['latitude'] ?>, <?= (float)$r['longitude'] ?>, <?= htmlspecialchars(json_encode($r['title'] ?? ''), ENT_QUOTES, 'UTF-8') ?>)"><i class="fas fa-map-pin"></i> View Map</a>
               <?php endif; ?>
+            </div>
+            <?php
+              $step_acc = !empty($r['accepted_at']);
+              $step_resp = !empty($r['responded_at']);
+              $step_res = !empty($r['resolved_at']);
+            ?>
+            <div class="telemetry-stepper">
+              <span style="font-weight:700;color:var(--text);"><i class="fas fa-tower-broadcast" style="color:var(--red-light);margin-right:3px;"></i>Telemetry:</span>
+              <span class="step-chip done"><i class="fas fa-check"></i> Dispatched</span>
+              <i class="fas fa-chevron-right" style="font-size:0.6rem;color:#cbd5e1;"></i>
+              <span class="step-chip <?= $step_acc ? 'done' : 'active' ?>"><i class="fas <?= $step_acc ? 'fa-check' : 'fa-clock' ?>"></i> <?= $step_acc ? 'Accepted' : 'Pending Accept' ?></span>
+              <i class="fas fa-chevron-right" style="font-size:0.6rem;color:#cbd5e1;"></i>
+              <span class="step-chip <?= $step_resp ? 'done' : ($step_acc ? 'active' : 'pending') ?>"><i class="fas <?= $step_resp ? 'fa-check' : 'fa-truck-fast' ?>"></i> <?= $step_resp ? 'En Route / On Site' : 'Standby' ?></span>
+              <i class="fas fa-chevron-right" style="font-size:0.6rem;color:#cbd5e1;"></i>
+              <span class="step-chip <?= $step_res ? 'done' : 'pending' ?>"><i class="fas <?= $step_res ? 'fa-check' : 'fa-circle-dot' ?>"></i> <?= $step_res ? 'Resolved' : 'Active Operation' ?></span>
             </div>
           </div>
           <div class="inc-actions">

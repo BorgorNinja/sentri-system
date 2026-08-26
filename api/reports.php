@@ -674,17 +674,136 @@ switch ($action) {
         break;
 
     case 'export':
-        if ($role !== 'admin') { echo json_encode(['status'=>'error','message'=>'Admin required.']); exit; }
-        header('Content-Type: text/csv');
-        header('Content-Disposition: attachment; filename="reports_export.csv"');
-        $output = fopen('php://output', 'w');
-        fputcsv($output, ['ID', 'Title', 'Status', 'Category', 'City', 'Created At']);
-        $res = $conn->query("SELECT id, title, status, category, city, created_at FROM reports ORDER BY created_at DESC");
-        while ($row = $res->fetch_assoc()) {
-            fputcsv($output, $row);
+        if (!in_array($role, ['admin', 'lgu', 'barangay'])) {
+            echo json_encode(['status'=>'error','message'=>'Unauthorized for export.']); exit;
         }
-        fclose($output);
-        exit;
+        $export_type = $_GET['type'] ?? 'reports';
+        $format = strtolower($_GET['format'] ?? 'csv');
+
+        if ($export_type === 'audit_logs') {
+            if ($role !== 'admin') {
+                echo json_encode(['status'=>'error','message'=>'Admin role required to export audit trail.']); exit;
+            }
+            $log_res = $conn->query("SELECT id, report_id, report_title, action, performed_by, performed_by_name, performed_at FROM report_audit_logs ORDER BY performed_at DESC");
+            $logs = [];
+            while ($row = $log_res->fetch_assoc()) {
+                $logs[] = $row;
+            }
+
+            if ($format === 'json') {
+                header('Content-Type: application/json');
+                header('Content-Disposition: attachment; filename="sentri_audit_trail_'.date('Ymd_His').'.json"');
+                echo json_encode(['status'=>'success','count'=>count($logs),'generated_at'=>date('c'),'audit_logs'=>$logs], JSON_PRETTY_PRINT);
+                exit;
+            } else {
+                header('Content-Type: text/csv; charset=utf-8');
+                header('Content-Disposition: attachment; filename="sentri_audit_trail_'.date('Ymd_His').'.csv"');
+                $out = fopen('php://output', 'w');
+                fputcsv($out, ['Audit ID', 'Report ID', 'Report Title', 'Action Performed', 'User ID', 'Performed By', 'Timestamp']);
+                foreach ($logs as $l) {
+                    fputcsv($out, [$l['id'], $l['report_id'], $l['report_title'], $l['action'], $l['performed_by'], $l['performed_by_name'], $l['performed_at']]);
+                }
+                fclose($out);
+                exit;
+            }
+        }
+
+        // Reports export with full telemetry
+        $filter_status = $_GET['status'] ?? '';
+        $filter_cat = $_GET['category'] ?? '';
+        $filter_brgy = $_GET['barangay'] ?? '';
+        $filter_city = $_GET['city'] ?? '';
+
+        $where_clauses = ["r.is_archived = 0"];
+        if ($filter_status && in_array($filter_status, ['dangerous','caution','safe'])) {
+            $where_clauses[] = "r.status = '".$conn->real_escape_string($filter_status)."'";
+        }
+        if ($filter_cat) {
+            $where_clauses[] = "r.category = '".$conn->real_escape_string($filter_cat)."'";
+        }
+        if ($filter_brgy) {
+            $where_clauses[] = "r.barangay = '".$conn->real_escape_string($filter_brgy)."'";
+        }
+        if ($filter_city) {
+            $where_clauses[] = "r.city = '".$conn->real_escape_string($filter_city)."'";
+        }
+
+        $where_sql = implode(' AND ', $where_clauses);
+        $rpt_sql = "
+            SELECT r.id, r.title, r.description, r.category, r.status, r.location_name,
+                   r.barangay, r.city, r.province, r.latitude, r.longitude, r.radius_m,
+                   r.upvotes, r.downvotes, r.escalated_to_lgu,
+                   CONCAT(u.first_name, ' ', u.last_name) AS reporter_name,
+                   u.email AS reporter_email,
+                   r.assigned_to,
+                   CONCAT(resp.first_name, ' ', resp.last_name) AS responder_name,
+                   resp.email AS responder_email,
+                   resp.responder_type AS responder_agency,
+                   r.accepted_at, r.responded_at, r.resolved_at,
+                   TIMESTAMPDIFF(MINUTE, r.created_at, r.resolved_at) AS resolution_minutes,
+                   r.created_at, r.updated_at
+            FROM reports r
+            JOIN users u ON u.id = r.user_id
+            LEFT JOIN users resp ON resp.id = r.assigned_to
+            WHERE $where_sql
+            ORDER BY r.created_at DESC";
+
+        $rpt_res = $conn->query($rpt_sql);
+        $export_data = [];
+        while ($row = $rpt_res->fetch_assoc()) {
+            $export_data[] = $row;
+        }
+
+        if ($format === 'json') {
+            header('Content-Type: application/json');
+            header('Content-Disposition: attachment; filename="sentri_reports_export_'.date('Ymd_His').'.json"');
+            echo json_encode([
+                'status' => 'success',
+                'count' => count($export_data),
+                'generated_at' => date('c'),
+                'reports' => $export_data
+            ], JSON_PRETTY_PRINT);
+            exit;
+        } else {
+            header('Content-Type: text/csv; charset=utf-8');
+            header('Content-Disposition: attachment; filename="sentri_reports_export_'.date('Ymd_His').'.csv"');
+            $out = fopen('php://output', 'w');
+            fputcsv($out, [
+                'ID', 'Title', 'Category', 'Status', 'Location Details', 'Barangay', 'City', 'Province',
+                'Latitude', 'Longitude', 'Radius (m)', 'Community Upvotes', 'Downvotes', 'Escalated to LGU',
+                'Reporter Name', 'Reporter Email', 'Assigned Responder', 'Responder Agency',
+                'Accepted At', 'Responded At', 'Resolved At', 'Resolution Duration (Mins)', 'Created At'
+            ]);
+            foreach ($export_data as $row) {
+                fputcsv($out, [
+                    $row['id'],
+                    $row['title'],
+                    $row['category'],
+                    $row['status'],
+                    $row['location_name'],
+                    $row['barangay'],
+                    $row['city'],
+                    $row['province'],
+                    $row['latitude'],
+                    $row['longitude'],
+                    $row['radius_m'],
+                    $row['upvotes'],
+                    $row['downvotes'],
+                    $row['escalated_to_lgu'] ? 'Yes' : 'No',
+                    $row['reporter_name'],
+                    $row['reporter_email'],
+                    $row['responder_name'] ?: 'Unassigned',
+                    $row['responder_agency'] ? strtoupper($row['responder_agency']) : 'N/A',
+                    $row['accepted_at'] ?: 'N/A',
+                    $row['responded_at'] ?: 'N/A',
+                    $row['resolved_at'] ?: 'N/A',
+                    $row['resolution_minutes'] !== null ? $row['resolution_minutes'] : 'N/A',
+                    $row['created_at']
+                ]);
+            }
+            fclose($out);
+            exit;
+        }
 
     default:
         echo json_encode(['status'=>'error','message'=>'Unknown action.']);

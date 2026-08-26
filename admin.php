@@ -424,6 +424,8 @@ tr:hover td{background:#fafbff;transition:background 0.15s;}
             <option value="1">Archived Only</option>
             <option value="">All</option>
           </select>
+          <a href="api/reports.php?action=export&type=reports&format=csv" class="act-btn restore" style="padding:9px 15px;text-decoration:none;font-weight:700;"><i class="fas fa-file-csv"></i> Export CSV</a>
+          <a href="api/reports.php?action=export&type=reports&format=json" class="act-btn user" style="padding:9px 15px;text-decoration:none;font-weight:700;"><i class="fas fa-file-code"></i> Export JSON</a>
         </div>
         <div class="table-wrap">
           <div class="loading" id="postsLoading"><i class="fas fa-spinner"></i> Loading posts...</div>
@@ -607,6 +609,8 @@ tr:hover td{background:#fafbff;transition:background 0.15s;}
             <option value="archived">Archived</option>
             <option value="restored">Restored</option>
           </select>
+          <a href="api/reports.php?action=export&type=audit_logs&format=csv" class="act-btn restore" style="padding:9px 15px;text-decoration:none;font-weight:700;"><i class="fas fa-file-csv"></i> Export Audit (CSV)</a>
+          <a href="api/reports.php?action=export&type=audit_logs&format=json" class="act-btn user" style="padding:9px 15px;text-decoration:none;font-weight:700;"><i class="fas fa-file-code"></i> Export JSON</a>
         </div>
         <div class="table-wrap">
           <div class="loading" id="auditLoading"><i class="fas fa-spinner"></i> Loading audit log...</div>

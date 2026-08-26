@@ -379,12 +379,13 @@ tr:hover td{background:#fafafa;}
         <h3><i class="fas fa-file-lines" style="color:var(--green);margin-right:6px;"></i>All Incident Reports</h3>
         <span class="card-meta" id="rptCount"><?= count($reports) ?> records</span>
       </div>
-      <div class="reports-filter-bar">
+      <div class="reports-filter-bar" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
         <button class="rf-btn rf-active" onclick="filterReports('all',this)">All</button>
         <button class="rf-btn" onclick="filterReports('dangerous',this)"><i class="fas fa-circle" style="color:#dc2626;font-size:0.6rem;"></i> Dangerous</button>
         <button class="rf-btn" onclick="filterReports('caution',this)"><i class="fas fa-circle" style="color:#d97706;font-size:0.6rem;"></i> Caution</button>
         <button class="rf-btn" onclick="filterReports('safe',this)"><i class="fas fa-circle" style="color:#16a34a;font-size:0.6rem;"></i> Safe</button>
-        <input type="search" class="rf-search" id="rptSearch" placeholder="Search reports…" oninput="searchReports(this.value)">
+        <input type="search" class="rf-search" id="rptSearch" placeholder="Search reports…" oninput="searchReports(this.value)" style="flex:1;min-width:180px;">
+        <a href="../api/reports.php?action=export&type=reports&format=csv<?= $brgy ? '&barangay='.rawurlencode($brgy) : '' ?>" class="rf-btn" style="text-decoration:none;display:inline-flex;align-items:center;gap:5px;background:#f0fdf4;color:#166534;border:1px solid #bbf7d0;font-weight:700;"><i class="fas fa-file-csv"></i> Export CSV</a>
       </div>
       <?php if(empty($reports)): ?><div class="empty"><i class="fas fa-folder-open"></i><p>No reports found.</p></div>
       <?php else: ?><?php include_once __DIR__.'/../portal/_report_table.php'; endif; ?>
