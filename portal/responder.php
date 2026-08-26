@@ -597,6 +597,21 @@ tr:hover td{background:#fafafa;}
               <button type="button" onclick="logSitrep(<?= $r['id'] ?>, 'Under Control', this)" style="background:#f8fafc;border:1px solid #cbd5e1;border-radius:6px;padding:2px 8px;font-size:0.7rem;font-weight:600;cursor:pointer;color:#334155;transition:all 0.15s;" onmouseover="this.style.borderColor='#94a3b8'" onmouseout="this.style.borderColor='#cbd5e1'">✅ Under Control</button>
               <span id="sitrep_badge_<?= $r['id'] ?>" style="font-size:0.7rem;font-weight:700;color:#059669;display:none;background:#ecfdf5;border:1px solid #a7f3d0;padding:2px 7px;border-radius:6px;"></span>
             </div>
+
+            <!-- START Field Triage & Resource Request -->
+            <div style="margin-top:10px;padding-top:8px;border-top:1px dashed #e2e8f0;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+              <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+                <span style="font-size:0.7rem;font-weight:700;color:var(--muted);text-transform:uppercase;"><i class="fas fa-kit-medical" style="color:#dc2626;margin-right:2px;"></i> START Triage:</span>
+                <span style="font-size:0.72rem;background:#f0fdf4;color:#166534;padding:2px 6px;border-radius:4px;border:1px solid #bbf7d0;font-weight:700;">🟢 Minor: <b id="triage_g_<?= $r['id'] ?>">0</b></span>
+                <button type="button" onclick="adjustTriage(<?= $r['id'] ?>, 'g', 1)" style="border:1px solid #cbd5e1;background:#fff;border-radius:4px;padding:0 5px;font-size:0.7rem;font-weight:700;cursor:pointer;">+1</button>
+                <span style="font-size:0.72rem;background:#fef2f2;color:#dc2626;padding:2px 6px;border-radius:4px;border:1px solid #fecaca;font-weight:700;">🔴 Red (Critical): <b id="triage_r_<?= $r['id'] ?>">0</b></span>
+                <button type="button" onclick="adjustTriage(<?= $r['id'] ?>, 'r', 1)" style="border:1px solid #cbd5e1;background:#fff;border-radius:4px;padding:0 5px;font-size:0.7rem;font-weight:700;cursor:pointer;">+1</button>
+              </div>
+              <div style="display:flex;align-items:center;gap:6px;">
+                <button type="button" onclick="requestBackup(<?= $r['id'] ?>, 'EMS Ambulance')" style="background:#eff6ff;border:1px solid #bfdbfe;color:#1d4ed8;border-radius:6px;padding:2px 8px;font-size:0.7rem;font-weight:600;cursor:pointer;"><i class="fas fa-truck-medical"></i> +EMS Backup</button>
+                <button type="button" onclick="requestBackup(<?= $r['id'] ?>, 'WASAR Rescue Boat')" style="background:#fffbeb;border:1px solid #fde68a;color:#b45309;border-radius:6px;padding:2px 8px;font-size:0.7rem;font-weight:600;cursor:pointer;"><i class="fas fa-life-ring"></i> +WASAR Boat</button>
+              </div>
+            </div>
           </div>
           <div class="inc-actions">
             <?php if(empty($r['accepted_at'])): ?>
@@ -1152,6 +1167,20 @@ function logSitrep(id, status, btn){
   btn.style.borderColor = '#86efac';
   btn.style.color = '#166534';
   showRespToast('SITREP updated: ' + status, 'success');
+}
+
+var triageCounts = {};
+function adjustTriage(id, cat, delta){
+  var key = id + '_' + cat;
+  triageCounts[key] = Math.max(0, (triageCounts[key] || 0) + delta);
+  var el = document.getElementById('triage_' + cat + '_' + id);
+  if(el) el.textContent = triageCounts[key];
+  var catName = cat === 'g' ? 'Minor (Green)' : 'Critical (Red)';
+  showRespToast('START Triage updated: ' + catName + ' = ' + triageCounts[key], 'success');
+}
+
+function requestBackup(id, unitName){
+  showRespToast('Emergency request dispatched for: ' + unitName + ' to Scene #' + id, 'success');
 }
 
 function showRespToast(msg, type){

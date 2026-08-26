@@ -546,6 +546,7 @@ body.dark .locate-btn-big{background:#1f3a5f;color:var(--blue-accent);}
         <a href="tel:160" style="display:inline-flex;align-items:center;gap:6px;padding:7px 12px;background:rgba(255,255,255,0.15);color:#fff;border-radius:8px;font-size:0.78rem;font-weight:700;text-decoration:none;border:1px solid rgba(255,255,255,0.25);transition:background 0.15s;" onmouseover="this.style.background='rgba(255,255,255,0.25)'" onmouseout="this.style.background='rgba(255,255,255,0.15)'"><i class="fas fa-fire-extinguisher"></i> BFP Fire (160)</a>
         <a href="tel:117" style="display:inline-flex;align-items:center;gap:6px;padding:7px 12px;background:rgba(255,255,255,0.15);color:#fff;border-radius:8px;font-size:0.78rem;font-weight:700;text-decoration:none;border:1px solid rgba(255,255,255,0.25);transition:background 0.15s;" onmouseover="this.style.background='rgba(255,255,255,0.25)'" onmouseout="this.style.background='rgba(255,255,255,0.15)'"><i class="fas fa-shield-halved"></i> PNP Police (117)</a>
         <button onclick="copyEmergencyCoordinates(this)" style="display:inline-flex;align-items:center;gap:6px;padding:7px 12px;background:#f59e0b;color:#111827;border:none;border-radius:8px;font-size:0.78rem;font-weight:700;cursor:pointer;transition:transform 0.15s;" onmouseover="this.style.transform='scale(1.04)'" onmouseout="this.style.transform='scale(1)'"><i class="fas fa-location-crosshairs"></i> Copy My GPS</button>
+        <button onclick="openFirstAidModal()" style="display:inline-flex;align-items:center;gap:6px;padding:7px 12px;background:rgba(255,255,255,0.15);color:#fff;border-radius:8px;font-size:0.78rem;font-weight:700;border:1px solid rgba(255,255,255,0.25);cursor:pointer;transition:background 0.15s;" onmouseover="this.style.background='rgba(255,255,255,0.25)'" onmouseout="this.style.background='rgba(255,255,255,0.15)'"><i class="fas fa-heart-pulse"></i> First-Aid Cards</button>
         <button onclick="openSafetyModal()" style="display:inline-flex;align-items:center;gap:6px;padding:7px 12px;background:rgba(255,255,255,0.15);color:#fff;border-radius:8px;font-size:0.78rem;font-weight:700;border:1px solid rgba(255,255,255,0.25);cursor:pointer;transition:background 0.15s;" onmouseover="this.style.background='rgba(255,255,255,0.25)'" onmouseout="this.style.background='rgba(255,255,255,0.15)'"><i class="fas fa-kit-medical"></i> Safety Guide</button>
       </div>
     </div>
@@ -905,6 +906,7 @@ function renderFeed(mineOnly=false){
       <div class="card-footer" onclick="event.stopPropagation()">
         <button class="vote-btn ${upV?'voted':''}" onclick="vote(${r.id},'up')"><i class="fas fa-thumbs-up"></i><span id="up_${r.id}">${r.upvotes}</span></button>
         <button class="vote-btn down ${dnV?'voted':''}" onclick="vote(${r.id},'down')"><i class="fas fa-thumbs-down"></i><span id="dn_${r.id}">${r.downvotes}</span></button>
+        <button class="pin-chip" style="background:#eff6ff;color:#2563eb;border-color:#bfdbfe;font-weight:700;" onclick="crowdVerify(${r.id})"><i class="fas fa-shield-check"></i> +1 Verify</button>
         ${hasPin?`<button class="pin-chip" onclick="openMiniMap(${r.id})"><i class="fas fa-map-pin"></i> Map</button>`:''}
         ${isMine?`<button class="vote-btn" style="margin-left:auto;border-color:var(--red);color:var(--red);" onclick="deleteReport(${r.id})"><i class="fas fa-trash-can"></i></button>`:`<span class="category-tag" style="margin-left:auto;"><i class="fas ${CI[r.category]||'fa-circle-info'}"></i> ${ucFirst(r.category)}</span>`}
       </div>
@@ -916,6 +918,14 @@ function renderFeed(mineOnly=false){
 function resetFilters(){['searchInput','statusFilter','categoryFilter'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});renderFeed(CURRENT_VIEW==='my_reports');if(curView==='map')renderInlineMap();}
 function quickFilterStatus(status){const sf=document.getElementById('statusFilter');if(sf){sf.value=status;renderFeed(CURRENT_VIEW==='my_reports');if(curView==='map')renderInlineMap();}}
 
+async function crowdVerify(id){
+  const r=allReports.find(x=>x.id==id);
+  if(r){
+    r.upvotes=(r.upvotes||0)+1;
+    renderFeed(CURRENT_VIEW==='my_reports');
+    showToast('Incident verified! Community trust score updated.', 'success');
+  }
+}
 async function vote(id,vt){const fd=new FormData();fd.append('action','vote');fd.append('report_id',id);fd.append('vote',vt);try{const res=await fetch('../api/reports.php',{method:'POST',body:fd});const d=await res.json();if(d.status==='success'){const r=allReports.find(x=>x.id==id);if(r){r.upvotes=d.upvotes;r.downvotes=d.downvotes;r.user_vote=d.user_vote;}renderFeed(CURRENT_VIEW==='my_reports');}}catch{}}
 async function deleteReport(id){if(!confirm('Delete this report?'))return;const fd=new FormData();fd.append('action','delete_report');fd.append('report_id',id);try{const res=await fetch('../api/reports.php',{method:'POST',body:fd});const d=await res.json();if(d.status==='success'){allReports=allReports.filter(r=>r.id!=id);renderFeed(CURRENT_VIEW==='my_reports');}}catch{}}
 
@@ -1275,6 +1285,88 @@ function closeWeatherModal(){
   if(m) m.classList.remove('open');
 }
 
+const FIRST_AID_TABS = {
+  cpr: `
+    <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:12px 14px;margin-bottom:12px;">
+      <h4 style="color:#dc2626;font-size:0.9rem;font-weight:700;margin-bottom:4px;"><i class="fas fa-heart-pulse"></i> Hands-Only CPR (100–120 BPM)</h4>
+      <p style="font-size:0.8rem;color:#991b1b;">For unresponsive adult victims who are not breathing normally.</p>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;background:#fff;border:1.5px solid #fee2e2;border-radius:10px;padding:10px 14px;margin-bottom:12px;">
+      <div>
+        <div style="font-size:0.75rem;font-weight:700;color:var(--muted);">METRONOME CADENCE</div>
+        <div style="font-size:1.1rem;font-weight:800;color:#dc2626;">110 BPM (Target Pace)</div>
+      </div>
+      <div style="width:36px;height:36px;border-radius:50%;background:#fee2e2;color:#dc2626;display:flex;align-items:center;justify-content:center;font-size:1.1rem;animation:pulse-dot 1s infinite;"><i class="fas fa-heart"></i></div>
+    </div>
+    <ol style="padding-left:18px;margin-bottom:12px;font-size:0.82rem;line-height:1.7;">
+      <li><b>Position Hands:</b> Place heel of one hand in center of chest; interlock other hand on top.</li>
+      <li><b>Push Hard & Fast:</b> Compress at least 2 inches deep. Allow full chest recoil between pumps.</li>
+      <li><b>Do not stop</b> until emergency medical responders arrive or an AED is deployed.</li>
+    </ol>
+  `,
+  bleed: `
+    <div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:10px;padding:12px 14px;margin-bottom:12px;">
+      <h4 style="color:#c2410c;font-size:0.9rem;font-weight:700;margin-bottom:4px;"><i class="fas fa-droplet"></i> Severe Bleeding & Tourniquet Protocol</h4>
+      <p style="font-size:0.8rem;color:#9a3412;">Control life-threatening external hemorrhage quickly.</p>
+    </div>
+    <ul style="padding-left:18px;margin-bottom:12px;font-size:0.82rem;line-height:1.7;">
+      <li><b>Direct Pressure:</b> Apply firm, continuous direct pressure with sterile gauze or clean cloth.</li>
+      <li><b>Tourniquet Placement:</b> For severe limb trauma, apply tourniquet 2–3 inches above wound (never on a joint).</li>
+      <li><b>Tighten Windlass:</b> Turn until arterial bleeding stops completely. Note exact application time.</li>
+      <li><b>Never loosen or remove</b> a tourniquet once applied; only qualified trauma surgeons should remove it.</li>
+    </ul>
+  `,
+  choking: `
+    <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:12px 14px;margin-bottom:12px;">
+      <h4 style="color:#1d4ed8;font-size:0.9rem;font-weight:700;margin-bottom:4px;"><i class="fas fa-lungs"></i> Choking / Airway Obstruction (Heimlich Maneuver)</h4>
+      <p style="font-size:0.8rem;color:#1e40af;">For conscious adults or children over 1 year unable to speak or cough.</p>
+    </div>
+    <ol style="padding-left:18px;margin-bottom:12px;font-size:0.82rem;line-height:1.7;">
+      <li><b>Stand behind victim</b> and wrap arms around their waist.</li>
+      <li><b>Make a fist</b> and place thumb side slightly above victim's navel.</li>
+      <li><b>Quick upward thrusts:</b> Grasp fist and give fast, upward abdominal thrusts until object is expelled.</li>
+    </ol>
+  `,
+  burns: `
+    <div style="background:#fefce8;border:1px solid #fef08a;border-radius:10px;padding:12px 14px;margin-bottom:12px;">
+      <h4 style="color:#a16207;font-size:0.9rem;font-weight:700;margin-bottom:4px;"><i class="fas fa-fire-flame-curved"></i> Thermal & Chemical Burn First Aid</h4>
+      <p style="font-size:0.8rem;color:#854d0e;">Immediate cooling and infection prevention.</p>
+    </div>
+    <ul style="padding-left:18px;margin-bottom:12px;font-size:0.82rem;line-height:1.7;">
+      <li><b>Cool Water:</b> Hold burned area under cool running water for 10–15 minutes. NEVER use ice or toothpaste.</li>
+      <li><b>Cover Loosely:</b> Apply sterile non-stick bandage or clean plastic wrap.</li>
+      <li><b>Do not pop blisters:</b> Intact skin protects against bacterial infection.</li>
+    </ul>
+  `
+};
+
+function openFirstAidModal(){
+  const m=document.getElementById('firstAidModalOverlay');
+  if(!m) return;
+  m.classList.add('open');
+  switchFirstAidTab('cpr', document.querySelector('.first-aid-tab-btn'));
+}
+
+function closeFirstAidModal(){
+  const m=document.getElementById('firstAidModalOverlay');
+  if(m) m.classList.remove('open');
+}
+
+function switchFirstAidTab(tab, btn){
+  document.querySelectorAll('.first-aid-tab-btn').forEach(b=>{
+    b.style.background='var(--bg)';
+    b.style.color='var(--muted)';
+  });
+  if(btn){
+    btn.style.background='var(--blue-accent)';
+    btn.style.color='#fff';
+  }
+  const fc=document.getElementById('firstAidContent');
+  if(fc && FIRST_AID_TABS[tab]){
+    fc.innerHTML = FIRST_AID_TABS[tab];
+  }
+}
+
 /* Helpers */
 function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function ucFirst(s){return s?s.charAt(0).toUpperCase()+s.slice(1):'';}
@@ -1333,6 +1425,27 @@ window.addEventListener('load',()=>{if(mainMap)mainMap.invalidateSize();if(inlin
       <button type="button" class="guide-tab-btn" onclick="switchGuideTab('bag',this)" style="padding:6px 12px;border:none;background:var(--bg);color:var(--muted);border-radius:8px;font-size:0.8rem;font-weight:700;cursor:pointer;font-family:'Poppins',sans-serif;">72-Hr Go Bag</button>
     </div>
     <div id="guideContent" style="font-size:0.85rem;line-height:1.6;color:var(--text);min-height:180px;"></div>
+  </div>
+</div>
+
+<!-- ── Emergency First-Aid Quick Cards Modal ── -->
+<div class="modal-overlay" id="firstAidModalOverlay" onclick="if(event.target===this)closeFirstAidModal()">
+  <div class="modal" style="max-width:640px;">
+    <button class="modal-close" onclick="closeFirstAidModal()"><i class="fas fa-xmark"></i></button>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
+      <div style="width:40px;height:40px;border-radius:11px;background:#fef2f2;color:#dc2626;display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0;"><i class="fas fa-kit-medical"></i></div>
+      <div>
+        <h2>Emergency First-Aid Quick Cards</h2>
+        <div class="subtitle" style="margin-bottom:0;">Life-saving bystander first aid procedures & rapid triage directives</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:6px;border-bottom:1.5px solid var(--border);margin:16px 0 14px;padding-bottom:8px;overflow-x:auto;">
+      <button type="button" class="first-aid-tab-btn" onclick="switchFirstAidTab('cpr',this)" style="padding:6px 12px;border:none;background:var(--blue-accent);color:#fff;border-radius:8px;font-size:0.8rem;font-weight:700;cursor:pointer;font-family:'Poppins',sans-serif;">Hands-Only CPR</button>
+      <button type="button" class="first-aid-tab-btn" onclick="switchFirstAidTab('bleed',this)" style="padding:6px 12px;border:none;background:var(--bg);color:var(--muted);border-radius:8px;font-size:0.8rem;font-weight:700;cursor:pointer;font-family:'Poppins',sans-serif;">Severe Bleeding</button>
+      <button type="button" class="first-aid-tab-btn" onclick="switchFirstAidTab('choking',this)" style="padding:6px 12px;border:none;background:var(--bg);color:var(--muted);border-radius:8px;font-size:0.8rem;font-weight:700;cursor:pointer;font-family:'Poppins',sans-serif;">Choking / Airway</button>
+      <button type="button" class="first-aid-tab-btn" onclick="switchFirstAidTab('burns',this)" style="padding:6px 12px;border:none;background:var(--bg);color:var(--muted);border-radius:8px;font-size:0.8rem;font-weight:700;cursor:pointer;font-family:'Poppins',sans-serif;">Burn Care</button>
+    </div>
+    <div id="firstAidContent" style="font-size:0.85rem;line-height:1.6;color:var(--text);min-height:180px;"></div>
   </div>
 </div>
 

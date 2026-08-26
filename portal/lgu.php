@@ -690,6 +690,46 @@ tr:hover td{background:#fafafa;}
       </div>
     </div>
 
+    <!-- ── River Basin & Flood Gauge Telemetry Monitor ── -->
+    <div class="card" style="margin-bottom:18px;">
+      <div class="card-header">
+        <h3><i class="fas fa-water" style="color:#0284c7;margin-right:6px;"></i>River Basin & Hydrological Sensor Telemetry</h3>
+        <span class="card-meta">PAGASA-QC DRRMO Station Network</span>
+      </div>
+      <div style="padding:16px 18px;display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;">
+        <div style="background:#f8fafc;border:1px solid var(--border);border-radius:12px;padding:14px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+            <strong style="font-size:0.86rem;">Marikina River Basin (Nangka Station)</strong>
+            <span style="background:#f0fdf4;color:#166534;font-size:0.68rem;font-weight:700;padding:2px 8px;border-radius:10px;border:1px solid #bbf7d0;">Normal (14.2m)</span>
+          </div>
+          <div style="font-size:0.72rem;color:var(--muted);margin-bottom:8px;">Alarm Level: 15.0m &middot; Critical: 18.0m</div>
+          <div style="width:100%;height:8px;background:#e2e8f0;border-radius:4px;overflow:hidden;">
+            <div style="width:58%;height:100%;background:#16a34a;border-radius:4px;"></div>
+          </div>
+        </div>
+        <div style="background:#f8fafc;border:1px solid var(--border);border-radius:12px;padding:14px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+            <strong style="font-size:0.86rem;">Tullahan River (Novaliches Station)</strong>
+            <span style="background:#fffbeb;color:#b45309;font-size:0.68rem;font-weight:700;padding:2px 8px;border-radius:10px;border:1px solid #fde68a;">Alert Level 1 (17.4m)</span>
+          </div>
+          <div style="font-size:0.72rem;color:var(--muted);margin-bottom:8px;">Alarm Level: 17.0m &middot; Critical: 19.5m</div>
+          <div style="width:100%;height:8px;background:#e2e8f0;border-radius:4px;overflow:hidden;">
+            <div style="width:78%;height:100%;background:#f59e0b;border-radius:4px;"></div>
+          </div>
+        </div>
+        <div style="background:#f8fafc;border:1px solid var(--border);border-radius:12px;padding:14px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+            <strong style="font-size:0.86rem;">San Juan River (Quezon Ave Station)</strong>
+            <span style="background:#f0fdf4;color:#166534;font-size:0.68rem;font-weight:700;padding:2px 8px;border-radius:10px;border:1px solid #bbf7d0;">Normal (11.1m)</span>
+          </div>
+          <div style="font-size:0.72rem;color:var(--muted);margin-bottom:8px;">Alarm Level: 13.5m &middot; Critical: 16.0m</div>
+          <div style="width:100%;height:8px;background:#e2e8f0;border-radius:4px;overflow:hidden;">
+            <div style="width:45%;height:100%;background:#16a34a;border-radius:4px;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
       <div class="card">
         <div class="card-header">
           <h3><i class="fas fa-triangle-exclamation" style="color:#dc2626;margin-right:6px;"></i>Active Dangerous Incidents</h3>

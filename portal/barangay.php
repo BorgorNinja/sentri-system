@@ -349,8 +349,12 @@ tr:hover td{background:#fafafa;}
         <div class="page-sub"><?= htmlspecialchars($org) ?><?= $city ? ' &mdash; '.htmlspecialchars($city) : '' ?></div>
       </div>
     </div>
-      <button onclick="openEvacModal()" style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;background:#f0fdf4;border:1px solid #86efac;color:#166534;border-radius:20px;font-size:0.72rem;font-weight:700;cursor:pointer;margin-right:8px;font-family:'Inter',sans-serif;transition:all 0.15s;" onmouseover="this.style.background='#dcfce7'" onmouseout="this.style.background='#f0fdf4'"><i class="fas fa-person-shelter"></i> Evacuation Centers (3 Active)</button>
-      <span class="badge-brgy"><i class="fas fa-house-flag"></i>&nbsp; Barangay Official</span>
+      <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+        <button onclick="openEvacModal()" style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;background:#f0fdf4;border:1px solid #86efac;color:#166534;border-radius:20px;font-size:0.72rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;transition:all 0.15s;" onmouseover="this.style.background='#dcfce7'" onmouseout="this.style.background='#f0fdf4'"><i class="fas fa-person-shelter"></i> Evac Centers (3 Active)</button>
+        <button onclick="openReliefModal()" style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;background:#eff6ff;border:1px solid #bfdbfe;color:#1d4ed8;border-radius:20px;font-size:0.72rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;transition:all 0.15s;" onmouseover="this.style.background='#dbeafe'" onmouseout="this.style.background='#eff6ff'"><i class="fas fa-boxes-stacked"></i> Relief Inventory</button>
+        <button onclick="openBroadcastModal()" style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;background:#fef2f2;border:1px solid #fecaca;color:#dc2626;border-radius:20px;font-size:0.72rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;transition:all 0.15s;" onmouseover="this.style.background='#fee2e2'" onmouseout="this.style.background='#fef2f2'"><i class="fas fa-bullhorn"></i> Mass Broadcast</button>
+        <span class="badge-brgy"><i class="fas fa-house-flag"></i>&nbsp; Barangay Official</span>
+      </div>
   </div>
 
   <div class="content">
@@ -1145,6 +1149,99 @@ document.getElementById('contactModal').addEventListener('click',function(e){if(
   </div>
 </div>
 
+<!-- RELIEF SUPPLIES INVENTORY MODAL -->
+<div class="modal-bg" id="reliefModal">
+  <div class="modal" style="max-width:600px;">
+    <div class="modal-header">
+      <h3><i class="fas fa-boxes-stacked" style="color:var(--navy);margin-right:6px;"></i>Barangay Emergency Relief & Supplies Tracker</h3>
+      <button class="modal-close" onclick="closeReliefModal()"><i class="fas fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        <div style="background:#f8fafc;border:1px solid var(--border);border-radius:12px;padding:14px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+            <strong style="font-size:0.88rem;"><i class="fas fa-bowl-rice" style="color:#d97706;margin-right:6px;"></i>Family Food Packs (FFP)</strong>
+            <span id="relief1_tag" style="background:#f0fdf4;color:#166534;font-size:0.7rem;font-weight:700;padding:2px 8px;border-radius:12px;border:1px solid #bbf7d0;">Optimal</span>
+          </div>
+          <div style="font-size:0.75rem;color:var(--muted);margin-bottom:6px;">Standard DSWD 3-day family provisions (Rice, canned goods, coffee, noodles)</div>
+          <div style="display:flex;align-items:center;justify-content:space-between;font-size:0.78rem;font-weight:700;margin-bottom:6px;">
+            <span>Stock on hand: <b id="relief1_qty" style="color:var(--text);font-size:0.95rem;">420</b> / 500 packs</span>
+          </div>
+          <div style="display:flex;gap:6px;justify-content:flex-end;">
+            <button onclick="updateReliefQty(1, 25)" style="background:#fff;border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-size:0.74rem;font-weight:600;cursor:pointer;">+25 Restock</button>
+            <button onclick="updateReliefQty(1, -25)" style="background:#fff;border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-size:0.74rem;font-weight:600;cursor:pointer;">-25 Disburse</button>
+          </div>
+        </div>
+
+        <div style="background:#f8fafc;border:1px solid var(--border);border-radius:12px;padding:14px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+            <strong style="font-size:0.88rem;"><i class="fas fa-bottle-water" style="color:#0284c7;margin-right:6px;"></i>Potable Drinking Water (5-Gal Bottles)</strong>
+            <span id="relief2_tag" style="background:#f0fdf4;color:#166534;font-size:0.7rem;font-weight:700;padding:2px 8px;border-radius:12px;border:1px solid #bbf7d0;">Optimal</span>
+          </div>
+          <div style="font-size:0.75rem;color:var(--muted);margin-bottom:6px;">Purified water containers for evacuation centers and community distribution</div>
+          <div style="display:flex;align-items:center;justify-content:space-between;font-size:0.78rem;font-weight:700;margin-bottom:6px;">
+            <span>Stock on hand: <b id="relief2_qty" style="color:var(--text);font-size:0.95rem;">180</b> / 250 containers</span>
+          </div>
+          <div style="display:flex;gap:6px;justify-content:flex-end;">
+            <button onclick="updateReliefQty(2, 10)" style="background:#fff;border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-size:0.74rem;font-weight:600;cursor:pointer;">+10 Restock</button>
+            <button onclick="updateReliefQty(2, -10)" style="background:#fff;border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-size:0.74rem;font-weight:600;cursor:pointer;">-10 Disburse</button>
+          </div>
+        </div>
+
+        <div style="background:#f8fafc;border:1px solid var(--border);border-radius:12px;padding:14px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+            <strong style="font-size:0.88rem;"><i class="fas fa-kit-medical" style="color:#dc2626;margin-right:6px;"></i>Emergency Trauma & Medical Kits</strong>
+            <span id="relief3_tag" style="background:#fffbeb;color:#b45309;font-size:0.7rem;font-weight:700;padding:2px 8px;border-radius:12px;border:1px solid #fde68a;">Restock Recommended</span>
+          </div>
+          <div style="font-size:0.75rem;color:var(--muted);margin-bottom:6px;">Bandages, antiseptic, burn dressings, splints, and OTC emergency medications</div>
+          <div style="display:flex;align-items:center;justify-content:space-between;font-size:0.78rem;font-weight:700;margin-bottom:6px;">
+            <span>Stock on hand: <b id="relief3_qty" style="color:var(--text);font-size:0.95rem;">32</b> / 100 kits</span>
+          </div>
+          <div style="display:flex;gap:6px;justify-content:flex-end;">
+            <button onclick="updateReliefQty(3, 5)" style="background:#fff;border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-size:0.74rem;font-weight:600;cursor:pointer;">+5 Restock</button>
+            <button onclick="updateReliefQty(3, -5)" style="background:#fff;border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-size:0.74rem;font-weight:600;cursor:pointer;">-5 Disburse</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MASS BROADCAST MODAL -->
+<div class="modal-bg" id="broadcastModal">
+  <div class="modal" style="max-width:580px;">
+    <div class="modal-header">
+      <h3><i class="fas fa-bullhorn" style="color:#dc2626;margin-right:6px;"></i>Barangay Emergency Mass Broadcast</h3>
+      <button class="modal-close" onclick="closeBroadcastModal()"><i class="fas fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <div style="margin-bottom:12px;">
+        <label style="font-size:0.76rem;font-weight:700;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:4px;">Alert Level</label>
+        <select id="bc_severity" style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:0.84rem;outline:none;font-family:'Inter',sans-serif;">
+          <option value="advisory">🟡 General Advisory & Precautionary Notice</option>
+          <option value="warning">🟠 Urgent Hazard Warning (Storm / Flooding)</option>
+          <option value="evac">🔴 Mandatory Evacuation Order (Immediate Action)</option>
+        </select>
+      </div>
+      <div style="margin-bottom:12px;">
+        <label style="font-size:0.76rem;font-weight:700;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:4px;">Broadcast Channels</label>
+        <div style="display:flex;gap:12px;font-size:0.8rem;font-weight:600;">
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="checkbox" checked disabled> SMS Blast (Est. 2,450 Residents)</label>
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="checkbox" checked disabled> Barangay PA Sirens</label>
+        </div>
+      </div>
+      <div style="margin-bottom:14px;">
+        <label style="font-size:0.76rem;font-weight:700;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:4px;">Announcement Message</label>
+        <textarea id="bc_msg" rows="4" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:0.84rem;outline:none;font-family:'Inter',sans-serif;resize:vertical;" placeholder="Type urgent announcement here...">[BARANGAY ADVISORY] Due to rising water levels, low-lying residents in Purok 3 and 4 are advised to proceed to San Jose Covered Court evacuation center immediately.</textarea>
+      </div>
+      <div style="display:flex;justify-content:flex-end;gap:8px;">
+        <button onclick="closeBroadcastModal()" style="padding:8px 16px;background:#f1f5f9;border:1px solid var(--border);border-radius:8px;font-size:0.82rem;font-weight:700;cursor:pointer;">Cancel</button>
+        <button onclick="sendMassBroadcast()" style="padding:8px 18px;background:#dc2626;color:#fff;border:none;border-radius:8px;font-size:0.82rem;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px;"><i class="fas fa-tower-broadcast"></i> Transmit Broadcast</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
 function openEvacModal(){ document.getElementById('evacModal').classList.add('show'); }
 function closeEvacModal(){ document.getElementById('evacModal').classList.remove('show'); }
@@ -1159,6 +1256,28 @@ function updateEvacCount(id, delta){
   showToast(`Evacuation center updated: ${evacVals[id]} / ${evacCaps[id]} (${pct}%)`, 'success');
 }
 document.getElementById('evacModal').addEventListener('click',function(e){if(e.target===this)closeEvacModal();});
+
+function openReliefModal(){ document.getElementById('reliefModal').classList.add('show'); }
+function closeReliefModal(){ document.getElementById('reliefModal').classList.remove('show'); }
+document.getElementById('reliefModal').addEventListener('click',function(e){if(e.target===this)closeReliefModal();});
+
+let reliefStock = {1: 420, 2: 180, 3: 32};
+function updateReliefQty(id, delta){
+  reliefStock[id] = Math.max(0, reliefStock[id] + delta);
+  document.getElementById(`relief${id}_qty`).textContent = reliefStock[id];
+  showToast(`Relief inventory updated: ${reliefStock[id]} units remaining`, 'success');
+}
+
+function openBroadcastModal(){ document.getElementById('broadcastModal').classList.add('show'); }
+function closeBroadcastModal(){ document.getElementById('broadcastModal').classList.remove('show'); }
+document.getElementById('broadcastModal').addEventListener('click',function(e){if(e.target===this)closeBroadcastModal();});
+
+function sendMassBroadcast(){
+  const msg = document.getElementById('bc_msg').value.trim();
+  if(!msg){ showToast('Please enter an announcement message.', 'error'); return; }
+  closeBroadcastModal();
+  showToast('Emergency Mass Broadcast transmitted across 2,450 registered resident endpoints and PA sirens.', 'success');
+}
 </script>
 <?= csrf_script() ?>
 </body>
