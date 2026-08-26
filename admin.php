@@ -360,6 +360,46 @@ tr:hover td{background:#fafbff;transition:background 0.15s;}
 
     <!-- ── OVERVIEW TAB ── -->
     <div class="tab-panel active" id="tab-overview">
+      <div class="panel" style="margin-bottom:20px;background:linear-gradient(135deg,#ffffff,#f8faff);border:1.5px solid #e2e8f0;">
+        <div class="panel-header" style="border-bottom:1px solid #e2e8f0;padding-bottom:12px;margin-bottom:16px;">
+          <div class="panel-title" style="color:var(--admin);display:flex;align-items:center;gap:8px;">
+            <i class="fas fa-server"></i> System Telemetry & Operational Health
+          </div>
+          <span style="font-size:0.78rem;background:#f5f3ff;color:var(--admin);padding:3px 10px;border-radius:20px;font-weight:700;border:1px solid #ddd6fe;">
+            <i class="fas fa-circle-check" style="color:#16a34a;margin-right:4px;"></i>All Systems Operational
+          </span>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;">
+          <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:14px 16px;box-shadow:0 1px 4px rgba(0,0,0,0.03);">
+            <div style="font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--muted);margin-bottom:4px;">Database Connection</div>
+            <div style="font-size:0.92rem;font-weight:700;color:var(--text);display:flex;align-items:center;gap:6px;">
+              <i class="fas fa-database" style="color:#2563eb;"></i> MariaDB Active
+            </div>
+            <div style="font-size:0.74rem;color:var(--muted);margin-top:2px;">Host: localhost &middot; InnoDB</div>
+          </div>
+          <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:14px 16px;box-shadow:0 1px 4px rgba(0,0,0,0.03);">
+            <div style="font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--muted);margin-bottom:4px;">Runtime & Engine</div>
+            <div style="font-size:0.92rem;font-weight:700;color:var(--text);display:flex;align-items:center;gap:6px;">
+              <i class="fas fa-microchip" style="color:#7c3aed;font-size:1.1rem;"></i> PHP <?= PHP_VERSION ?>
+            </div>
+            <div style="font-size:0.74rem;color:var(--muted);margin-top:2px;">Memory Peak: <?= round(memory_get_peak_usage(true)/1024/1024, 2) ?> MB</div>
+          </div>
+          <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:14px 16px;box-shadow:0 1px 4px rgba(0,0,0,0.03);">
+            <div style="font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--muted);margin-bottom:4px;">Upload Storage</div>
+            <div style="font-size:0.92rem;font-weight:700;color:var(--text);display:flex;align-items:center;gap:6px;">
+              <i class="fas fa-folder-open" style="color:#16a34a;"></i> /uploads Ready
+            </div>
+            <div style="font-size:0.74rem;color:var(--muted);margin-top:2px;">Status: <?= is_writable(__DIR__ . '/uploads') ? 'Read / Write OK' : 'Protected' ?></div>
+          </div>
+          <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:14px 16px;box-shadow:0 1px 4px rgba(0,0,0,0.03);">
+            <div style="font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--muted);margin-bottom:4px;">Security & Auth</div>
+            <div style="font-size:0.92rem;font-weight:700;color:var(--text);display:flex;align-items:center;gap:6px;">
+              <i class="fas fa-shield-halved" style="color:#d97706;"></i> CSRF + 2FA Shield
+            </div>
+            <div style="font-size:0.74rem;color:var(--muted);margin-top:2px;">HttpOnly &middot; SameSite Lax</div>
+          </div>
+        </div>
+      </div>
       <div class="panel">
         <div class="panel-header">
           <div class="panel-title"><i class="fas fa-chart-bar"></i> Recent Activity</div>

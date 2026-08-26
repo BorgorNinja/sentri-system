@@ -883,6 +883,7 @@ tr:hover td{background:#fafafa;}
         <button class="filter-btn" onclick="filterMap('caution',this)"><i class="fas fa-circle" style="color:#d97706;font-size:0.6rem;"></i> Caution</button>
         <button class="filter-btn" onclick="filterMap('safe',this)"><i class="fas fa-circle" style="color:#16a34a;font-size:0.6rem;"></i> Safe</button>
         <button class="filter-btn" id="toggleHazardRingsLgu" onclick="toggleLguHazardBuffer(this)" title="Toggle 250m/150m safety hazard buffer rings"><i class="fas fa-bullseye" style="color:#ef4444;font-size:0.7rem;"></i> Hazard Buffers</button>
+        <button class="filter-btn" id="toggleHeatmapLgu" onclick="toggleLguHeatmapDensity(this)" title="Toggle incident intensity cluster overlay"><i class="fas fa-fire-flame-curved" style="color:#f59e0b;font-size:0.7rem;"></i> Density Heatmap</button>
         <div style="position:relative;margin-left:auto;">
           <input type="text" id="lguMapSearchInput" placeholder="Filter map pins..." oninput="filterLguMapBySearch(this.value)" style="padding:4px 8px 4px 22px;border:1.5px solid var(--border);border-radius:6px;font-size:0.74rem;outline:none;background:#fff;width:140px;">
           <i class="fas fa-magnifying-glass" style="position:absolute;left:7px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:0.7rem;"></i>
@@ -991,6 +992,50 @@ tr:hover td{background:#fafafa;}
       }
     }
 
+    var lguHeatmapCircles = [];
+    var showLguHeatmap = false;
+
+    function clearLguHeatmap() {
+      lguHeatmapCircles.forEach(function(c){ map.removeLayer(c); });
+      lguHeatmapCircles = [];
+    }
+
+    function drawLguHeatmap() {
+      clearLguHeatmap();
+      allMarkers.forEach(function(m){
+        if(map.hasLayer(m) && m.reportData){
+          var r = m.reportData;
+          var weight = r.status === 'dangerous' ? 0.35 : (r.status === 'caution' ? 0.22 : 0.12);
+          var rad = r.status === 'dangerous' ? 400 : (r.status === 'caution' ? 280 : 180);
+          var color = r.status === 'dangerous' ? '#ef4444' : (r.status === 'caution' ? '#f59e0b' : '#10b981');
+          var heatCircle = L.circle([r.lat, r.lng], {
+            radius: rad,
+            color: 'transparent',
+            fillColor: color,
+            fillOpacity: weight
+          });
+          heatCircle.addTo(map);
+          lguHeatmapCircles.push(heatCircle);
+        }
+      });
+    }
+
+    function toggleLguHeatmapDensity(btn){
+      showLguHeatmap = !showLguHeatmap;
+      btn.classList.toggle('active-all', showLguHeatmap);
+      if(showLguHeatmap){
+        btn.style.background = '#fffbeb';
+        btn.style.color = '#b45309';
+        btn.style.borderColor = '#fde68a';
+        drawLguHeatmap();
+      } else {
+        btn.style.background = '';
+        btn.style.color = '';
+        btn.style.borderColor = '';
+        clearLguHeatmap();
+      }
+    }
+
     function updateLguMapFilter(){
       allMarkers.forEach(function(m){
         var r = m.reportData;
@@ -1005,11 +1050,12 @@ tr:hover td{background:#fafafa;}
         else { if(map.hasLayer(m)) map.removeLayer(m); }
       });
       if(showLguHazardRings) drawLguHazardCircles();
+      if(showLguHeatmap) drawLguHeatmap();
     }
 
     function filterMap(status, btn){
       currentFilter = status;
-      document.querySelectorAll('.map-controls .filter-btn:not(#toggleHazardRingsLgu)').forEach(function(b){ b.className='filter-btn'; });
+      document.querySelectorAll('.map-controls .filter-btn:not(#toggleHazardRingsLgu):not(#toggleHeatmapLgu)').forEach(function(b){ b.className='filter-btn'; });
       btn.classList.add('active-'+status);
       updateLguMapFilter();
     }

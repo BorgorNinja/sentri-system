@@ -363,7 +363,10 @@ tr:hover td{background:#fafafa;}
         <div class="page-sub"><?= htmlspecialchars($unit) ?><?= $area ? ' &mdash; '.htmlspecialchars($area) : '' ?></div>
       </div>
     </div>
-    <div style="display:flex;align-items:center;gap:8px;margin-left:auto;">
+    <div style="display:flex;align-items:center;gap:8px;margin-left:auto;flex-wrap:wrap;">
+      <button type="button" id="btnTestTone" onclick="playDispatchTone()" title="Test Dispatch Acoustic Chime" style="display:inline-flex;align-items:center;gap:5px;background:#fef2f2;border:1px solid #fecaca;color:#dc2626;padding:5px 10px;border-radius:20px;font-size:0.75rem;font-weight:700;cursor:pointer;transition:all 0.2s;">
+        <i class="fas fa-volume-high"></i> Tone Test
+      </button>
       <div class="resp-status-picker" style="display:flex;align-items:center;gap:6px;background:#f8fafc;padding:5px 10px;border-radius:20px;border:1px solid var(--border);font-size:0.75rem;font-weight:700;">
         <span id="dutyStatusDot" style="width:8px;height:8px;border-radius:50%;background:#10b981;box-shadow:0 0 6px #10b981;"></span>
         <select id="dutyStatusSel" onchange="changeDutyStatus(this.value)" style="border:none;background:transparent;font-size:0.75rem;font-weight:700;color:var(--text);outline:none;cursor:pointer;">
@@ -1090,6 +1093,40 @@ document.addEventListener('DOMContentLoaded', function(){
   var saved = localStorage.getItem('sentri_resp_duty_status') || 'available';
   updateDutyStatusUI(saved);
 });
+
+function playDispatchTone(){
+  try {
+    var AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if(!AudioCtx) return;
+    var ctx = new AudioCtx();
+    var osc = ctx.createOscillator();
+    var gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    
+    var now = ctx.currentTime;
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(750, now);
+    osc.frequency.setValueAtTime(950, now + 0.15);
+    osc.frequency.setValueAtTime(750, now + 0.3);
+    osc.frequency.setValueAtTime(950, now + 0.45);
+    
+    gain.gain.setValueAtTime(0.25, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.65);
+    
+    osc.start(now);
+    osc.stop(now + 0.65);
+    
+    var btn = document.getElementById('btnTestTone');
+    if(btn){
+      var orig = btn.innerHTML;
+      btn.innerHTML = '<i class="fas fa-wave-square"></i> Playing...';
+      setTimeout(function(){ btn.innerHTML = orig; }, 700);
+    }
+  } catch(e) {
+    console.warn('AudioContext alert tone notice:', e);
+  }
+}
 
 // Auto-refresh queue every 90 seconds
 <?php if($view === 'queue'): ?>

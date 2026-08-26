@@ -459,6 +459,7 @@ tr:hover td{background:#fafafa;}
         <button class="filter-btn" onclick="filterMap('caution',this)"><i class="fas fa-circle" style="color:#d97706;font-size:0.6rem;"></i> Caution</button>
         <button class="filter-btn" onclick="filterMap('safe',this)"><i class="fas fa-circle" style="color:#16a34a;font-size:0.6rem;"></i> Safe</button>
         <button class="filter-btn" id="toggleHazardRings" onclick="toggleHazardBuffer(this)" title="Toggle 250m/150m safety hazard buffer rings"><i class="fas fa-bullseye" style="color:#ef4444;font-size:0.7rem;"></i> Hazard Buffers</button>
+        <button class="filter-btn" id="toggleHeatmap" onclick="toggleHeatmapDensity(this)" title="Toggle incident intensity cluster overlay"><i class="fas fa-fire-flame-curved" style="color:#f59e0b;font-size:0.7rem;"></i> Density Heatmap</button>
         <div style="position:relative;margin-left:auto;">
           <input type="text" id="mapSearchInput" placeholder="Filter map pins..." oninput="filterMapBySearch(this.value)" style="padding:4px 8px 4px 22px;border:1.5px solid var(--border);border-radius:6px;font-size:0.74rem;outline:none;background:#fff;width:140px;">
           <i class="fas fa-magnifying-glass" style="position:absolute;left:7px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:0.7rem;"></i>
@@ -562,6 +563,50 @@ tr:hover td{background:#fafafa;}
       }
     }
 
+    var heatmapCircles = [];
+    var showHeatmap = false;
+
+    function clearHeatmap() {
+      heatmapCircles.forEach(function(c){ lmap.removeLayer(c); });
+      heatmapCircles = [];
+    }
+
+    function drawHeatmap() {
+      clearHeatmap();
+      allMapMarkers.forEach(function(m){
+        if(lmap.hasLayer(m) && m.reportData){
+          var r = m.reportData;
+          var weight = r.status === 'dangerous' ? 0.35 : (r.status === 'caution' ? 0.22 : 0.12);
+          var rad = r.status === 'dangerous' ? 400 : (r.status === 'caution' ? 280 : 180);
+          var color = r.status === 'dangerous' ? '#ef4444' : (r.status === 'caution' ? '#f59e0b' : '#10b981');
+          var heatCircle = L.circle([r.lat, r.lng], {
+            radius: rad,
+            color: 'transparent',
+            fillColor: color,
+            fillOpacity: weight
+          });
+          heatCircle.addTo(lmap);
+          heatmapCircles.push(heatCircle);
+        }
+      });
+    }
+
+    function toggleHeatmapDensity(btn){
+      showHeatmap = !showHeatmap;
+      btn.classList.toggle('active-all', showHeatmap);
+      if(showHeatmap){
+        btn.style.background = '#fffbeb';
+        btn.style.color = '#b45309';
+        btn.style.borderColor = '#fde68a';
+        drawHeatmap();
+      } else {
+        btn.style.background = '';
+        btn.style.color = '';
+        btn.style.borderColor = '';
+        clearHeatmap();
+      }
+    }
+
     function updateMapFilter(){
       allMapMarkers.forEach(function(m){
         var r = m.reportData;
@@ -576,11 +621,12 @@ tr:hover td{background:#fafafa;}
         else { if(lmap.hasLayer(m)) lmap.removeLayer(m); }
       });
       if(showHazardRings) drawHazardCircles();
+      if(showHeatmap) drawHeatmap();
     }
 
     function filterMap(status,btn){
       currentMapStatus = status;
-      document.querySelectorAll('.map-controls .filter-btn:not(#toggleHazardRings)').forEach(function(b){b.className='filter-btn';});
+      document.querySelectorAll('.map-controls .filter-btn:not(#toggleHazardRings):not(#toggleHeatmap)').forEach(function(b){b.className='filter-btn';});
       btn.classList.add('active-'+status);
       updateMapFilter();
     }

@@ -537,6 +537,7 @@ body.dark .locate-btn-big{background:#1f3a5f;color:var(--blue-accent);}
         <a href="tel:160" style="display:inline-flex;align-items:center;gap:6px;padding:7px 12px;background:rgba(255,255,255,0.15);color:#fff;border-radius:8px;font-size:0.78rem;font-weight:700;text-decoration:none;border:1px solid rgba(255,255,255,0.25);transition:background 0.15s;" onmouseover="this.style.background='rgba(255,255,255,0.25)'" onmouseout="this.style.background='rgba(255,255,255,0.15)'"><i class="fas fa-fire-extinguisher"></i> BFP Fire (160)</a>
         <a href="tel:117" style="display:inline-flex;align-items:center;gap:6px;padding:7px 12px;background:rgba(255,255,255,0.15);color:#fff;border-radius:8px;font-size:0.78rem;font-weight:700;text-decoration:none;border:1px solid rgba(255,255,255,0.25);transition:background 0.15s;" onmouseover="this.style.background='rgba(255,255,255,0.25)'" onmouseout="this.style.background='rgba(255,255,255,0.15)'"><i class="fas fa-shield-halved"></i> PNP Police (117)</a>
         <button onclick="copyEmergencyCoordinates(this)" style="display:inline-flex;align-items:center;gap:6px;padding:7px 12px;background:#f59e0b;color:#111827;border:none;border-radius:8px;font-size:0.78rem;font-weight:700;cursor:pointer;transition:transform 0.15s;" onmouseover="this.style.transform='scale(1.04)'" onmouseout="this.style.transform='scale(1)'"><i class="fas fa-location-crosshairs"></i> Copy My GPS</button>
+        <button onclick="openSafetyModal()" style="display:inline-flex;align-items:center;gap:6px;padding:7px 12px;background:rgba(255,255,255,0.15);color:#fff;border-radius:8px;font-size:0.78rem;font-weight:700;border:1px solid rgba(255,255,255,0.25);cursor:pointer;transition:background 0.15s;" onmouseover="this.style.background='rgba(255,255,255,0.25)'" onmouseout="this.style.background='rgba(255,255,255,0.15)'"><i class="fas fa-kit-medical"></i> Safety Guide</button>
       </div>
     </div>
     <div class="filters">
@@ -1176,6 +1177,86 @@ function pickColor(c){selColor=c;const prev=document.getElementById('avatarPrevi
 /* Profile: GPS */
 async function saveGPS(){if(!navigator.geolocation){alert('Geolocation not supported.');return;}const btn=document.getElementById('getGpsBtn');const disp=document.getElementById('gpsCoordsDisplay');btn.disabled=true;btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Acquiring…';navigator.geolocation.getCurrentPosition(async pos=>{const lat=pos.coords.latitude,lng=pos.coords.longitude;const fd=new FormData();fd.append('action','save_gps');fd.append('latitude',lat);fd.append('longitude',lng);try{const res=await fetch('../api/reports.php',{method:'POST',body:fd});const d=await res.json();if(d.status==='success'){if(disp){disp.className='gps-coords has-gps';disp.innerHTML=`<i class="fas fa-circle-check"></i> ${lat.toFixed(6)}, ${lng.toFixed(6)}`;}const pfMsg=document.getElementById('pfMsg');if(pfMsg)showMsg(pfMsg,'success','GPS saved! Map and alerts unlocked.');userLat=lat;userLng=lng;hasGPS=true;updateChip();checkProximity();}}catch{}btn.disabled=false;btn.innerHTML='<i class="fas fa-location-crosshairs"></i> Get GPS Data';},err=>{alert(err.code===1?'Location access denied.':'Could not get location.');btn.disabled=false;btn.innerHTML='<i class="fas fa-location-crosshairs"></i> Get GPS Data';},{enableHighAccuracy:true,timeout:15000,maximumAge:0});}
 
+/* Safety Guide */
+const GUIDE_TABS = {
+  typhoon: `
+    <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:12px 14px;margin-bottom:12px;">
+      <h4 style="color:#1d4ed8;font-size:0.9rem;font-weight:700;margin-bottom:4px;"><i class="fas fa-cloud-bolt"></i> Typhoon & Severe Weather Protocols</h4>
+      <p style="font-size:0.8rem;color:#1e3a8a;">Track PAGASA advisory bulletins, prepare emergency power banks, and secure loose outdoor roofing.</p>
+    </div>
+    <ul style="padding-left:18px;margin-bottom:12px;font-size:0.82rem;line-height:1.7;">
+      <li><b>Elevate appliances & valuables</b> if in a flood-prone low-lying zone.</li>
+      <li><b>Charge mobile phones and power banks</b> before expected utility blackouts.</li>
+      <li><b>Store at least 1 gallon of potable water</b> per person per day for 3 days.</li>
+      <li><b>Do not wade into moving floodwaters</b> to prevent leptospirosis and submerged debris injuries.</li>
+    </ul>
+  `,
+  earthquake: `
+    <div style="background:#fef3c7;border:1px solid #fde68a;border-radius:10px;padding:12px 14px;margin-bottom:12px;">
+      <h4 style="color:#b45309;font-size:0.9rem;font-weight:700;margin-bottom:4px;"><i class="fas fa-house-crack"></i> Earthquake Action: Drop, Cover, Hold On</h4>
+      <p style="font-size:0.8rem;color:#78350f;">Protect your head and neck immediately under sturdy furniture until ground shaking stops.</p>
+    </div>
+    <ul style="padding-left:18px;margin-bottom:12px;font-size:0.82rem;line-height:1.7;">
+      <li><b>Drop</b> to your hands and knees to prevent being knocked over.</li>
+      <li><b>Cover</b> your head and neck under a sturdy table or desk.</li>
+      <li><b>Hold On</b> to your shelter until shaking stops.</li>
+      <li><b>Evacuate via stairs only</b> — NEVER use elevators during or after a seismic tremor.</li>
+    </ul>
+  `,
+  fire: `
+    <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:12px 14px;margin-bottom:12px;">
+      <h4 style="color:#dc2626;font-size:0.9rem;font-weight:700;margin-bottom:4px;"><i class="fas fa-fire"></i> Fire Evacuation & Prevention</h4>
+      <p style="font-size:0.8rem;color:#991b1b;">Crawl low under smoke, feel doors with back of hand before opening, call BFP 160 immediately.</p>
+    </div>
+    <ul style="padding-left:18px;margin-bottom:12px;font-size:0.82rem;line-height:1.7;">
+      <li><b>Know 2 evacuation routes</b> out of your room or household.</li>
+      <li><b>If clothes catch fire:</b> Stop, Drop, and Roll immediately.</li>
+      <li><b>Never re-enter a burning structure</b> for personal possessions.</li>
+    </ul>
+  `,
+  bag: `
+    <div style="background:#ecfdf5;border:1px solid #a7f3d0;border-radius:10px;padding:12px 14px;margin-bottom:12px;">
+      <h4 style="color:#059669;font-size:0.9rem;font-weight:700;margin-bottom:4px;"><i class="fas fa-suitcase-medical"></i> 72-Hour Emergency Go-Bag Essentials</h4>
+      <p style="font-size:0.8rem;color:#065f46;">Pack in a waterproof backpack near your primary household exit.</p>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:0.8rem;">
+      <div><i class="fas fa-check" style="color:#10b981;margin-right:5px;"></i> Non-perishable food (canned/energy bars)</div>
+      <div><i class="fas fa-check" style="color:#10b981;margin-right:5px;"></i> 3-day water supply in sealed bottles</div>
+      <div><i class="fas fa-check" style="color:#10b981;margin-right:5px;"></i> First aid kit & personal prescription meds</div>
+      <div><i class="fas fa-check" style="color:#10b981;margin-right:5px;"></i> High-lumen LED flashlight + extra batteries</div>
+      <div><i class="fas fa-check" style="color:#10b981;margin-right:5px;"></i> Emergency whistle for signaling rescuers</div>
+      <div><i class="fas fa-check" style="color:#10b981;margin-right:5px;"></i> Copies of IDs & vital documents in ziplock</div>
+    </div>
+  `
+};
+
+function openSafetyModal(){
+  const m=document.getElementById('safetyModalOverlay');
+  if(!m) return;
+  m.classList.add('open');
+  switchGuideTab('typhoon', document.querySelector('.guide-tab-btn'));
+}
+
+function closeSafetyModal(){
+  const m=document.getElementById('safetyModalOverlay');
+  if(m) m.classList.remove('open');
+}
+
+function switchGuideTab(tab, btn){
+  document.querySelectorAll('.guide-tab-btn').forEach(b=>{
+    b.style.background='var(--bg)';
+    b.style.color='var(--muted)';
+  });
+  if(btn){
+    btn.style.background='var(--blue-accent)';
+    btn.style.color='#fff';
+  }
+  const gc=document.getElementById('guideContent');
+  if(gc && GUIDE_TABS[tab]){
+    gc.innerHTML = GUIDE_TABS[tab];
+  }
+}
+
 /* Helpers */
 function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function ucFirst(s){return s?s.charAt(0).toUpperCase()+s.slice(1):'';}
@@ -1187,12 +1268,31 @@ startGPS();
 if(document.getElementById('colorPalette'))buildPalette();
 if(['overview','my_reports','map'].includes(CURRENT_VIEW)){fetchReports();setInterval(fetchReports,60000);}
 if(CURRENT_VIEW==='map')setTimeout(()=>renderMainMap(),300);
-/* On slow connections, self-hosted fonts/icons can keep streaming in and
-   reflowing the layout well after the maps first render. Re-sync once
-   everything has actually finished loading, on top of the ResizeObserver. */
 if(document.fonts&&document.fonts.ready){document.fonts.ready.then(()=>{if(mainMap)mainMap.invalidateSize();if(inlineMap)inlineMap.invalidateSize();});}
 window.addEventListener('load',()=>{if(mainMap)mainMap.invalidateSize();if(inlineMap)inlineMap.invalidateSize();});
 </script>
+
+<!-- ── Safety Guide & Disaster Preparedness Modal ── -->
+<div class="modal-overlay" id="safetyModalOverlay" onclick="if(event.target===this)closeSafetyModal()">
+  <div class="modal" style="max-width:640px;">
+    <button class="modal-close" onclick="closeSafetyModal()"><i class="fas fa-xmark"></i></button>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
+      <div style="width:40px;height:40px;border-radius:11px;background:#ebf2ff;color:#2563eb;display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0;"><i class="fas fa-shield-heart"></i></div>
+      <div>
+        <h2>Emergency Preparedness Guide</h2>
+        <div class="subtitle" style="margin-bottom:0;">Essential disaster safety protocols & 72-hour family go-bag checklist</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:6px;border-bottom:1.5px solid var(--border);margin:16px 0 14px;padding-bottom:8px;overflow-x:auto;">
+      <button type="button" class="guide-tab-btn" onclick="switchGuideTab('typhoon',this)" style="padding:6px 12px;border:none;background:var(--blue-accent);color:#fff;border-radius:8px;font-size:0.8rem;font-weight:700;cursor:pointer;font-family:'Poppins',sans-serif;">Typhoon / Flood</button>
+      <button type="button" class="guide-tab-btn" onclick="switchGuideTab('earthquake',this)" style="padding:6px 12px;border:none;background:var(--bg);color:var(--muted);border-radius:8px;font-size:0.8rem;font-weight:700;cursor:pointer;font-family:'Poppins',sans-serif;">Earthquake</button>
+      <button type="button" class="guide-tab-btn" onclick="switchGuideTab('fire',this)" style="padding:6px 12px;border:none;background:var(--bg);color:var(--muted);border-radius:8px;font-size:0.8rem;font-weight:700;cursor:pointer;font-family:'Poppins',sans-serif;">Fire Safety</button>
+      <button type="button" class="guide-tab-btn" onclick="switchGuideTab('bag',this)" style="padding:6px 12px;border:none;background:var(--bg);color:var(--muted);border-radius:8px;font-size:0.8rem;font-weight:700;cursor:pointer;font-family:'Poppins',sans-serif;">72-Hr Go Bag</button>
+    </div>
+    <div id="guideContent" style="font-size:0.85rem;line-height:1.6;color:var(--text);min-height:180px;"></div>
+  </div>
+</div>
+
 <?= csrf_script() ?>
 </body>
 </html>
