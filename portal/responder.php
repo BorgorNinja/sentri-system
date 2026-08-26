@@ -363,9 +363,20 @@ tr:hover td{background:#fafafa;}
         <div class="page-sub"><?= htmlspecialchars($unit) ?><?= $area ? ' &mdash; '.htmlspecialchars($area) : '' ?></div>
       </div>
     </div>
-    <span class="badge-resp" style="color:<?= $unit_color ?>;border-color:<?= $unit_color ?>;background:<?= $unit_color ?>18;">
-      <i class="fas fa-truck-medical"></i>&nbsp; <?= htmlspecialchars($rtype) ?>
-    </span>
+    <div style="display:flex;align-items:center;gap:8px;margin-left:auto;">
+      <div class="resp-status-picker" style="display:flex;align-items:center;gap:6px;background:#f8fafc;padding:5px 10px;border-radius:20px;border:1px solid var(--border);font-size:0.75rem;font-weight:700;">
+        <span id="dutyStatusDot" style="width:8px;height:8px;border-radius:50%;background:#10b981;box-shadow:0 0 6px #10b981;"></span>
+        <select id="dutyStatusSel" onchange="changeDutyStatus(this.value)" style="border:none;background:transparent;font-size:0.75rem;font-weight:700;color:var(--text);outline:none;cursor:pointer;">
+          <option value="available">On Duty · Ready</option>
+          <option value="en_route">Dispatched · En Route</option>
+          <option value="on_scene">At Scene · Engaged</option>
+          <option value="off_duty">Off Duty</option>
+        </select>
+      </div>
+      <span class="badge-resp" style="color:<?= $unit_color ?>;border-color:<?= $unit_color ?>;background:<?= $unit_color ?>18;">
+        <i class="fas fa-truck-medical"></i>&nbsp; <?= htmlspecialchars($rtype) ?>
+      </span>
+    </div>
   </div>
 
   <?php if($view === 'queue' && $danger_count > 0): ?>
@@ -1049,6 +1060,36 @@ function searchRespIncidents(query){
   currentRespQuery = query.toLowerCase().trim();
   applyRespFilters();
 }
+
+function changeDutyStatus(val){
+  localStorage.setItem('sentri_resp_duty_status', val);
+  updateDutyStatusUI(val);
+}
+
+function updateDutyStatusUI(val){
+  var dot = document.getElementById('dutyStatusDot');
+  var sel = document.getElementById('dutyStatusSel');
+  if(!dot || !sel) return;
+  sel.value = val;
+  if(val === 'available'){
+    dot.style.background = '#10b981';
+    dot.style.boxShadow = '0 0 6px #10b981';
+  } else if(val === 'en_route'){
+    dot.style.background = '#f59e0b';
+    dot.style.boxShadow = '0 0 6px #f59e0b';
+  } else if(val === 'on_scene'){
+    dot.style.background = '#ef4444';
+    dot.style.boxShadow = '0 0 6px #ef4444';
+  } else {
+    dot.style.background = '#94a3b8';
+    dot.style.boxShadow = 'none';
+  }
+}
+
+document.addEventListener('DOMContentLoaded', function(){
+  var saved = localStorage.getItem('sentri_resp_duty_status') || 'available';
+  updateDutyStatusUI(saved);
+});
 
 // Auto-refresh queue every 90 seconds
 <?php if($view === 'queue'): ?>

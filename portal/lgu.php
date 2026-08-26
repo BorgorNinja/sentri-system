@@ -882,7 +882,12 @@ tr:hover td{background:#fafafa;}
         <button class="filter-btn" onclick="filterMap('dangerous',this)"><i class="fas fa-circle" style="color:#dc2626;font-size:0.6rem;"></i> Dangerous</button>
         <button class="filter-btn" onclick="filterMap('caution',this)"><i class="fas fa-circle" style="color:#d97706;font-size:0.6rem;"></i> Caution</button>
         <button class="filter-btn" onclick="filterMap('safe',this)"><i class="fas fa-circle" style="color:#16a34a;font-size:0.6rem;"></i> Safe</button>
-        <div style="margin-left:auto;font-size:0.75rem;color:var(--muted);">OpenStreetMap</div>
+        <button class="filter-btn" id="toggleHazardRingsLgu" onclick="toggleLguHazardBuffer(this)" title="Toggle 250m/150m safety hazard buffer rings"><i class="fas fa-bullseye" style="color:#ef4444;font-size:0.7rem;"></i> Hazard Buffers</button>
+        <div style="position:relative;margin-left:auto;">
+          <input type="text" id="lguMapSearchInput" placeholder="Filter map pins..." oninput="filterLguMapBySearch(this.value)" style="padding:4px 8px 4px 22px;border:1.5px solid var(--border);border-radius:6px;font-size:0.74rem;outline:none;background:#fff;width:140px;">
+          <i class="fas fa-magnifying-glass" style="position:absolute;left:7px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:0.7rem;"></i>
+        </div>
+        <div style="font-size:0.75rem;color:var(--muted);">OpenStreetMap</div>
       </div>
       <div style="position:relative;">
         <div id="incidentMap"></div>
@@ -890,6 +895,7 @@ tr:hover td{background:#fafafa;}
           <div class="legend-row"><div class="legend-dot" style="background:#dc2626;"></div>Dangerous</div>
           <div class="legend-row"><div class="legend-dot" style="background:#d97706;"></div>Caution</div>
           <div class="legend-row"><div class="legend-dot" style="background:#16a34a;"></div>Safe</div>
+          <div class="legend-row" style="margin-top:4px;padding-top:4px;border-top:1px dashed #e2e8f0;font-size:0.7rem;color:#64748b;"><i class="fas fa-circle-dot" style="color:#dc2626;margin-right:4px;"></i>Buffer: 250m / 150m</div>
         </div>
       </div>
     </div>
@@ -910,6 +916,11 @@ tr:hover td{background:#fafafa;}
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(map);
 
     var allMarkers = [];
+    var lguHazardCircles = [];
+    var showLguHazardRings = false;
+    var currentFilter = 'all';
+    var currentLguQuery = '';
+
     reports.forEach(function(r){
       var color = markerColors[r.status] || '#888';
       var m = L.marker([r.lat,r.lng],{icon:makeIcon(color)});
@@ -936,16 +947,76 @@ tr:hover td{background:#fafafa;}
       map.setView([14.5995,120.9842],12);
     }
 
-    var currentFilter = 'all';
-    function filterMap(status, btn){
-      currentFilter = status;
-      document.querySelectorAll('.filter-btn').forEach(function(b){ b.className='filter-btn'; });
-      btn.classList.add('active-'+status);
+    function clearLguHazardCircles() {
+      lguHazardCircles.forEach(function(c){ map.removeLayer(c); });
+      lguHazardCircles = [];
+    }
+
+    function drawLguHazardCircles() {
+      clearLguHazardCircles();
       allMarkers.forEach(function(m){
-        var show = (status==='all' || m.reportData.status===status);
-        if(show){ if(!map.hasLayer(m)) m.addTo(map); }
+        if(map.hasLayer(m) && m.reportData){
+          var r = m.reportData;
+          if(r.status === 'dangerous' || r.status === 'caution'){
+            var rad = r.status === 'dangerous' ? 250 : 150;
+            var col = r.status === 'dangerous' ? '#dc2626' : '#d97706';
+            var circle = L.circle([r.lat, r.lng], {
+              radius: rad,
+              color: col,
+              weight: 2,
+              dashArray: '5 5',
+              fillColor: col,
+              fillOpacity: 0.16
+            }).bindTooltip('<div style="font-weight:700;font-size:0.74rem;">'+(r.status==='dangerous'?'Hazard Perimeter (250m)':'Caution Zone (150m)')+'<br><span style="font-weight:400;font-size:0.7rem;">'+r.title+'</span></div>');
+            circle.addTo(map);
+            lguHazardCircles.push(circle);
+          }
+        }
+      });
+    }
+
+    function toggleLguHazardBuffer(btn){
+      showLguHazardRings = !showLguHazardRings;
+      btn.classList.toggle('active-all', showLguHazardRings);
+      if(showLguHazardRings){
+        btn.style.background = '#fef2f2';
+        btn.style.color = '#dc2626';
+        btn.style.borderColor = '#fca5a5';
+        drawLguHazardCircles();
+      } else {
+        btn.style.background = '';
+        btn.style.color = '';
+        btn.style.borderColor = '';
+        clearLguHazardCircles();
+      }
+    }
+
+    function updateLguMapFilter(){
+      allMarkers.forEach(function(m){
+        var r = m.reportData;
+        var matchStatus = (currentFilter === 'all' || r.status === currentFilter);
+        var matchQuery = true;
+        if(currentLguQuery){
+          var text = (r.title + ' ' + (r.barangay||'') + ' ' + (r.desc||'')).toLowerCase();
+          matchQuery = text.indexOf(currentLguQuery) !== -1;
+        }
+        var show = matchStatus && matchQuery;
+        if(show){ if(!map.hasLayer(m)) map.addTo(map); }
         else { if(map.hasLayer(m)) map.removeLayer(m); }
       });
+      if(showLguHazardRings) drawLguHazardCircles();
+    }
+
+    function filterMap(status, btn){
+      currentFilter = status;
+      document.querySelectorAll('.map-controls .filter-btn:not(#toggleHazardRingsLgu)').forEach(function(b){ b.className='filter-btn'; });
+      btn.classList.add('active-'+status);
+      updateLguMapFilter();
+    }
+
+    function filterLguMapBySearch(query){
+      currentLguQuery = (query||'').trim().toLowerCase();
+      updateLguMapFilter();
     }
     </script>
 
