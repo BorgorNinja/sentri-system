@@ -597,6 +597,7 @@ tr:hover td{background:#fafafa;}
       </div>
     </div>
     <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+      <button onclick="openAlertLevelModal()" style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;background:#fef2f2;border:1px solid #fca5a5;color:#b91c1c;border-radius:20px;font-size:0.72rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;transition:all 0.15s;" onmouseover="this.style.background='#fee2e2'" onmouseout="this.style.background='#fef2f2'"><i class="fas fa-triangle-exclamation"></i> DRRM Alert Level</button>
       <button onclick="openMutualAidModal()" style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;background:#f0fdf4;border:1px solid #86efac;color:#166534;border-radius:20px;font-size:0.72rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;transition:all 0.15s;" onmouseover="this.style.background='#dcfce7'" onmouseout="this.style.background='#f0fdf4'"><i class="fas fa-handshake-angle"></i> ICS Mutual Aid Matrix</button>
       <span class="badge-lgu"><i class="fas fa-landmark"></i>&nbsp; LGU Official</span>
     </div>
@@ -1711,6 +1712,77 @@ function searchTableReports(query){
   </div>
 </div>
 
+<!-- ── DRRM ALERT LEVEL & EVACUATION MANDATE CONTROLLER MODAL ── -->
+<div class="lgu-modal-bg" id="alertLevelModal">
+  <div class="lgu-modal" style="max-width:800px;">
+    <div class="lgu-modal-header">
+      <h3><i class="fas fa-triangle-exclamation" style="color:#dc2626;margin-right:6px;"></i>DRRM Operations Alert Status & Evacuation Mandate Controller</h3>
+      <button class="lgu-modal-close" onclick="closeAlertLevelModal()"><i class="fas fa-xmark"></i></button>
+    </div>
+    <div class="lgu-modal-body">
+      <!-- Active Alert Level Card -->
+      <div id="activeAlertCard" style="background:linear-gradient(135deg,#991b1b 0%,#b91c1c 100%);color:#fff;border-radius:12px;padding:16px 20px;margin-bottom:14px;box-shadow:0 4px 14px rgba(185,28,28,0.25);">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+          <div>
+            <span style="background:rgba(255,255,255,0.2);padding:3px 8px;border-radius:6px;font-size:0.7rem;font-weight:800;letter-spacing:0.5px;text-transform:uppercase;">NDRRMC Charlie Protocol</span>
+            <div style="font-size:1.25rem;font-weight:800;margin-top:4px;" id="activeAlertTitle">RED ALERT / EMERGENCY LEVEL 3</div>
+            <div style="font-size:0.78rem;opacity:0.9;margin-top:2px;" id="activeAlertDesc">Mandatory Pre-Emptive Evacuation Enforced for Low-Lying Riverbanks & High-Slope Zones.</div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-size:0.72rem;opacity:0.8;">Authorized Dispatcher</div>
+            <strong style="font-size:0.88rem;">Dr. Eduardo Cruz</strong>
+            <div style="font-size:0.72rem;opacity:0.8;">QC DRRMO Operations Director</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Real-time Threshold Gauges -->
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-bottom:14px;">
+        <div style="background:#fff;border:1px solid var(--border);border-radius:10px;padding:10px 14px;">
+          <div style="font-size:0.72rem;color:var(--muted);font-weight:700;">HYDROLOGICAL GAUGE</div>
+          <div style="font-size:1.05rem;font-weight:800;color:#dc2626;margin-top:2px;">Marikina River: 16.4m</div>
+          <div style="font-size:0.72rem;color:#b91c1c;font-weight:600;"><i class="fas fa-bell"></i> Level 2 Alarm (Critical at 18.0m)</div>
+        </div>
+        <div style="background:#fff;border:1px solid var(--border);border-radius:10px;padding:10px 14px;">
+          <div style="font-size:0.72rem;color:var(--muted);font-weight:700;">PRECIPITATION RATE</div>
+          <div style="font-size:1.05rem;font-weight:800;color:#d97706;margin-top:2px;">38.5 mm/hr (Heavy)</div>
+          <div style="font-size:0.72rem;color:#b45309;font-weight:600;"><i class="fas fa-cloud-showers-heavy"></i> Orange Warning Protocol</div>
+        </div>
+        <div style="background:#fff;border:1px solid var(--border);border-radius:10px;padding:10px 14px;">
+          <div style="font-size:0.72rem;color:var(--muted);font-weight:700;">STANDBY STAGING TEAMS</div>
+          <div style="font-size:1.05rem;font-weight:800;color:#16a34a;margin-top:2px;">100% Manning Full Staging</div>
+          <div style="font-size:0.72rem;color:#15803d;font-weight:600;"><i class="fas fa-shield-halved"></i> 14 Responders On Duty</div>
+        </div>
+      </div>
+
+      <!-- Alert Level Switcher & Directive Broadcast -->
+      <div style="background:#f8fafc;border:1px solid var(--border);border-radius:10px;padding:12px 16px;margin-bottom:14px;">
+        <div style="font-size:0.8rem;font-weight:800;color:var(--text);margin-bottom:8px;">Set Operational Alert Protocol Level:</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px;">
+          <button type="button" onclick="setOperationalAlert('white', this)" style="padding:10px;border-radius:8px;border:1.5px solid #cbd5e1;background:#fff;color:var(--text);text-align:left;cursor:pointer;transition:all 0.15s;">
+            <div style="font-weight:800;font-size:0.82rem;color:#475569;"><i class="fas fa-circle-dot" style="color:#94a3b8;"></i> White (Normal)</div>
+            <div style="font-size:0.72rem;color:var(--muted);margin-top:2px;">Continuous routine monitoring</div>
+          </button>
+          <button type="button" onclick="setOperationalAlert('blue', this)" style="padding:10px;border-radius:8px;border:1.5px solid #93c5fd;background:#eff6ff;color:var(--text);text-align:left;cursor:pointer;transition:all 0.15s;">
+            <div style="font-weight:800;font-size:0.82rem;color:#1d4ed8;"><i class="fas fa-circle-dot" style="color:#3b82f6;"></i> Blue (Heightened)</div>
+            <div style="font-size:0.72rem;color:var(--muted);margin-top:2px;">50% DRRMO readiness staging</div>
+          </button>
+          <button type="button" onclick="setOperationalAlert('red', this)" style="padding:10px;border-radius:8px;border:2px solid #ef4444;background:#fef2f2;color:var(--text);text-align:left;cursor:pointer;transition:all 0.15s;">
+            <div style="font-weight:800;font-size:0.82rem;color:#b91c1c;"><i class="fas fa-circle-dot" style="color:#dc2626;"></i> Red (Emergency)</div>
+            <div style="font-size:0.72rem;color:var(--muted);margin-top:2px;">100% Manning & Evacuation</div>
+          </button>
+        </div>
+      </div>
+
+      <!-- Action Footer -->
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding-top:10px;border-top:1px solid var(--border);flex-wrap:wrap;">
+        <div style="font-size:0.74rem;color:var(--muted);"><i class="fas fa-tower-broadcast" style="color:#dc2626;margin-right:4px;"></i> Will trigger automatic push notification to all 5 Barangay Operations Centers.</div>
+        <button type="button" onclick="broadcastAlertDirective()" style="padding:8px 18px;background:#dc2626;color:#fff;border:none;border-radius:8px;font-size:0.8rem;font-weight:800;cursor:pointer;display:inline-flex;align-items:center;gap:6px;box-shadow:0 2px 8px rgba(220,38,38,0.3);"><i class="fas fa-bullhorn"></i> Broadcast Alert Directive</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
 function openMutualAidModal(){ document.getElementById('mutualAidModal').classList.add('show'); }
 function closeMutualAidModal(){ document.getElementById('mutualAidModal').classList.remove('show'); }
@@ -1721,6 +1793,38 @@ function requestMutualAid(id, agency, btn){
   btn.style.background = '#059669';
   btn.innerHTML = '<i class="fas fa-check"></i> Mobilized';
   showToast(`Mutual aid request transmitted to ${agency}. Staging unit mobilized.`, 'success');
+}
+
+function openAlertLevelModal(){ document.getElementById('alertLevelModal').classList.add('show'); }
+function closeAlertLevelModal(){ document.getElementById('alertLevelModal').classList.remove('show'); }
+document.getElementById('alertLevelModal').addEventListener('click', function(e){ if(e.target===this) closeAlertLevelModal(); });
+
+function setOperationalAlert(level, btn){
+  const card = document.getElementById('activeAlertCard');
+  const title = document.getElementById('activeAlertTitle');
+  const desc = document.getElementById('activeAlertDesc');
+  if(!card || !title || !desc) return;
+  if(level === 'white'){
+    card.style.background = 'linear-gradient(135deg,#334155 0%,#475569 100%)';
+    title.textContent = 'WHITE ALERT / NORMAL MONITORING';
+    desc.textContent = 'Standard weather and environmental monitoring active. All barangay units on routine status.';
+    showToast('Operational level set to White Alert (Normal Monitoring).', 'info');
+  } else if(level === 'blue'){
+    card.style.background = 'linear-gradient(135deg,#1e40af 0%,#2563eb 100%)';
+    title.textContent = 'BLUE ALERT / HEIGHTENED STANDBY';
+    desc.textContent = '50% DRRMO personnel on active standby. Evacuation centers on staging status.';
+    showToast('Operational level updated to Blue Alert (Heightened Standby).', 'warning');
+  } else {
+    card.style.background = 'linear-gradient(135deg,#991b1b 0%,#b91c1c 100%)';
+    title.textContent = 'RED ALERT / FULL EMERGENCY LEVEL 3';
+    desc.textContent = 'Mandatory Pre-Emptive Evacuation Enforced for Low-Lying Riverbanks & High-Slope Zones.';
+    showToast('Operational level elevated to RED ALERT (Full Emergency Activation).', 'error');
+  }
+}
+
+function broadcastAlertDirective(){
+  closeAlertLevelModal();
+  showToast('DRRM Alert Directive broadcasted to all 5 Barangay Operations Centers and community feeds.', 'success');
 }
 </script>
 <?= csrf_script() ?>

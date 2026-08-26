@@ -1739,6 +1739,140 @@ window.addEventListener('load',()=>{if(mainMap)mainMap.invalidateSize();if(inlin
   </div>
 </div>
 
+<!-- ── 72-Hour Calamity Go Bag & Emergency Kit Planner Modal ── -->
+<div class="modal-overlay" id="goBagModalOverlay" onclick="if(event.target===this)closeGoBagModal()">
+  <div class="modal" style="max-width:700px;max-height:90vh;display:flex;flex-direction:column;overflow:hidden;">
+    <button class="modal-close" onclick="closeGoBagModal()"><i class="fas fa-xmark"></i></button>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;flex-shrink:0;">
+      <div style="width:42px;height:42px;border-radius:12px;background:#fef3c7;color:#d97706;display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0;">
+        <i class="fas fa-bag-shopping"></i>
+      </div>
+      <div>
+        <h2 style="font-size:1.15rem;font-weight:800;color:var(--text);margin:0;">72-Hour Calamity Go Bag Planner</h2>
+        <p style="font-size:0.78rem;color:var(--muted);margin:0;">Essential survival kit checklist recommended by NDRRMC & OCD for 72-hour family self-reliance.</p>
+      </div>
+    </div>
+
+    <!-- Progress Card -->
+    <div style="background:#f8fafc;border:1px solid var(--border);border-radius:10px;padding:12px 16px;margin:12px 0;flex-shrink:0;">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px;">
+        <span style="font-size:0.8rem;font-weight:700;color:var(--text);" id="goBagProgressText">6 of 8 Essentials Packed (75%)</span>
+        <span id="goBagStatusBadge" style="font-size:0.7rem;font-weight:800;padding:2px 8px;border-radius:20px;background:#fef3c7;color:#92400e;"><i class="fas fa-shield-halved"></i> Moderate Readiness</span>
+      </div>
+      <div style="width:100%;height:8px;background:#e2e8f0;border-radius:4px;overflow:hidden;">
+        <div id="goBagProgressBar" style="width:75%;height:100%;background:linear-gradient(90deg,#f59e0b,#10b981);transition:width 0.3s ease;"></div>
+      </div>
+    </div>
+
+    <!-- Checklist Items Grid -->
+    <div style="display:grid;grid-template-columns:1fr;gap:7px;flex:1;min-height:0;max-height:54vh;overflow-y:auto;padding:2px 6px 6px 2px;">
+      
+      <!-- Item 1 -->
+      <label style="background:#fff;border:1px solid var(--border);border-radius:8px;padding:8px 12px;display:flex;align-items:flex-start;gap:10px;cursor:pointer;transition:background 0.15s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='#fff'">
+        <input type="checkbox" class="gobag-check" onchange="toggleGoBagItem(0)" style="margin-top:2px;transform:scale(1.15);cursor:pointer;">
+        <div style="flex:1;min-width:0;">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+            <strong style="font-size:0.83rem;color:var(--text);">Drinking Water (1 gal / 4L per person per day)</strong>
+            <span style="font-size:0.66rem;background:#e0f2fe;color:#0369a1;padding:1px 5px;border-radius:4px;font-weight:700;">Hydration</span>
+          </div>
+          <div style="font-size:0.72rem;color:var(--muted);margin-top:1px;">Minimum 3-day supply in sealed, clean plastic containers plus water purification tablets.</div>
+        </div>
+      </label>
+
+      <!-- Item 2 -->
+      <label style="background:#fff;border:1px solid var(--border);border-radius:8px;padding:8px 12px;display:flex;align-items:flex-start;gap:10px;cursor:pointer;transition:background 0.15s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='#fff'">
+        <input type="checkbox" class="gobag-check" onchange="toggleGoBagItem(1)" style="margin-top:2px;transform:scale(1.15);cursor:pointer;">
+        <div style="flex:1;min-width:0;">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+            <strong style="font-size:0.83rem;color:var(--text);">Ready-to-Eat Non-Perishable Food</strong>
+            <span style="font-size:0.66rem;background:#fef3c7;color:#92400e;padding:1px 5px;border-radius:4px;font-weight:700;">Nutrition</span>
+          </div>
+          <div style="font-size:0.72rem;color:var(--muted);margin-top:1px;">Canned fish/meat, biscuits, high-calorie energy bars, and a manual rotary can opener.</div>
+        </div>
+      </label>
+
+      <!-- Item 3 -->
+      <label style="background:#fff;border:1px solid var(--border);border-radius:8px;padding:8px 12px;display:flex;align-items:flex-start;gap:10px;cursor:pointer;transition:background 0.15s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='#fff'">
+        <input type="checkbox" class="gobag-check" onchange="toggleGoBagItem(2)" style="margin-top:2px;transform:scale(1.15);cursor:pointer;">
+        <div style="flex:1;min-width:0;">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+            <strong style="font-size:0.83rem;color:var(--text);">First-Aid Kit & 7-Day Prescription Meds</strong>
+            <span style="font-size:0.66rem;background:#fee2e2;color:#b91c1c;padding:1px 5px;border-radius:4px;font-weight:700;">Medical</span>
+          </div>
+          <div style="font-size:0.72rem;color:var(--muted);margin-top:1px;">Bandages, povidone-iodine, paracetamol, maintenance meds, and emergency medical cards.</div>
+        </div>
+      </label>
+
+      <!-- Item 4 -->
+      <label style="background:#fff;border:1px solid var(--border);border-radius:8px;padding:8px 12px;display:flex;align-items:flex-start;gap:10px;cursor:pointer;transition:background 0.15s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='#fff'">
+        <input type="checkbox" class="gobag-check" onchange="toggleGoBagItem(3)" style="margin-top:2px;transform:scale(1.15);cursor:pointer;">
+        <div style="flex:1;min-width:0;">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+            <strong style="font-size:0.83rem;color:var(--text);">Waterproof LED Flashlight & Spare Batteries</strong>
+            <span style="font-size:0.66rem;background:#f3e8ff;color:#6b21a8;padding:1px 5px;border-radius:4px;font-weight:700;">Lighting</span>
+          </div>
+          <div style="font-size:0.72rem;color:var(--muted);margin-top:1px;">High-lumen flashlight or headlamp with fresh AA/AAA batteries sealed in dry bag.</div>
+        </div>
+      </label>
+
+      <!-- Item 5 -->
+      <label style="background:#fff;border:1px solid var(--border);border-radius:8px;padding:8px 12px;display:flex;align-items:flex-start;gap:10px;cursor:pointer;transition:background 0.15s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='#fff'">
+        <input type="checkbox" class="gobag-check" onchange="toggleGoBagItem(4)" style="margin-top:2px;transform:scale(1.15);cursor:pointer;">
+        <div style="flex:1;min-width:0;">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+            <strong style="font-size:0.83rem;color:var(--text);">High-Decibel Whistle & Multi-Tool Knife</strong>
+            <span style="font-size:0.66rem;background:#f1f5f9;color:#334155;padding:1px 5px;border-radius:4px;font-weight:700;">Rescue & Utility</span>
+          </div>
+          <div style="font-size:0.72rem;color:var(--muted);margin-top:1px;">120dB pea-less whistle for acoustic rescue signaling under rubble or high water.</div>
+        </div>
+      </label>
+
+      <!-- Item 6 -->
+      <label style="background:#fff;border:1px solid var(--border);border-radius:8px;padding:8px 12px;display:flex;align-items:flex-start;gap:10px;cursor:pointer;transition:background 0.15s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='#fff'">
+        <input type="checkbox" class="gobag-check" onchange="toggleGoBagItem(5)" style="margin-top:2px;transform:scale(1.15);cursor:pointer;">
+        <div style="flex:1;min-width:0;">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+            <strong style="font-size:0.83rem;color:var(--text);">Heavy-Duty Powerbank (20,000mAh) & Cables</strong>
+            <span style="font-size:0.66rem;background:#dbeafe;color:#1e40af;padding:1px 5px;border-radius:4px;font-weight:700;">Power</span>
+          </div>
+          <div style="font-size:0.72rem;color:var(--muted);margin-top:1px;">Fully charged battery bank with lightning/USB-C cables in a waterproof phone pouch.</div>
+        </div>
+      </label>
+
+      <!-- Item 7 -->
+      <label style="background:#fff;border:1px solid var(--border);border-radius:8px;padding:8px 12px;display:flex;align-items:flex-start;gap:10px;cursor:pointer;transition:background 0.15s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='#fff'">
+        <input type="checkbox" class="gobag-check" onchange="toggleGoBagItem(6)" style="margin-top:2px;transform:scale(1.15);cursor:pointer;">
+        <div style="flex:1;min-width:0;">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+            <strong style="font-size:0.83rem;color:var(--text);">Vital Documents & IDs in Sealed Ziplock</strong>
+            <span style="font-size:0.66rem;background:#dcfce7;color:#15803d;padding:1px 5px;border-radius:4px;font-weight:700;">Documents</span>
+          </div>
+          <div style="font-size:0.72rem;color:var(--muted);margin-top:1px;">Birth certificates, PhilHealth/Gov IDs, land titles, and emergency cash in small denominations.</div>
+        </div>
+      </label>
+
+      <!-- Item 8 -->
+      <label style="background:#fff;border:1px solid var(--border);border-radius:8px;padding:8px 12px;display:flex;align-items:flex-start;gap:10px;cursor:pointer;transition:background 0.15s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='#fff'">
+        <input type="checkbox" class="gobag-check" onchange="toggleGoBagItem(7)" style="margin-top:2px;transform:scale(1.15);cursor:pointer;">
+        <div style="flex:1;min-width:0;">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+            <strong style="font-size:0.83rem;color:var(--text);">N95 Masks, Alcohol & Personal Sanitation Kit</strong>
+            <span style="font-size:0.66rem;background:#ede9fe;color:#5b21b6;padding:1px 5px;border-radius:4px;font-weight:700;">Sanitation</span>
+          </div>
+          <div style="font-size:0.72rem;color:var(--muted);margin-top:1px;">70% isopropyl alcohol, antibacterial wet wipes, heavy-duty trash bags, and toothbrushes.</div>
+        </div>
+      </label>
+
+    </div>
+
+    <!-- Modal Footer Actions -->
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:14px;padding-top:12px;border-top:1px solid var(--border);flex-shrink:0;">
+      <button type="button" onclick="resetGoBagChecklist()" style="padding:6px 12px;background:#f8fafc;border:1px solid var(--border);color:var(--muted);border-radius:8px;font-size:0.75rem;font-weight:700;cursor:pointer;"><i class="fas fa-rotate-left"></i> Reset Checklist</button>
+      <button type="button" onclick="closeGoBagModal()" style="padding:6px 16px;background:var(--blue-accent);color:#fff;border:none;border-radius:8px;font-size:0.78rem;font-weight:700;cursor:pointer;">Done</button>
+    </div>
+  </div>
+</div>
+
 <?= csrf_script() ?>
 </body>
 </html>

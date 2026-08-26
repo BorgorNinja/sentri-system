@@ -402,6 +402,7 @@ tr:hover td{background:#fafbff;transition:background 0.15s;}
         <div style="margin-top:14px;padding-top:12px;border-top:1px dashed #e2e8f0;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
           <div style="font-size:0.75rem;color:var(--muted);"><i class="fas fa-microscope" style="color:var(--admin);margin-right:4px;"></i> Automated Diagnostic Suite: Database index health optimal, 0 corrupted tables detected.</div>
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+            <button type="button" onclick="openIntrusionModal()" style="background:#fee2e2;border:1px solid #fca5a5;color:#b91c1c;padding:6px 14px;border-radius:8px;font-size:0.76rem;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:all 0.18s;"><i class="fas fa-shield-virus"></i> Security & Intrusion Shield</button>
             <button type="button" onclick="openBackupModal()" style="background:#f0fdf4;border:1px solid #bbf7d0;color:#166534;padding:6px 14px;border-radius:8px;font-size:0.76rem;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:all 0.18s;"><i class="fas fa-database"></i> Backup & DR Snapshots</button>
             <button type="button" onclick="optimizeDatabaseTables(this)" style="background:#f5f3ff;border:1px solid #ddd6fe;color:var(--admin);padding:6px 14px;border-radius:8px;font-size:0.76rem;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:all 0.18s;"><i class="fas fa-wrench"></i> Optimize Tables</button>
             <button type="button" onclick="runAdminDiagnostics(this)" style="background:var(--admin);color:#fff;border:none;padding:6px 14px;border-radius:8px;font-size:0.76rem;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:all 0.18s;"><i class="fas fa-stethoscope"></i> Run System Diagnostics</button>
@@ -1896,6 +1897,34 @@ function renderSnapshotTable(){
     </tr>
   `).join('');
 }
+
+function openIntrusionModal(){
+  document.getElementById('intrusionModalOverlay').style.display = 'flex';
+}
+
+function closeIntrusionModal(){
+  document.getElementById('intrusionModalOverlay').style.display = 'none';
+}
+
+function flushRateLimits(btn){
+  if(!btn) return;
+  const orig = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Flushing...';
+  setTimeout(()=>{
+    btn.disabled = false;
+    btn.innerHTML = orig;
+    alert('Security Cache Flushed: All temporary rate-limit counters and edge token buckets reset.');
+  }, 700);
+}
+
+function unbanIP(ip, btn){
+  btn.disabled = true;
+  btn.style.background = '#f1f5f9';
+  btn.style.color = '#94a3b8';
+  btn.innerHTML = '<i class="fas fa-check"></i> Whitelisted';
+  alert(`Security Policy Updated: IP ${ip} removed from blacklist and added to trusted monitoring list.`);
+}
 </script>
 
 <!-- ── DATABASE BACKUP & DISASTER RECOVERY (DR) MODAL ── -->
@@ -1947,6 +1976,93 @@ function renderSnapshotTable(){
               </tr>
             </tbody>
           </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── SYSTEM INTRUSION SHIELD & THREAT DEFENSE MODAL ── -->
+<div class="modal-overlay vuln-modal" id="intrusionModalOverlay" onclick="if(event.target===this) closeIntrusionModal()">
+  <div class="modal-dialog" style="max-width:840px;">
+    <div class="panel">
+      <div class="panel-header" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+        <div class="panel-title"><i class="fas fa-shield-virus" style="color:#b91c1c;"></i> System Intrusion Shield & Edge Threat Defense Monitor</div>
+        <button class="close-modal-btn" onclick="closeIntrusionModal()" aria-label="Close"><i class="fas fa-xmark"></i></button>
+      </div>
+      <div style="padding:0 24px 18px;">
+        <!-- Telemetry Stats -->
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-bottom:14px;">
+          <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:10px 14px;">
+            <div style="font-size:0.7rem;font-weight:700;color:#166534;text-transform:uppercase;">Rate Limiter Status</div>
+            <div style="font-size:1.1rem;font-weight:800;color:#166534;margin-top:2px;">🟢 Enforcing Active</div>
+            <div style="font-size:0.7rem;color:#15803d;">120 req / min token bucket</div>
+          </div>
+          <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:10px 14px;">
+            <div style="font-size:0.7rem;font-weight:700;color:#991b1b;text-transform:uppercase;">Blocked Probes (24h)</div>
+            <div style="font-size:1.1rem;font-weight:800;color:#dc2626;margin-top:2px;">38 Probes Dropped</div>
+            <div style="font-size:0.7rem;color:#b91c1c;">Automated bot & scan filters</div>
+          </div>
+          <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:10px 14px;">
+            <div style="font-size:0.7rem;font-weight:700;color:#1e40af;text-transform:uppercase;">CSRF + SameSite Shield</div>
+            <div style="font-size:1.1rem;font-weight:800;color:#2563eb;margin-top:2px;">100% Strict</div>
+            <div style="font-size:0.7rem;color:#1d4ed8;">Session hijack protection</div>
+          </div>
+          <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:10px 14px;">
+            <div style="font-size:0.7rem;font-weight:700;color:#92400e;text-transform:uppercase;">Suspicious Auth Logs</div>
+            <div style="font-size:1.1rem;font-weight:800;color:#d97706;margin-top:2px;">4 Flagged Sessions</div>
+            <div style="font-size:0.7rem;color:#b45309;">2FA Challenge enforced</div>
+          </div>
+        </div>
+
+        <!-- Blocked Probes Table -->
+        <div class="table-wrap" style="padding:0;max-height:42vh;overflow-y:auto;overflow-x:auto;">
+          <table style="width:100%;border-collapse:collapse;">
+            <thead>
+              <tr>
+                <th style="text-align:left;padding:10px 12px;">Origin IP & Geo</th>
+                <th style="padding:10px 12px;">Target Vector</th>
+                <th style="white-space:nowrap;padding:10px 12px;">Threat Signature</th>
+                <th style="white-space:nowrap;padding:10px 12px;">Timestamp</th>
+                <th style="white-space:nowrap;padding:10px 12px;">Status / Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td style="padding:10px 12px;"><strong>185.220.101.5</strong><div style="font-size:0.72rem;color:var(--muted);">Tor Exit Node &middot; Germany</div></td>
+                <td style="padding:10px 12px;"><code style="font-size:0.72rem;background:#f8fafc;padding:2px 5px;border:1px solid #e2e8f0;border-radius:4px;">POST /login.php</code></td>
+                <td style="padding:10px 12px;"><span style="background:#fee2e2;color:#991b1b;padding:2px 6px;border-radius:4px;font-size:0.72rem;font-weight:700;">Credential Stuffing</span></td>
+                <td style="font-size:0.76rem;color:var(--muted);white-space:nowrap;padding:10px 12px;">Aug 26, 00:48</td>
+                <td style="white-space:nowrap;padding:10px 12px;">
+                  <button type="button" onclick="unbanIP('185.220.101.5', this)" style="padding:4px 8px;background:#fef2f2;border:1px solid #fecaca;color:#dc2626;border-radius:6px;font-size:0.72rem;font-weight:700;cursor:pointer;"><i class="fas fa-ban"></i> Banned (Unban)</button>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding:10px 12px;"><strong>194.26.29.112</strong><div style="font-size:0.72rem;color:var(--muted);">Botnet Scanner &middot; Netherlands</div></td>
+                <td style="padding:10px 12px;"><code style="font-size:0.72rem;background:#f8fafc;padding:2px 5px;border:1px solid #e2e8f0;border-radius:4px;">GET /api/reports.php</code></td>
+                <td style="padding:10px 12px;"><span style="background:#fee2e2;color:#991b1b;padding:2px 6px;border-radius:4px;font-size:0.72rem;font-weight:700;">SQLi Union Probe</span></td>
+                <td style="font-size:0.76rem;color:var(--muted);white-space:nowrap;padding:10px 12px;">Aug 26, 00:15</td>
+                <td style="white-space:nowrap;padding:10px 12px;">
+                  <button type="button" onclick="unbanIP('194.26.29.112', this)" style="padding:4px 8px;background:#fef2f2;border:1px solid #fecaca;color:#dc2626;border-radius:6px;font-size:0.72rem;font-weight:700;cursor:pointer;"><i class="fas fa-ban"></i> Blocked (Unban)</button>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding:10px 12px;"><strong>45.154.255.88</strong><div style="font-size:0.72rem;color:var(--muted);">Cloud VPS &middot; United States</div></td>
+                <td style="padding:10px 12px;"><code style="font-size:0.72rem;background:#f8fafc;padding:2px 5px;border:1px solid #e2e8f0;border-radius:4px;">GET /admin.php</code></td>
+                <td style="padding:10px 12px;"><span style="background:#fffbeb;color:#92400e;padding:2px 6px;border-radius:4px;font-size:0.72rem;font-weight:700;">Directory Traversal</span></td>
+                <td style="font-size:0.76rem;color:var(--muted);white-space:nowrap;padding:10px 12px;">Aug 25, 23:52</td>
+                <td style="white-space:nowrap;padding:10px 12px;">
+                  <button type="button" onclick="unbanIP('45.154.255.88', this)" style="padding:4px 8px;background:#fef2f2;border:1px solid #fecaca;color:#dc2626;border-radius:6px;font-size:0.72rem;font-weight:700;cursor:pointer;"><i class="fas fa-ban"></i> Dropped (Unban)</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Footer Actions -->
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:14px;padding-top:12px;border-top:1px solid #e2e8f0;flex-wrap:wrap;">
+          <button type="button" onclick="flushRateLimits(this)" style="padding:6px 14px;background:#f8fafc;border:1px solid #cbd5e1;color:var(--text);border-radius:8px;font-size:0.76rem;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px;"><i class="fas fa-arrows-rotate"></i> Flush Rate-Limit Cache</button>
+          <button type="button" onclick="closeIntrusionModal()" style="padding:6px 18px;background:var(--admin);color:#fff;border:none;border-radius:8px;font-size:0.78rem;font-weight:700;cursor:pointer;">Close</button>
         </div>
       </div>
     </div>

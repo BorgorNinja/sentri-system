@@ -352,6 +352,7 @@ tr:hover td{background:#fafafa;}
       <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
         <button onclick="openEvacModal()" style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;background:#f0fdf4;border:1px solid #86efac;color:#166534;border-radius:20px;font-size:0.72rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;transition:all 0.15s;" onmouseover="this.style.background='#dcfce7'" onmouseout="this.style.background='#f0fdf4'"><i class="fas fa-person-shelter"></i> Evac Centers (3 Active)</button>
         <button onclick="openReliefModal()" style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;background:#eff6ff;border:1px solid #bfdbfe;color:#1d4ed8;border-radius:20px;font-size:0.72rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;transition:all 0.15s;" onmouseover="this.style.background='#dbeafe'" onmouseout="this.style.background='#eff6ff'"><i class="fas fa-boxes-stacked"></i> Relief Inventory</button>
+        <button onclick="openReliefClaimsModal()" style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;background:#fefce8;border:1px solid #fde047;color:#854d0e;border-radius:20px;font-size:0.72rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;transition:all 0.15s;" onmouseover="this.style.background='#fef9c3'" onmouseout="this.style.background='#fefce8'"><i class="fas fa-hand-holding-hand"></i> Relief Claims</button>
         <button onclick="openBroadcastModal()" style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;background:#fef2f2;border:1px solid #fecaca;color:#dc2626;border-radius:20px;font-size:0.72rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;transition:all 0.15s;" onmouseover="this.style.background='#fee2e2'" onmouseout="this.style.background='#fef2f2'"><i class="fas fa-bullhorn"></i> Mass Broadcast</button>
         <button onclick="openVulnerableModal()" style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;background:#fdf4ff;border:1px solid #f0abfc;color:#86198f;border-radius:20px;font-size:0.72rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;transition:all 0.15s;" onmouseover="this.style.background='#fae8ff'" onmouseout="this.style.background='#fdf4ff'"><i class="fas fa-person-cane"></i> Vulnerable Registry</button>
         <span class="badge-brgy"><i class="fas fa-house-flag"></i>&nbsp; Barangay Official</span>
@@ -1313,6 +1314,95 @@ document.getElementById('contactModal').addEventListener('click',function(e){if(
   </div>
 </div>
 
+<!-- ── BARANGAY RELIEF DISTRIBUTION & QR VOUCHER CLAIMS MODAL ── -->
+<div class="modal-bg" id="reliefClaimsModal">
+  <div class="modal" style="max-width:760px;">
+    <div class="modal-header">
+      <h3><i class="fas fa-hand-holding-hand" style="color:#ca8a04;margin-right:6px;"></i>Barangay Calamity Relief & Food Pack Distribution Tracker</h3>
+      <button class="modal-close" onclick="closeReliefClaimsModal()"><i class="fas fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <div style="background:#fefce8;border:1px solid #fde047;border-radius:10px;padding:10px 14px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">
+        <div style="font-size:0.78rem;color:#854d0e;">
+          <strong>Disbursement Telemetry:</strong> Live food pack ration issuance and household QR voucher verification for San Jose.
+        </div>
+        <span style="font-size:0.72rem;background:#fef08a;color:#713f12;padding:3px 9px;border-radius:20px;font-weight:800;border:1px solid #eab308;">98 / 142 Claimed (69%)</span>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin-bottom:12px;">
+        <div style="background:#fff;border:1px solid var(--border);border-radius:8px;padding:8px 12px;text-align:center;">
+          <div style="font-size:1.1rem;font-weight:800;color:var(--text);" id="claimTotalFamilies">142</div>
+          <div style="font-size:0.7rem;color:var(--muted);">Target Families</div>
+        </div>
+        <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:8px 12px;text-align:center;">
+          <div style="font-size:1.1rem;font-weight:800;color:#16a34a;" id="claimCountClaimed">98</div>
+          <div style="font-size:0.7rem;color:#15803d;">Claimed Rations</div>
+        </div>
+        <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:8px 12px;text-align:center;">
+          <div style="font-size:1.1rem;font-weight:800;color:#d97706;" id="claimCountPending">44</div>
+          <div style="font-size:0.7rem;color:#b45309;">Pending Voucher</div>
+        </div>
+        <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:8px 12px;text-align:center;">
+          <div style="font-size:1.1rem;font-weight:800;color:#2563eb;">402</div>
+          <div style="font-size:0.7rem;color:#1d4ed8;">Buffer Stock (Packs)</div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;">
+        <button class="claim-tab-btn" onclick="filterReliefClaims('all', this)" style="padding:4px 10px;border-radius:6px;border:1px solid var(--border);background:#ca8a04;color:#fff;font-size:0.74rem;font-weight:700;cursor:pointer;">All Puroks</button>
+        <button class="claim-tab-btn" onclick="filterReliefClaims('Purok 1', this)" style="padding:4px 10px;border-radius:6px;border:1px solid var(--border);background:#fff;color:var(--muted);font-size:0.74rem;font-weight:700;cursor:pointer;">Purok 1</button>
+        <button class="claim-tab-btn" onclick="filterReliefClaims('Purok 2', this)" style="padding:4px 10px;border-radius:6px;border:1px solid var(--border);background:#fff;color:var(--muted);font-size:0.74rem;font-weight:700;cursor:pointer;">Purok 2</button>
+        <button class="claim-tab-btn" onclick="filterReliefClaims('Purok 3', this)" style="padding:4px 10px;border-radius:6px;border:1px solid var(--border);background:#fff;color:var(--muted);font-size:0.74rem;font-weight:700;cursor:pointer;">Purok 3</button>
+        <button class="claim-tab-btn" onclick="filterReliefClaims('Purok 4', this)" style="padding:4px 10px;border-radius:6px;border:1px solid var(--border);background:#fff;color:var(--muted);font-size:0.74rem;font-weight:700;cursor:pointer;">Purok 4</button>
+      </div>
+
+      <div class="table-wrap" style="max-height:42vh;overflow-y:auto;">
+        <table>
+          <thead>
+            <tr>
+              <th style="white-space:nowrap;">Household Head</th>
+              <th style="white-space:nowrap;">Purok</th>
+              <th>Allocated Package</th>
+              <th style="white-space:nowrap;">Voucher Status</th>
+              <th style="white-space:nowrap;">Action</th>
+            </tr>
+          </thead>
+          <tbody id="reliefClaimsTableBody">
+            <tr class="claim-row-item" data-purok="Purok 1">
+              <td><strong>Maria Santos</strong><div style="font-size:0.72rem;color:var(--muted);">5 Members &middot; House #14, Riverside</div></td>
+              <td><span style="background:#f1f5f9;padding:2px 6px;border-radius:4px;font-size:0.72rem;font-weight:600;">Purok 1</span></td>
+              <td><span style="background:#f0fdf4;color:#166534;padding:2px 6px;border-radius:4px;font-size:0.72rem;font-weight:700;">DSWD Food Pack + 5L Water</span></td>
+              <td><span id="claim_status_1" style="background:#f0fdf4;color:#16a34a;padding:2px 8px;border-radius:12px;font-size:0.7rem;font-weight:700;">Claimed &middot; Aug 25</span></td>
+              <td><button onclick="toggleClaimStatus(1, this)" style="padding:4px 8px;background:#f8fafc;border:1px solid var(--border);color:var(--text);border-radius:6px;font-size:0.72rem;font-weight:700;cursor:pointer;">Reset</button></td>
+            </tr>
+            <tr class="claim-row-item" data-purok="Purok 3">
+              <td><strong>Danilo Cruz</strong><div style="font-size:0.72rem;color:var(--muted);">3 Members &middot; Blk 4 Lot 2, Lower Zone</div></td>
+              <td><span style="background:#f1f5f9;padding:2px 6px;border-radius:4px;font-size:0.72rem;font-weight:600;">Purok 3</span></td>
+              <td><span style="background:#eff6ff;color:#1d4ed8;padding:2px 6px;border-radius:4px;font-size:0.72rem;font-weight:700;">DSWD Food Pack + Trauma Kit</span></td>
+              <td><span id="claim_status_2" style="background:#fffbeb;color:#d97706;padding:2px 8px;border-radius:12px;font-size:0.7rem;font-weight:700;">Pending Voucher</span></td>
+              <td><button onclick="toggleClaimStatus(2, this)" style="padding:4px 8px;background:#f0fdf4;border:1px solid #86efac;color:#166534;border-radius:6px;font-size:0.72rem;font-weight:700;cursor:pointer;">Mark Claimed</button></td>
+            </tr>
+            <tr class="claim-row-item" data-purok="Purok 2">
+              <td><strong>Elena Reyes</strong><div style="font-size:0.72rem;color:var(--muted);">4 Members &middot; House #8, Alley 3</div></td>
+              <td><span style="background:#f1f5f9;padding:2px 6px;border-radius:4px;font-size:0.72rem;font-weight:600;">Purok 2</span></td>
+              <td><span style="background:#fdf4ff;color:#86198f;padding:2px 6px;border-radius:4px;font-size:0.72rem;font-weight:700;">DSWD Food Pack + Infant Care Kit</span></td>
+              <td><span id="claim_status_3" style="background:#f0fdf4;color:#16a34a;padding:2px 8px;border-radius:12px;font-size:0.7rem;font-weight:700;">Claimed &middot; Aug 25</span></td>
+              <td><button onclick="toggleClaimStatus(3, this)" style="padding:4px 8px;background:#f8fafc;border:1px solid var(--border);color:var(--text);border-radius:6px;font-size:0.72rem;font-weight:700;cursor:pointer;">Reset</button></td>
+            </tr>
+            <tr class="claim-row-item" data-purok="Purok 4">
+              <td><strong>Ricardo Gomez</strong><div style="font-size:0.72rem;color:var(--muted);">6 Members &middot; House #31, Creek Side</div></td>
+              <td><span style="background:#f1f5f9;padding:2px 6px;border-radius:4px;font-size:0.72rem;font-weight:600;">Purok 4</span></td>
+              <td><span style="background:#f0fdf4;color:#166534;padding:2px 6px;border-radius:4px;font-size:0.72rem;font-weight:700;">DSWD Food Pack (2x) + 5L Water</span></td>
+              <td><span id="claim_status_4" style="background:#fffbeb;color:#d97706;padding:2px 8px;border-radius:12px;font-size:0.7rem;font-weight:700;">Pending Voucher</span></td>
+              <td><button onclick="toggleClaimStatus(4, this)" style="padding:4px 8px;background:#f0fdf4;border:1px solid #86efac;color:#166534;border-radius:6px;font-size:0.72rem;font-weight:700;cursor:pointer;">Mark Claimed</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
 function openEvacModal(){ document.getElementById('evacModal').classList.add('show'); }
 function closeEvacModal(){ document.getElementById('evacModal').classList.remove('show'); }
@@ -1337,6 +1427,52 @@ function updateReliefQty(id, delta){
   reliefStock[id] = Math.max(0, reliefStock[id] + delta);
   document.getElementById(`relief${id}_qty`).textContent = reliefStock[id];
   showToast(`Relief inventory updated: ${reliefStock[id]} units remaining`, 'success');
+}
+
+function openReliefClaimsModal(){ document.getElementById('reliefClaimsModal').classList.add('show'); }
+function closeReliefClaimsModal(){ document.getElementById('reliefClaimsModal').classList.remove('show'); }
+document.getElementById('reliefClaimsModal').addEventListener('click',function(e){if(e.target===this)closeReliefClaimsModal();});
+
+function filterReliefClaims(purok, btn){
+  document.querySelectorAll('.claim-tab-btn').forEach(b=>{
+    b.style.background='#fff';
+    b.style.color='var(--muted)';
+  });
+  if(btn){
+    btn.style.background='#ca8a04';
+    btn.style.color='#fff';
+  }
+  document.querySelectorAll('.claim-row-item').forEach(row=>{
+    if(purok==='all' || row.getAttribute('data-purok')===purok){
+      row.style.display='';
+    } else {
+      row.style.display='none';
+    }
+  });
+}
+
+function toggleClaimStatus(id, btn){
+  const el = document.getElementById(`claim_status_${id}`);
+  if(!el) return;
+  if(el.textContent.includes('Pending')){
+    el.textContent = 'Claimed · Just now';
+    el.style.background = '#f0fdf4';
+    el.style.color = '#16a34a';
+    btn.textContent = 'Reset';
+    btn.style.background = '#f8fafc';
+    btn.style.borderColor = 'var(--border)';
+    btn.style.color = 'var(--text)';
+    showToast('Household relief package marked as Claimed & verified.', 'success');
+  } else {
+    el.textContent = 'Pending Voucher';
+    el.style.background = '#fffbeb';
+    el.style.color = '#d97706';
+    btn.textContent = 'Mark Claimed';
+    btn.style.background = '#f0fdf4';
+    btn.style.borderColor = '#86efac';
+    btn.style.color = '#166534';
+    showToast('Household relief status reset to Pending Voucher.', 'info');
+  }
 }
 
 function openBroadcastModal(){ document.getElementById('broadcastModal').classList.add('show'); }

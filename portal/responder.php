@@ -374,6 +374,9 @@ tr:hover td{background:#fafafa;}
       <button type="button" id="btnTestTone" onclick="playDispatchTone()" title="Test Dispatch Acoustic Chime" style="display:inline-flex;align-items:center;gap:5px;background:#fef2f2;border:1px solid #fecaca;color:#dc2626;padding:5px 10px;border-radius:20px;font-size:0.75rem;font-weight:700;cursor:pointer;transition:all 0.2s;">
         <i class="fas fa-volume-high"></i> Tone Test
       </button>
+      <button type="button" id="btnHazmat" onclick="openHazmatModal()" title="Tactical HAZMAT & Chemical Emergency Guide" style="display:inline-flex;align-items:center;gap:5px;background:#fffbeb;border:1px solid #fde68a;color:#b45309;padding:5px 10px;border-radius:20px;font-size:0.75rem;font-weight:700;cursor:pointer;transition:all 0.2s;">
+        <i class="fas fa-biohazard"></i> HAZMAT ERG
+      </button>
       <button type="button" id="btnSafetyCheckin" onclick="openSafetyCheckinModal()" title="Responder PPE & Hazard Exposure Check-In" style="display:inline-flex;align-items:center;gap:5px;background:#eff6ff;border:1px solid #bfdbfe;color:#1d4ed8;padding:5px 10px;border-radius:20px;font-size:0.75rem;font-weight:700;cursor:pointer;transition:all 0.2s;">
         <i class="fas fa-shield-heart"></i> Safety Check-In
       </button>
@@ -1212,11 +1215,141 @@ function submitSafetyCheckin(){
   showRespToast('Field personnel safety telemetry logged: SCBA OK, Gas normal, Vitals stable.', 'success');
 }
 
+function openHazmatModal(){
+  document.getElementById('hazmatModal').classList.add('show');
+}
+function closeHazmatModal(){
+  document.getElementById('hazmatModal').classList.remove('show');
+}
+
+function filterHazmatList(q){
+  q = (q || '').toLowerCase();
+  document.querySelectorAll('.hazmat-item-card').forEach(card=>{
+    const txt = card.textContent.toLowerCase();
+    if(!q || txt.includes(q)){
+      card.style.display = 'block';
+    } else {
+      card.style.display = 'none';
+    }
+  });
+}
+
+function copyHazmatGuide(code, btn){
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(code).then(()=>{
+      const orig = btn.innerHTML;
+      btn.innerHTML = '<i class="fas fa-check"></i> Copied';
+      btn.style.background = '#059669';
+      btn.style.color = '#fff';
+      setTimeout(()=>{
+        btn.innerHTML = orig;
+        btn.style.background = '';
+        btn.style.color = '';
+      }, 1500);
+    });
+  } else {
+    prompt('ERG Guide Protocol:', code);
+  }
+}
+
 // Auto-refresh queue every 90 seconds
 <?php if($view === 'queue'): ?>
 setTimeout(function(){location.reload();}, 90000);
 <?php endif; ?>
 </script>
+
+<!-- ── TACTICAL HAZMAT & CHEMICAL EMERGENCY RESPONSE GUIDE (ERG) MODAL ── -->
+<div class="nav-modal-overlay" id="hazmatModal" onclick="if(event.target===this)closeHazmatModal()">
+  <div class="nav-modal" style="max-width:680px;max-height:86vh;display:flex;flex-direction:column;overflow:hidden;">
+    <div class="nav-modal-head" style="flex-shrink:0;">
+      <h3 style="color:#b45309;"><i class="fas fa-biohazard" style="margin-right:6px;color:#d97706;"></i>HAZMAT & Tactical Chemical Emergency Guide (ERG 2024)</h3>
+      <button class="safety-modal-close" style="background:none;border:none;font-size:1.1rem;cursor:pointer;color:var(--muted);" onclick="closeHazmatModal()"><i class="fas fa-times"></i></button>
+    </div>
+    <div style="padding:16px 20px;flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:12px;">
+      <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:10px 14px;font-size:0.78rem;color:#92400e;flex-shrink:0;">
+        <strong>Tactical Standard Operating Directive:</strong> Scene perimeter isolation distances, primary extinguishing agents, and respiratory protection per PH-BFP & DOT Emergency Response Guidebook.
+      </div>
+
+      <!-- Search Input -->
+      <div style="flex-shrink:0;">
+        <input type="text" oninput="filterHazmatList(this.value)" placeholder="Search substance name, UN number, or guide code (e.g. LPG, battery, acid)..." style="width:100%;padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:0.8rem;outline:none;box-sizing:border-box;">
+      </div>
+
+      <!-- HAZMAT Substance Cards Grid -->
+      <div id="hazmatListContainer" style="display:flex;flex-direction:column;gap:10px;">
+        
+        <!-- LPG -->
+        <div class="hazmat-item-card" style="background:#fff;border:1px solid var(--border);border-left:4px solid #ef4444;border-radius:8px;padding:12px 14px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px;">
+            <div>
+              <strong style="font-size:0.88rem;color:var(--text);">Liquefied Petroleum Gas (LPG / Propane / Butane)</strong>
+              <div style="font-size:0.72rem;color:var(--muted);">UN 1075 &middot; ERG Guide 115 (Flammable Gases)</div>
+            </div>
+            <span style="background:#fee2e2;color:#991b1b;padding:2px 8px;border-radius:20px;font-size:0.7rem;font-weight:800;white-space:nowrap;">Flash Hazard</span>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:6px;font-size:0.74rem;margin-top:6px;">
+            <div style="background:#f8fafc;padding:6px;border-radius:6px;"><strong>Perimeter Isolation:</strong> 100m (800m if tank is involved in fire)</div>
+            <div style="background:#f8fafc;padding:6px;border-radius:6px;"><strong>Suppression:</strong> Dry Chem / CO2 / Water fog to cool tank</div>
+            <div style="background:#f8fafc;padding:6px;border-radius:6px;"><strong>PPE Required:</strong> SCBA + Thermal Bunker Gear</div>
+          </div>
+        </div>
+
+        <!-- Lithium Battery -->
+        <div class="hazmat-item-card" style="background:#fff;border:1px solid var(--border);border-left:4px solid #f59e0b;border-radius:8px;padding:12px 14px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px;">
+            <div>
+              <strong style="font-size:0.88rem;color:var(--text);">Lithium-Ion Battery Thermal Runaway (EV / ESS BESS)</strong>
+              <div style="font-size:0.72rem;color:var(--muted);">UN 3480 &middot; ERG Guide 147 (Lithium Batteries / Toxic HF Gas)</div>
+            </div>
+            <span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:20px;font-size:0.7rem;font-weight:800;white-space:nowrap;">Toxic Gas / Reigniting</span>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:6px;font-size:0.74rem;margin-top:6px;">
+            <div style="background:#f8fafc;padding:6px;border-radius:6px;"><strong>Perimeter Isolation:</strong> 50m initial scene isolation</div>
+            <div style="background:#f8fafc;padding:6px;border-radius:6px;"><strong>Suppression:</strong> Copious water deluge (>2,000 gal) for cell cooling</div>
+            <div style="background:#f8fafc;padding:6px;border-radius:6px;"><strong>PPE Required:</strong> Positive-Pressure SCBA (HF Gas Protection)</div>
+          </div>
+        </div>
+
+        <!-- Hydrochloric Acid -->
+        <div class="hazmat-item-card" style="background:#fff;border:1px solid var(--border);border-left:4px solid #8b5cf6;border-radius:8px;padding:12px 14px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px;">
+            <div>
+              <strong style="font-size:0.88rem;color:var(--text);">Industrial Hydrochloric / Muriatic Acid Spill</strong>
+              <div style="font-size:0.72rem;color:var(--muted);">UN 1789 &middot; ERG Guide 157 (Corrosives / Toxic Vapor)</div>
+            </div>
+            <span style="background:#f3e8ff;color:#6b21a8;padding:2px 8px;border-radius:20px;font-size:0.7rem;font-weight:800;white-space:nowrap;">Corrosive Acid</span>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:6px;font-size:0.74rem;margin-top:6px;">
+            <div style="background:#f8fafc;padding:6px;border-radius:6px;"><strong>Perimeter Isolation:</strong> 60m upwind / 300m downwind vapor</div>
+            <div style="background:#f8fafc;padding:6px;border-radius:6px;"><strong>Neutralizer:</strong> Soda Ash / Slaked Lime &middot; Do NOT spray direct water</div>
+            <div style="background:#f8fafc;padding:6px;border-radius:6px;"><strong>PPE Required:</strong> Chemical Splash Suit Level A/B</div>
+          </div>
+        </div>
+
+        <!-- Transformer Dielectric Oil -->
+        <div class="hazmat-item-card" style="background:#fff;border:1px solid var(--border);border-left:4px solid #0284c7;border-radius:8px;padding:12px 14px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px;">
+            <div>
+              <strong style="font-size:0.88rem;color:var(--text);">High-Voltage Transformer Dielectric Oil Fire</strong>
+              <div style="font-size:0.72rem;color:var(--muted);">Class C Electrical / Class B Oil &middot; ERG Guide 128</div>
+            </div>
+            <span style="background:#e0f2fe;color:#0369a1;padding:2px 8px;border-radius:20px;font-size:0.7rem;font-weight:800;white-space:nowrap;">Electrocution Hazard</span>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:6px;font-size:0.74rem;margin-top:6px;">
+            <div style="background:#f8fafc;padding:6px;border-radius:6px;"><strong>Perimeter Isolation:</strong> 15m minimum stand-off until Meralco lockout</div>
+            <div style="background:#f8fafc;padding:6px;border-radius:6px;"><strong>Suppression:</strong> Dry Chem / CO2 / Non-conductive fog</div>
+            <div style="background:#f8fafc;padding:6px;border-radius:6px;"><strong>Safety Note:</strong> NEVER apply solid water stream on live lines</div>
+          </div>
+        </div>
+
+      </div>
+
+      <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:6px;padding-top:10px;border-top:1px solid var(--border);flex-shrink:0;">
+        <button type="button" onclick="closeHazmatModal()" style="padding:8px 16px;background:#b45309;color:#fff;border:none;border-radius:8px;font-size:0.8rem;font-weight:700;cursor:pointer;">Dismiss Guide</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- ── RESPONDER SAFETY & HAZARD EXPOSURE CHECK-IN MODAL ── -->
 <div class="nav-modal-overlay" id="safetyCheckinModal" onclick="if(event.target===this)closeSafetyCheckinModal()">
