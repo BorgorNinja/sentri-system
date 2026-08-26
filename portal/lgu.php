@@ -43,7 +43,7 @@ $danger_reports = $all_reports = $brgy_stats = $contacts = [];
 if ($view === 'overview' || $view === 'all_reports') {
     $limit = ($view === 'overview') ? 15 : 100;
     $status_filter = ($view === 'overview') ? "AND r.status='dangerous'" : "";
-    $s = $conn->prepare("SELECT r.id,r.title,r.category,r.status,r.barangay,r.city,r.created_at,u.first_name,u.last_name FROM reports r JOIN users u ON u.id=r.user_id WHERE r.is_archived=0 $status_filter ORDER BY r.created_at DESC LIMIT $limit");
+    $s = $conn->prepare("SELECT r.id,r.title,r.category,r.status,r.barangay,r.city,r.created_at,r.description,u.first_name,u.last_name FROM reports r JOIN users u ON u.id=r.user_id WHERE r.is_archived=0 $status_filter ORDER BY r.created_at DESC LIMIT $limit");
     $s->execute(); $res=$s->get_result();
     while($row=$res->fetch_assoc()) {
         if($view==='overview') $danger_reports[]=$row; else $all_reports[]=$row;
@@ -636,8 +636,16 @@ tr:hover td{background:#fafafa;}
           <table>
             <thead><tr><th>#</th><th>Title</th><th>Category</th><th>Barangay</th><th>Date</th></tr></thead>
             <tbody>
-            <?php foreach($danger_reports as $r): ?>
-              <tr style="cursor:pointer;" onclick="lguViewReport(<?= $r['id'] ?>,'<?= addslashes(htmlspecialchars($r['title'])) ?>','<?= $r['category'] ?>','<?= $r['status'] ?>','<?= addslashes(htmlspecialchars($r['barangay']??$r['city'])) ?>','<?= addslashes(htmlspecialchars(($r['first_name']??'').' '.($r['last_name']??''))) ?>','<?= date('M j, Y', strtotime($r['created_at'])) ?>','')">
+            <?php foreach($danger_reports as $r):
+              $r_title_js = htmlspecialchars(json_encode($r['title'] ?? ''), ENT_QUOTES, 'UTF-8');
+              $r_cat_js   = htmlspecialchars(json_encode($r['category'] ?? ''), ENT_QUOTES, 'UTF-8');
+              $r_stat_js  = htmlspecialchars(json_encode($r['status'] ?? ''), ENT_QUOTES, 'UTF-8');
+              $r_loc_js   = htmlspecialchars(json_encode($r['barangay'] ?? $r['city'] ?? ''), ENT_QUOTES, 'UTF-8');
+              $r_user_js  = htmlspecialchars(json_encode(($r['first_name'] ?? '') . ' ' . ($r['last_name'] ?? '')), ENT_QUOTES, 'UTF-8');
+              $r_date_js  = htmlspecialchars(json_encode(date('M j, Y', strtotime($r['created_at']))), ENT_QUOTES, 'UTF-8');
+              $r_desc_js  = htmlspecialchars(json_encode($r['description'] ?? ''), ENT_QUOTES, 'UTF-8');
+            ?>
+              <tr style="cursor:pointer;" onclick="lguViewReport(<?= $r['id'] ?>, <?= $r_title_js ?>, <?= $r_cat_js ?>, <?= $r_stat_js ?>, <?= $r_loc_js ?>, <?= $r_user_js ?>, <?= $r_date_js ?>, <?= $r_desc_js ?>)">
                 <td style="color:var(--muted);font-size:0.74rem;">#<?= $r['id'] ?></td>
                 <td style="font-weight:600;max-width:180px;"><?= htmlspecialchars(mb_strimwidth($r['title'],0,50,'…')) ?></td>
                 <td><span class="cat-chip"><i class="fas <?= $cat_icons[$r['category']] ?? 'fa-circle-exclamation' ?>"></i> <?= ucfirst($r['category']) ?></span></td>
@@ -699,7 +707,15 @@ tr:hover td{background:#fafafa;}
         <table>
           <thead><tr><th>#</th><th>Title</th><th>Category</th><th>Status</th><th>Barangay</th><th>Reported By</th><th>Date</th><th>Actions</th></tr></thead>
           <tbody>
-          <?php foreach($all_reports as $r): ?>
+          <?php foreach($all_reports as $r):
+            $r_title_js = htmlspecialchars(json_encode($r['title'] ?? ''), ENT_QUOTES, 'UTF-8');
+            $r_cat_js   = htmlspecialchars(json_encode($r['category'] ?? ''), ENT_QUOTES, 'UTF-8');
+            $r_stat_js  = htmlspecialchars(json_encode($r['status'] ?? ''), ENT_QUOTES, 'UTF-8');
+            $r_loc_js   = htmlspecialchars(json_encode($r['barangay'] ?? $r['city'] ?? ''), ENT_QUOTES, 'UTF-8');
+            $r_user_js  = htmlspecialchars(json_encode(($r['first_name'] ?? '') . ' ' . ($r['last_name'] ?? '')), ENT_QUOTES, 'UTF-8');
+            $r_date_js  = htmlspecialchars(json_encode(date('M j, Y', strtotime($r['created_at']))), ENT_QUOTES, 'UTF-8');
+            $r_desc_js  = htmlspecialchars(json_encode($r['description'] ?? ''), ENT_QUOTES, 'UTF-8');
+          ?>
             <tr data-status="<?= htmlspecialchars($r['status']) ?>">
               <td style="color:var(--muted);font-size:0.74rem;">#<?= $r['id'] ?></td>
               <td style="font-weight:600;max-width:200px;"><?= htmlspecialchars(mb_strimwidth($r['title'],0,55,'…')) ?></td>
@@ -709,7 +725,7 @@ tr:hover td{background:#fafafa;}
               <td style="font-size:0.78rem;color:var(--muted);"><?= htmlspecialchars($r['first_name'].' '.$r['last_name']) ?></td>
               <td style="font-size:0.74rem;color:var(--muted);white-space:nowrap;"><?= date('M j, Y', strtotime($r['created_at'])) ?></td>
               <td>
-                <button onclick="lguViewReport(<?= $r['id'] ?>,'<?= addslashes(htmlspecialchars($r['title'])) ?>','<?= $r['category'] ?>','<?= $r['status'] ?>','<?= addslashes(htmlspecialchars($r['barangay']??$r['city'])) ?>','<?= addslashes(htmlspecialchars($r['first_name'].' '.$r['last_name'])) ?>','<?= date('M j, Y', strtotime($r['created_at'])) ?>','<?= addslashes(htmlspecialchars('')) ?>')" style="background:#eff6ff;color:#2563eb;border:none;padding:5px 10px;border-radius:7px;font-size:0.76rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;"><i class="fas fa-pen-to-square"></i> Manage</button>
+                <button onclick="lguViewReport(<?= $r['id'] ?>, <?= $r_title_js ?>, <?= $r_cat_js ?>, <?= $r_stat_js ?>, <?= $r_loc_js ?>, <?= $r_user_js ?>, <?= $r_date_js ?>, <?= $r_desc_js ?>)" style="background:#eff6ff;color:#2563eb;border:none;padding:5px 10px;border-radius:7px;font-size:0.76rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;"><i class="fas fa-pen-to-square"></i> Manage</button>
               </td>
             </tr>
           <?php endforeach; ?>

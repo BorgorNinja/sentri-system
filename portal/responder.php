@@ -433,7 +433,7 @@ tr:hover td{background:#fafafa;}
               <span><i class="fas fa-location-dot"></i> <?= htmlspecialchars($r['barangay'] ?? $r['city'] ?? '') ?></span>
               <span><?= date('M j, g:ia', strtotime($r['created_at'])) ?></span>
               <?php if($r['latitude']): ?>
-              <a class="map-link" href="javascript:void(0)" onclick="viewOnMap(<?= (float)$r['latitude'] ?>, <?= (float)$r['longitude'] ?>, '<?= htmlspecialchars(addslashes($r['title']), ENT_QUOTES) ?>')"><i class="fas fa-map-pin"></i> View Map</a>
+              <a class="map-link" href="javascript:void(0)" onclick="viewOnMap(<?= (float)$r['latitude'] ?>, <?= (float)$r['longitude'] ?>, <?= htmlspecialchars(json_encode($r['title'] ?? ''), ENT_QUOTES, 'UTF-8') ?>)"><i class="fas fa-map-pin"></i> View Map</a>
               <?php endif; ?>
             </div>
             <?php if($r['description']): ?><div style="font-size:0.76rem;color:var(--muted);margin-top:2px;"><?= htmlspecialchars(mb_strimwidth($r['description'],0,100,'…')) ?></div><?php endif; ?>
@@ -509,7 +509,7 @@ tr:hover td{background:#fafafa;}
               <span><i class="fas fa-location-dot"></i> <?= htmlspecialchars($r['barangay'] ?? $r['city'] ?? '') ?></span>
               <span><?= date('M j, g:ia', strtotime($r['created_at'])) ?></span>
               <?php if(!empty($r['latitude']) && !empty($r['longitude'])): ?>
-              <a class="map-link" href="javascript:void(0)" onclick="viewOnMap(<?= (float)$r['latitude'] ?>, <?= (float)$r['longitude'] ?>, '<?= htmlspecialchars(addslashes($r['title']), ENT_QUOTES) ?>')"><i class="fas fa-map-pin"></i> View Map</a>
+              <a class="map-link" href="javascript:void(0)" onclick="viewOnMap(<?= (float)$r['latitude'] ?>, <?= (float)$r['longitude'] ?>, <?= htmlspecialchars(json_encode($r['title'] ?? ''), ENT_QUOTES, 'UTF-8') ?>)"><i class="fas fa-map-pin"></i> View Map</a>
               <?php endif; ?>
             </div>
             <?php if(!empty($r['description'])): ?><div style="font-size:0.76rem;color:var(--muted);margin-top:2px;"><?= htmlspecialchars(mb_strimwidth($r['description'],0,120,'…')) ?></div><?php endif; ?>
@@ -546,7 +546,7 @@ tr:hover td{background:#fafafa;}
               <span><i class="fas fa-location-dot"></i> <?= htmlspecialchars($r['barangay'] ?? $r['city'] ?? '') ?></span>
               <span><?= date('M j, g:ia', strtotime($r['created_at'])) ?></span>
               <?php if($r['latitude']): ?>
-              <a class="map-link" href="javascript:void(0)" onclick="viewOnMap(<?= (float)$r['latitude'] ?>, <?= (float)$r['longitude'] ?>, '<?= htmlspecialchars(addslashes($r['title']), ENT_QUOTES) ?>')"><i class="fas fa-map-pin"></i> View Map</a>
+              <a class="map-link" href="javascript:void(0)" onclick="viewOnMap(<?= (float)$r['latitude'] ?>, <?= (float)$r['longitude'] ?>, <?= htmlspecialchars(json_encode($r['title'] ?? ''), ENT_QUOTES, 'UTF-8') ?>)"><i class="fas fa-map-pin"></i> View Map</a>
               <?php endif; ?>
             </div>
           </div>
