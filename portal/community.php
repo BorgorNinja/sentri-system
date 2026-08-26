@@ -547,6 +547,7 @@ body.dark .locate-btn-big{background:#1f3a5f;color:var(--blue-accent);}
         <a href="tel:117" style="display:inline-flex;align-items:center;gap:6px;padding:7px 12px;background:rgba(255,255,255,0.15);color:#fff;border-radius:8px;font-size:0.78rem;font-weight:700;text-decoration:none;border:1px solid rgba(255,255,255,0.25);transition:background 0.15s;" onmouseover="this.style.background='rgba(255,255,255,0.25)'" onmouseout="this.style.background='rgba(255,255,255,0.15)'"><i class="fas fa-shield-halved"></i> PNP Police (117)</a>
         <button onclick="copyEmergencyCoordinates(this)" style="display:inline-flex;align-items:center;gap:6px;padding:7px 12px;background:#f59e0b;color:#111827;border:none;border-radius:8px;font-size:0.78rem;font-weight:700;cursor:pointer;transition:transform 0.15s;" onmouseover="this.style.transform='scale(1.04)'" onmouseout="this.style.transform='scale(1)'"><i class="fas fa-location-crosshairs"></i> Copy My GPS</button>
         <button onclick="openFirstAidModal()" style="display:inline-flex;align-items:center;gap:6px;padding:7px 12px;background:rgba(255,255,255,0.15);color:#fff;border-radius:8px;font-size:0.78rem;font-weight:700;border:1px solid rgba(255,255,255,0.25);cursor:pointer;transition:background 0.15s;" onmouseover="this.style.background='rgba(255,255,255,0.25)'" onmouseout="this.style.background='rgba(255,255,255,0.15)'"><i class="fas fa-heart-pulse"></i> First-Aid Cards</button>
+        <button onclick="openGoBagModal()" style="display:inline-flex;align-items:center;gap:6px;padding:7px 12px;background:rgba(255,255,255,0.15);color:#fff;border-radius:8px;font-size:0.78rem;font-weight:700;border:1px solid rgba(255,255,255,0.25);cursor:pointer;transition:background 0.15s;" onmouseover="this.style.background='rgba(255,255,255,0.25)'" onmouseout="this.style.background='rgba(255,255,255,0.15)'"><i class="fas fa-bag-shopping"></i> 72-Hr Go Bag</button>
         <button onclick="openSafetyModal()" style="display:inline-flex;align-items:center;gap:6px;padding:7px 12px;background:rgba(255,255,255,0.15);color:#fff;border-radius:8px;font-size:0.78rem;font-weight:700;border:1px solid rgba(255,255,255,0.25);cursor:pointer;transition:background 0.15s;" onmouseover="this.style.background='rgba(255,255,255,0.25)'" onmouseout="this.style.background='rgba(255,255,255,0.15)'"><i class="fas fa-kit-medical"></i> Safety Guide</button>
         <button onclick="openHotlinesModal()" style="display:inline-flex;align-items:center;gap:6px;padding:7px 12px;background:rgba(255,255,255,0.15);color:#fff;border-radius:8px;font-size:0.78rem;font-weight:700;border:1px solid rgba(255,255,255,0.25);cursor:pointer;transition:background 0.15s;" onmouseover="this.style.background='rgba(255,255,255,0.25)'" onmouseout="this.style.background='rgba(255,255,255,0.15)'"><i class="fas fa-address-book"></i> Hotlines Directory</button>
       </div>
@@ -1415,6 +1416,87 @@ function filterHotlineList(cat, btn){
   });
 }
 
+function openGoBagModal(){
+  const m=document.getElementById('goBagModalOverlay');
+  if(!m) return;
+  initGoBagState();
+  m.classList.add('open');
+}
+
+function closeGoBagModal(){
+  const m=document.getElementById('goBagModalOverlay');
+  if(m) m.classList.remove('open');
+}
+
+const GO_BAG_DEFAULT_CHECKED = [0, 1, 2, 3, 4, 5];
+
+function initGoBagState(){
+  let saved = null;
+  try {
+    const raw = localStorage.getItem('sentri_gobag_state');
+    if(raw) saved = JSON.parse(raw);
+  } catch(e){}
+  if(!saved || !Array.isArray(saved)){
+    saved = GO_BAG_DEFAULT_CHECKED;
+  }
+  const checkboxes = document.querySelectorAll('.gobag-check');
+  checkboxes.forEach((cb, idx)=>{
+    cb.checked = saved.includes(idx);
+  });
+  updateGoBagProgress();
+}
+
+function toggleGoBagItem(idx){
+  const checkboxes = document.querySelectorAll('.gobag-check');
+  const checkedIndices = [];
+  checkboxes.forEach((cb, i)=>{
+    if(cb.checked) checkedIndices.push(i);
+  });
+  try {
+    localStorage.setItem('sentri_gobag_state', JSON.stringify(checkedIndices));
+  } catch(e){}
+  updateGoBagProgress();
+}
+
+function resetGoBagChecklist(){
+  try {
+    localStorage.removeItem('sentri_gobag_state');
+  } catch(e){}
+  const checkboxes = document.querySelectorAll('.gobag-check');
+  checkboxes.forEach((cb, idx)=>{
+    cb.checked = GO_BAG_DEFAULT_CHECKED.includes(idx);
+  });
+  updateGoBagProgress();
+}
+
+function updateGoBagProgress(){
+  const checkboxes = document.querySelectorAll('.gobag-check');
+  let checked = 0;
+  checkboxes.forEach(cb=>{ if(cb.checked) checked++; });
+  const total = checkboxes.length || 8;
+  const pct = Math.round((checked / total) * 100);
+  const bar = document.getElementById('goBagProgressBar');
+  const lbl = document.getElementById('goBagProgressText');
+  const badge = document.getElementById('goBagStatusBadge');
+  if(bar) bar.style.width = `${pct}%`;
+  if(lbl) lbl.textContent = `${checked} of ${total} Essentials Packed (${pct}%)`;
+  if(badge){
+    if(pct >= 100){
+      badge.innerHTML = '<i class="fas fa-circle-check"></i> Fully Prepared (100%)';
+      badge.style.background = '#dcfce7';
+      badge.style.color = '#15803d';
+    } else if(pct >= 60){
+      badge.innerHTML = '<i class="fas fa-shield-halved"></i> Moderate Readiness';
+      badge.style.background = '#fef3c7';
+      badge.style.color = '#92400e';
+    } else {
+      badge.innerHTML = '<i class="fas fa-triangle-exclamation"></i> Incomplete Go Bag';
+      badge.style.background = '#fee2e2';
+      badge.style.color = '#b91c1c';
+    }
+  }
+}
+
 /* Helpers */
 function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function ucFirst(s){return s?s.charAt(0).toUpperCase()+s.slice(1):'';}
@@ -1499,9 +1581,9 @@ window.addEventListener('load',()=>{if(mainMap)mainMap.invalidateSize();if(inlin
 
 <!-- ── Emergency Hotlines & One-Touch Quick-Dial Directory Modal ── -->
 <div class="modal-overlay" id="hotlinesModalOverlay" onclick="if(event.target===this)closeHotlinesModal()">
-  <div class="modal" style="max-width:680px;">
+  <div class="modal" style="max-width:700px;max-height:86vh;display:flex;flex-direction:column;overflow:hidden;">
     <button class="modal-close" onclick="closeHotlinesModal()"><i class="fas fa-xmark"></i></button>
-    <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;flex-shrink:0;">
       <div style="width:42px;height:42px;border-radius:12px;background:#fef2f2;color:#ef4444;display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0;">
         <i class="fas fa-phone-volume"></i>
       </div>
@@ -1512,7 +1594,7 @@ window.addEventListener('load',()=>{if(mainMap)mainMap.invalidateSize();if(inlin
     </div>
 
     <!-- Category Tabs -->
-    <div style="display:flex;gap:6px;border-bottom:1.5px solid var(--border);margin:16px 0 14px;padding-bottom:8px;overflow-x:auto;">
+    <div style="display:flex;gap:6px;border-bottom:1.5px solid var(--border);margin:16px 0 14px;padding-bottom:8px;overflow-x:auto;flex-shrink:0;">
       <button type="button" class="hotline-tab-btn" onclick="filterHotlineList('all',this)" style="padding:6px 12px;border:none;background:var(--blue-accent);color:#fff;border-radius:8px;font-size:0.8rem;font-weight:700;cursor:pointer;font-family:'Poppins',sans-serif;">All (10)</button>
       <button type="button" class="hotline-tab-btn" onclick="filterHotlineList('disaster',this)" style="padding:6px 12px;border:none;background:var(--bg);color:var(--muted);border-radius:8px;font-size:0.8rem;font-weight:700;cursor:pointer;font-family:'Poppins',sans-serif;">Disaster / Rescue</button>
       <button type="button" class="hotline-tab-btn" onclick="filterHotlineList('medical',this)" style="padding:6px 12px;border:none;background:var(--bg);color:var(--muted);border-radius:8px;font-size:0.8rem;font-weight:700;cursor:pointer;font-family:'Poppins',sans-serif;">Medical / EMS</button>
@@ -1521,7 +1603,7 @@ window.addEventListener('load',()=>{if(mainMap)mainMap.invalidateSize();if(inlin
     </div>
 
     <!-- Hotlines Grid -->
-    <div id="hotlinesListContainer" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:10px;max-height:55vh;overflow-y:auto;padding-right:4px;">
+    <div id="hotlinesListContainer" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:10px;flex:1;min-height:0;overflow-y:auto;padding-right:4px;">
       
       <!-- 911 National -->
       <div class="hotline-item-card" data-cat="disaster" style="background:#fff;border:1px solid var(--border);border-left:4px solid #ef4444;border-radius:10px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px;">

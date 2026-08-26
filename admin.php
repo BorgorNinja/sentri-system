@@ -1900,7 +1900,7 @@ function renderSnapshotTable(){
 
 <!-- ── DATABASE BACKUP & DISASTER RECOVERY (DR) MODAL ── -->
 <div class="modal-overlay vuln-modal" id="backupModalOverlay" onclick="if(event.target===this) closeBackupModal()">
-  <div class="modal-dialog" style="max-width:760px;">
+  <div class="modal-dialog" style="max-width:820px;">
     <div class="panel">
       <div class="panel-header" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
         <div class="panel-title"><i class="fas fa-database" style="color:var(--admin);"></i> System Backup & Disaster Recovery (DR) Snapshot Manager</div>
@@ -1911,36 +1911,36 @@ function renderSnapshotTable(){
           <div style="font-size:0.78rem;color:#166534;">
             <strong>Disaster Recovery RPO: 24 Hours &middot; RTO: < 5 Minutes.</strong> Automated daily database dumps and integrity verification ensure zero data loss across emergency incident logs.
           </div>
-          <button type="button" class="btn-action approve" onclick="createInstantSnapshot(this)"><i class="fas fa-plus"></i> Create Instant Snapshot</button>
+          <button type="button" class="btn-action approve" onclick="createInstantSnapshot(this)" style="white-space:nowrap;"><i class="fas fa-plus"></i> Create Instant Snapshot</button>
         </div>
-        <div class="table-wrap" style="max-height:48vh;overflow-y:auto;">
-          <table>
+        <div class="table-wrap" style="padding:0;max-height:48vh;overflow-y:auto;overflow-x:auto;">
+          <table style="width:100%;border-collapse:collapse;">
             <thead>
               <tr>
-                <th>Snapshot Archive</th>
-                <th>File Size</th>
-                <th>SHA-256 Checksum</th>
-                <th>Created</th>
-                <th>Actions</th>
+                <th style="text-align:left;padding:10px 12px;">Snapshot Archive</th>
+                <th style="white-space:nowrap;padding:10px 12px;">File Size</th>
+                <th style="white-space:nowrap;padding:10px 12px;">SHA-256 Checksum</th>
+                <th style="white-space:nowrap;padding:10px 12px;">Created</th>
+                <th style="white-space:nowrap;padding:10px 12px;">Actions</th>
               </tr>
             </thead>
             <tbody id="snapshotTableBody">
               <tr>
-                <td><strong>sentri_db_auto_2026-08-25_0000.sql.gz</strong><div style="font-size:0.72rem;color:var(--muted);">Daily Automated Dump</div></td>
-                <td><span style="background:#f1f5f9;padding:2px 6px;border-radius:4px;font-size:0.72rem;font-weight:700;">14.2 MB</span></td>
-                <td><code style="font-size:0.72rem;background:#f8fafc;padding:2px 5px;border:1px solid #e2e8f0;border-radius:4px;">8f3a9e...b210</code></td>
-                <td style="font-size:0.76rem;color:var(--muted);">Aug 25, 2026 00:00</td>
-                <td>
+                <td style="padding:10px 12px;"><strong>sentri_db_auto_2026-08-25_0000.sql.gz</strong><div style="font-size:0.72rem;color:var(--muted);">Daily Automated Dump</div></td>
+                <td style="padding:10px 12px;"><span style="background:#f1f5f9;padding:2px 6px;border-radius:4px;font-size:0.72rem;font-weight:700;white-space:nowrap;">14.2 MB</span></td>
+                <td style="padding:10px 12px;"><code style="font-size:0.72rem;background:#f8fafc;padding:2px 5px;border:1px solid #e2e8f0;border-radius:4px;">8f3a9e...b210</code></td>
+                <td style="font-size:0.76rem;color:var(--muted);white-space:nowrap;padding:10px 12px;">Aug 25, 2026 00:00</td>
+                <td style="white-space:nowrap;padding:10px 12px;">
                   <button type="button" onclick="alert('Downloading SQL dump archive: sentri_db_auto_2026-08-25_0000.sql.gz');" style="padding:4px 8px;background:#f0fdf4;border:1px solid #86efac;color:#166534;border-radius:6px;font-size:0.72rem;font-weight:700;cursor:pointer;"><i class="fas fa-download"></i></button>
                   <button type="button" onclick="alert('Snapshot Integrity Verified: Checksum matches MariaDB InnoDB binary log.');" style="padding:4px 8px;background:#eff6ff;border:1px solid #bfdbfe;color:#1d4ed8;border-radius:6px;font-size:0.72rem;font-weight:700;cursor:pointer;"><i class="fas fa-check"></i></button>
                 </td>
               </tr>
               <tr>
-                <td><strong>sentri_db_pre_deploy_2026-08-24_1830.sql.gz</strong><div style="font-size:0.72rem;color:var(--muted);">Manual Schema Pre-Check</div></td>
-                <td><span style="background:#f1f5f9;padding:2px 6px;border-radius:4px;font-size:0.72rem;font-weight:700;">13.9 MB</span></td>
-                <td><code style="font-size:0.72rem;background:#f8fafc;padding:2px 5px;border:1px solid #e2e8f0;border-radius:4px;">4c7d1a...f902</code></td>
-                <td style="font-size:0.76rem;color:var(--muted);">Aug 24, 2026 18:30</td>
-                <td>
+                <td style="padding:10px 12px;"><strong>sentri_db_pre_deploy_2026-08-24_1830.sql.gz</strong><div style="font-size:0.72rem;color:var(--muted);">Manual Schema Pre-Check</div></td>
+                <td style="padding:10px 12px;"><span style="background:#f1f5f9;padding:2px 6px;border-radius:4px;font-size:0.72rem;font-weight:700;white-space:nowrap;">13.9 MB</span></td>
+                <td style="padding:10px 12px;"><code style="font-size:0.72rem;background:#f8fafc;padding:2px 5px;border:1px solid #e2e8f0;border-radius:4px;">4c7d1a...f902</code></td>
+                <td style="font-size:0.76rem;color:var(--muted);white-space:nowrap;padding:10px 12px;">Aug 24, 2026 18:30</td>
+                <td style="white-space:nowrap;padding:10px 12px;">
                   <button type="button" onclick="alert('Downloading SQL dump archive: sentri_db_pre_deploy_2026-08-24_1830.sql.gz');" style="padding:4px 8px;background:#f0fdf4;border:1px solid #86efac;color:#166534;border-radius:6px;font-size:0.72rem;font-weight:700;cursor:pointer;"><i class="fas fa-download"></i></button>
                   <button type="button" onclick="alert('Snapshot Integrity Verified: Checksum matches MariaDB InnoDB binary log.');" style="padding:4px 8px;background:#eff6ff;border:1px solid #bfdbfe;color:#1d4ed8;border-radius:6px;font-size:0.72rem;font-weight:700;cursor:pointer;"><i class="fas fa-check"></i></button>
                 </td>

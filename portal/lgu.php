@@ -1629,7 +1629,7 @@ function searchTableReports(query){
 
 <!-- ── MULTI-AGENCY ICS MUTUAL AID MATRIX MODAL ── -->
 <div class="lgu-modal-bg" id="mutualAidModal">
-  <div class="lgu-modal" style="max-width:720px;">
+  <div class="lgu-modal" style="max-width:840px;">
     <div class="lgu-modal-header">
       <h3><i class="fas fa-handshake-angle" style="color:var(--navy);margin-right:6px;"></i>Multi-Agency Incident Command (ICS) Mutual Aid Matrix</h3>
       <button class="lgu-modal-close" onclick="closeMutualAidModal()"><i class="fas fa-xmark"></i></button>
@@ -1639,18 +1639,18 @@ function searchTableReports(query){
         <div style="font-size:0.78rem;color:#1e40af;">
           <strong>Regional Asset Staging:</strong> Inter-agency emergency assets available for immediate mutual aid mobilization across NCR and regional DRRM clusters.
         </div>
-        <span style="font-size:0.72rem;background:#dbeafe;color:#1d4ed8;padding:3px 9px;border-radius:20px;font-weight:800;border:1px solid #93c5fd;">5 Staged Agencies</span>
+        <span style="font-size:0.72rem;background:#dbeafe;color:#1d4ed8;padding:3px 9px;border-radius:20px;font-weight:800;border:1px solid #93c5fd;white-space:nowrap;">5 Staged Agencies</span>
       </div>
 
       <div class="table-wrap" style="max-height:48vh;overflow-y:auto;">
         <table>
           <thead>
             <tr>
-              <th>Responding Agency</th>
+              <th style="white-space:nowrap;">Responding Agency</th>
               <th>Asset Capability & Equipment</th>
-              <th>Personnel</th>
-              <th>Deployment ETA</th>
-              <th>Status / Action</th>
+              <th style="white-space:nowrap;">Personnel</th>
+              <th style="white-space:nowrap;">Deployment ETA</th>
+              <th style="white-space:nowrap;">Status / Action</th>
             </tr>
           </thead>
           <tbody>
