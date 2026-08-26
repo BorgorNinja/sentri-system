@@ -3,58 +3,58 @@ session_start(['cookie_httponly'=>true,'cookie_samesite'=>'Lax','cookie_secure'=
 if (isset($_SESSION['user_id'])) { require_once __DIR__ . '/config/auth.php'; redirect_to_portal(); }
 require __DIR__ . '/config/db.php';
 
-$token     = trim($_GET['token'] ?? '');
-$tokenOk   = false;
+$token = trim($_GET['token'] ?? '');
+$tokenOk = false;
 $tokenUser = null;
 
 // Validate token on every GET/POST
 if (!empty($token) && preg_match('/^[a-f0-9]{64}$/', $token)) {
-    $stmt = $conn->prepare(
-        "SELECT id, first_name, reset_token_expires FROM users
-         WHERE reset_token = ? AND reset_token_expires > NOW() LIMIT 1"
-    );
-    $stmt->bind_param("s", $token);
-    $stmt->execute();
-    $res  = $stmt->get_result();
-    $tokenUser = $res->fetch_assoc();
-    $stmt->close();
-    if ($tokenUser) $tokenOk = true;
+ $stmt = $conn->prepare(
+ "SELECT id, first_name, reset_token_expires FROM users
+ WHERE reset_token = ? AND reset_token_expires > NOW() LIMIT 1"
+ );
+ $stmt->bind_param("s", $token);
+ $stmt->execute();
+ $res = $stmt->get_result();
+ $tokenUser = $res->fetch_assoc();
+ $stmt->close();
+ if ($tokenUser) $tokenOk = true;
 }
 
-// Handle POST — set new password
+// Handle POST - set new password
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    header('Content-Type: application/json');
+ header('Content-Type: application/json');
 
-    if (!$tokenOk) {
-        echo json_encode(['status'=>'error','message'=>'This reset link is invalid or has expired. Please request a new one.']); exit;
-    }
+ if (!$tokenOk) {
+ echo json_encode(['status'=>'error','message'=>'This reset link is invalid or has expired. Please request a new one.']); exit;
+ }
 
-    $pw  = $_POST['password']         ?? '';
-    $pw2 = $_POST['confirm_password'] ?? '';
+ $pw = $_POST['password'] ?? '';
+ $pw2 = $_POST['confirm_password'] ?? '';
 
-    if (strlen($pw) < 8) {
-        echo json_encode(['status'=>'error','message'=>'Password must be at least 8 characters.']); exit;
-    }
-    if ($pw !== $pw2) {
-        echo json_encode(['status'=>'error','message'=>'Passwords do not match.']); exit;
-    }
+ if (strlen($pw) < 8) {
+ echo json_encode(['status'=>'error','message'=>'Password must be at least 8 characters.']); exit;
+ }
+ if ($pw !== $pw2) {
+ echo json_encode(['status'=>'error','message'=>'Passwords do not match.']); exit;
+ }
 
-    $hash = password_hash($pw, PASSWORD_BCRYPT, ['cost' => 12]);
+ $hash = password_hash($pw, PASSWORD_BCRYPT, ['cost' => 12]);
 
-    // Update password + clear reset token + ensure verified
-    $upd = $conn->prepare(
-        "UPDATE users SET password=?, reset_token=NULL, reset_token_expires=NULL, email_verified=1
-         WHERE id=?"
-    );
-    $upd->bind_param("si", $hash, $tokenUser['id']);
-    $upd->execute(); $upd->close();
+ // Update password + clear reset token + ensure verified
+ $upd = $conn->prepare(
+ "UPDATE users SET password=?, reset_token=NULL, reset_token_expires=NULL, email_verified=1
+ WHERE id=?"
+ );
+ $upd->bind_param("si", $hash, $tokenUser['id']);
+ $upd->execute(); $upd->close();
 
-    echo json_encode([
-        'status'   => 'success',
-        'message'  => 'Password reset successfully! Redirecting to sign in...',
-        'redirect' => 'login.php?reset=success',
-    ]);
-    exit;
+ echo json_encode([
+ 'status' => 'success',
+ 'message' => 'Password reset successfully! Redirecting to sign in...',
+ 'redirect' => 'login.php?reset=success',
+ ]);
+ exit;
 }
 ?>
 <!DOCTYPE html>
@@ -62,7 +62,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Reset Password – SenTri</title>
+<title>Reset Password - SenTri</title>
 <link rel="stylesheet" href="assets/vendor/fonts/fonts.css">
 <link rel="stylesheet" href="assets/vendor/fontawesome/css/all.min.css">
 <style>
@@ -107,82 +107,82 @@ p.sub{font-size:0.9rem;color:var(--muted);line-height:1.7;margin-bottom:24px;}
 <body>
 <div class="bg-canvas"><div id="particles" style="position:absolute;inset:0;overflow:hidden;"></div></div>
 <div class="card">
-  <a href="index.php" class="brand">
-    <div class="brand-icon"><i class="fas fa-shield-halved"></i></div>
-    <span class="brand-name">SenTri</span>
-  </a>
+ <a href="index.php" class="brand">
+ <div class="brand-icon"><i class="fas fa-shield-halved"></i></div>
+ <span class="brand-name">SenTri</span>
+ </a>
 
-  <?php if ($tokenOk): ?>
-    <div class="icon-wrap ok"><i class="fas fa-lock-open"></i></div>
-    <h1>Set New Password</h1>
-    <p class="sub">Hi <strong><?= htmlspecialchars($tokenUser['first_name']) ?></strong>, enter and confirm your new password below.</p>
-    <div id="msg" class="msg"></div>
-    <form id="resetForm" novalidate>
-      <input type="hidden" name="token" value="<?= htmlspecialchars($token) ?>">
-      <div class="form-group">
-        <label>New Password</label>
-        <input type="password" id="password" name="password" placeholder="Min. 8 characters" required oninput="checkStrength(this.value)">
-        <span class="show-btn" onclick="togglePw('password',this)">SHOW</span>
-        <div class="pw-strength"><div class="pw-strength-bar" id="pwBar"></div></div>
-        <div class="pw-rules">Use at least 8 characters with letters and numbers.</div>
-      </div>
-      <div class="form-group">
-        <label>Confirm New Password</label>
-        <input type="password" id="confirm_password" name="confirm_password" placeholder="Repeat your password" required>
-        <span class="show-btn" onclick="togglePw('confirm_password',this)">SHOW</span>
-      </div>
-      <button class="btn-primary" type="submit" id="submitBtn"><i class="fas fa-key"></i> Reset Password</button>
-    </form>
+ <?php if ($tokenOk): ?>
+ <div class="icon-wrap ok"><i class="fas fa-lock-open"></i></div>
+ <h1>Set New Password</h1>
+ <p class="sub">Hi <strong><?= htmlspecialchars($tokenUser['first_name']) ?></strong>, enter and confirm your new password below.</p>
+ <div id="msg" class="msg"></div>
+ <form id="resetForm" novalidate>
+ <input type="hidden" name="token" value="<?= htmlspecialchars($token) ?>">
+ <div class="form-group">
+ <label>New Password</label>
+ <input type="password" id="password" name="password" placeholder="Min. 8 characters" required oninput="checkStrength(this.value)">
+ <span class="show-btn" onclick="togglePw('password',this)">SHOW</span>
+ <div class="pw-strength"><div class="pw-strength-bar" id="pwBar"></div></div>
+ <div class="pw-rules">Use at least 8 characters with letters and numbers.</div>
+ </div>
+ <div class="form-group">
+ <label>Confirm New Password</label>
+ <input type="password" id="confirm_password" name="confirm_password" placeholder="Repeat your password" required>
+ <span class="show-btn" onclick="togglePw('confirm_password',this)">SHOW</span>
+ </div>
+ <button class="btn-primary" type="submit" id="submitBtn"><i class="fas fa-key"></i> Reset Password</button>
+ </form>
 
-  <?php else: ?>
-    <div class="icon-wrap err"><i class="fas fa-triangle-exclamation"></i></div>
-    <h1>Link Expired or Invalid</h1>
-    <p class="sub">This password reset link is no longer valid. Links expire after 1 hour. Please request a new one.</p>
-    <a href="forgot_password.php" class="btn-primary" style="display:block;text-align:center;text-decoration:none;padding:13px;border-radius:10px;color:#fff;">
-      <i class="fas fa-paper-plane"></i> Request New Reset Link
-    </a>
-  <?php endif; ?>
-  <a href="login.php" class="btn-ghost-link"><i class="fas fa-arrow-left"></i> Back to Sign In</a>
+ <?php else: ?>
+ <div class="icon-wrap err"><i class="fas fa-triangle-exclamation"></i></div>
+ <h1>Link Expired or Invalid</h1>
+ <p class="sub">This password reset link is no longer valid. Links expire after 1 hour. Please request a new one.</p>
+ <a href="forgot_password.php" class="btn-primary" style="display:block;text-align:center;text-decoration:none;padding:13px;border-radius:10px;color:#fff;">
+ <i class="fas fa-paper-plane"></i> Request New Reset Link
+ </a>
+ <?php endif; ?>
+ <a href="login.php" class="btn-ghost-link"><i class="fas fa-arrow-left"></i> Back to Sign In</a>
 </div>
 
 <script>
 (function(){
-  const c=document.getElementById('particles');
-  for(let i=0;i<30;i++){const p=document.createElement('div');p.className='particle';p.style.cssText=`left:${Math.random()*100}%;animation-duration:${7+Math.random()*10}s;animation-delay:${-Math.random()*17}s;width:${1+Math.random()*2}px;height:${1+Math.random()*2}px;background:rgba(255,255,255,${0.2+Math.random()*0.4});`;c.appendChild(p);}
+ const c=document.getElementById('particles');
+ for(let i=0;i<30;i++){const p=document.createElement('div');p.className='particle';p.style.cssText=`left:${Math.random()*100}%;animation-duration:${7+Math.random()*10}s;animation-delay:${-Math.random()*17}s;width:${1+Math.random()*2}px;height:${1+Math.random()*2}px;background:rgba(255,255,255,${0.2+Math.random()*0.4});`;c.appendChild(p);}
 })();
 function togglePw(id,btn){const el=document.getElementById(id);const s=el.type==='text';el.type=s?'password':'text';btn.textContent=s?'SHOW':'HIDE';}
 function checkStrength(val){
-  const bar=document.getElementById('pwBar');
-  let score=0;
-  if(val.length>=8)score++;if(/[A-Z]/.test(val))score++;if(/[0-9]/.test(val))score++;if(/[^A-Za-z0-9]/.test(val))score++;
-  bar.style.width=[0,30,55,80,100][score]+'%';
-  bar.style.background=['','#e53e3e','#dd6b20','#3a8dff','#38a169'][score]||'#eee';
+ const bar=document.getElementById('pwBar');
+ let score=0;
+ if(val.length>=8)score++;if(/[A-Z]/.test(val))score++;if(/[0-9]/.test(val))score++;if(/[^A-Za-z0-9]/.test(val))score++;
+ bar.style.width=[0,30,55,80,100][score]+'%';
+ bar.style.background=['','#e53e3e','#dd6b20','#3a8dff','#38a169'][score]||'#eee';
 }
 const form=document.getElementById('resetForm');
 if(form){
-  form.addEventListener('submit',async function(e){
-    e.preventDefault();
-    const btn=document.getElementById('submitBtn');
-    const msgEl=document.getElementById('msg');
-    const fd=new FormData(this);
-    const orig=btn.innerHTML;
-    btn.disabled=true;btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Resetting...';
-    try{
-      const res=await fetch('reset_password.php?token='+encodeURIComponent(fd.get('token')),{method:'POST',body:fd});
-      const data=await res.json();
-      if(data.status==='success'){
-        msgEl.className='msg success';msgEl.textContent=data.message;msgEl.style.display='block';
-        btn.innerHTML='<i class="fas fa-check"></i> Done!';
-        setTimeout(()=>{window.location.href=data.redirect;},1500);
-      }else{
-        msgEl.className='msg error';msgEl.textContent=data.message;msgEl.style.display='block';
-        btn.disabled=false;btn.innerHTML=orig;
-      }
-    }catch{
-      msgEl.className='msg error';msgEl.textContent='Something went wrong.';msgEl.style.display='block';
-      btn.disabled=false;btn.innerHTML=orig;
-    }
-  });
+ form.addEventListener('submit',async function(e){
+ e.preventDefault();
+ const btn=document.getElementById('submitBtn');
+ const msgEl=document.getElementById('msg');
+ const fd=new FormData(this);
+ const orig=btn.innerHTML;
+ btn.disabled=true;btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Resetting...';
+ try{
+ const res=await fetch('reset_password.php?token='+encodeURIComponent(fd.get('token')),{method:'POST',body:fd});
+ const data=await res.json();
+ if(data.status==='success'){
+ msgEl.className='msg success';msgEl.textContent=data.message;msgEl.style.display='block';
+ btn.innerHTML='<i class="fas fa-check"></i> Done!';
+ setTimeout(()=>{window.location.href=data.redirect;},1500);
+ }else{
+ msgEl.className='msg error';msgEl.textContent=data.message;msgEl.style.display='block';
+ btn.disabled=false;btn.innerHTML=orig;
+ }
+ }catch{
+ msgEl.className='msg error';msgEl.textContent='Something went wrong.';msgEl.style.display='block';
+ btn.disabled=false;btn.innerHTML=orig;
+ }
+ });
 }
 </script>
 </body>

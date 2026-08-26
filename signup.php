@@ -9,169 +9,169 @@ require __DIR__ . '/config/db.php';
 // ── Auto-migrate: runs on every request (before POST check) ──────────────────
 // Ensures schema is up-to-date before any INSERT attempt.
 try {
-    $db = $conn->query("SELECT DATABASE()")->fetch_row()[0];
-    $existingCols = [];
-    $colRes = $conn->query("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS
-                            WHERE TABLE_SCHEMA='$db' AND TABLE_NAME='users'");
-    while ($r = $colRes->fetch_row()) $existingCols[] = $r[0];
-    $colRes->free();
+ $db = $conn->query("SELECT DATABASE()")->fetch_row()[0];
+ $existingCols = [];
+ $colRes = $conn->query("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS
+ WHERE TABLE_SCHEMA='$db' AND TABLE_NAME='users'");
+ while ($r = $colRes->fetch_row()) $existingCols[] = $r[0];
+ $colRes->free();
 
-    if (!in_array('email_verified', $existingCols))
-        $conn->query("ALTER TABLE users ADD COLUMN email_verified TINYINT(1) NOT NULL DEFAULT 0 AFTER role");
-    if (!in_array('verification_token', $existingCols))
-        $conn->query("ALTER TABLE users ADD COLUMN verification_token VARCHAR(64) DEFAULT NULL AFTER email_verified");
-    if (!in_array('token_expires_at', $existingCols))
-        $conn->query("ALTER TABLE users ADD COLUMN token_expires_at DATETIME DEFAULT NULL AFTER verification_token");
-    if (!in_array('reset_token', $existingCols))
-        $conn->query("ALTER TABLE users ADD COLUMN reset_token VARCHAR(64) DEFAULT NULL AFTER token_expires_at");
-    if (!in_array('reset_token_expires', $existingCols))
-        $conn->query("ALTER TABLE users ADD COLUMN reset_token_expires DATETIME DEFAULT NULL AFTER reset_token");
+ if (!in_array('email_verified', $existingCols))
+ $conn->query("ALTER TABLE users ADD COLUMN email_verified TINYINT(1) NOT NULL DEFAULT 0 AFTER role");
+ if (!in_array('verification_token', $existingCols))
+ $conn->query("ALTER TABLE users ADD COLUMN verification_token VARCHAR(64) DEFAULT NULL AFTER email_verified");
+ if (!in_array('token_expires_at', $existingCols))
+ $conn->query("ALTER TABLE users ADD COLUMN token_expires_at DATETIME DEFAULT NULL AFTER verification_token");
+ if (!in_array('reset_token', $existingCols))
+ $conn->query("ALTER TABLE users ADD COLUMN reset_token VARCHAR(64) DEFAULT NULL AFTER token_expires_at");
+ if (!in_array('reset_token_expires', $existingCols))
+ $conn->query("ALTER TABLE users ADD COLUMN reset_token_expires DATETIME DEFAULT NULL AFTER reset_token");
 
-    if (!in_array('email_verified', $existingCols))
-        $conn->query("UPDATE users SET email_verified=1 WHERE created_at < NOW()");
+ if (!in_array('email_verified', $existingCols))
+ $conn->query("UPDATE users SET email_verified=1 WHERE created_at < NOW()");
 
-    if (!in_array('phone_number', $existingCols))
-        $conn->query("ALTER TABLE users ADD COLUMN phone_number VARCHAR(30) DEFAULT NULL AFTER email");
-    if (!in_array('org_name', $existingCols))
-        $conn->query("ALTER TABLE users ADD COLUMN org_name VARCHAR(255) DEFAULT NULL");
-    if (!in_array('position', $existingCols))
-        $conn->query("ALTER TABLE users ADD COLUMN `position` VARCHAR(150) DEFAULT NULL");
-    if (!in_array('barangay_name', $existingCols))
-        $conn->query("ALTER TABLE users ADD COLUMN barangay_name VARCHAR(150) DEFAULT NULL");
-    if (!in_array('municipality', $existingCols))
-        $conn->query("ALTER TABLE users ADD COLUMN municipality VARCHAR(150) DEFAULT NULL");
-    if (!in_array('is_approved', $existingCols)) {
-        $conn->query("ALTER TABLE users ADD COLUMN is_approved TINYINT(1) NOT NULL DEFAULT 0");
-        $conn->query("UPDATE users SET is_approved=1 WHERE role IN('user','community','admin')");
-    }
-    if (!in_array('responder_type', $existingCols))
-        $conn->query("ALTER TABLE users ADD COLUMN responder_type VARCHAR(30) DEFAULT NULL");
+ if (!in_array('phone_number', $existingCols))
+ $conn->query("ALTER TABLE users ADD COLUMN phone_number VARCHAR(30) DEFAULT NULL AFTER email");
+ if (!in_array('org_name', $existingCols))
+ $conn->query("ALTER TABLE users ADD COLUMN org_name VARCHAR(255) DEFAULT NULL");
+ if (!in_array('position', $existingCols))
+ $conn->query("ALTER TABLE users ADD COLUMN `position` VARCHAR(150) DEFAULT NULL");
+ if (!in_array('barangay_name', $existingCols))
+ $conn->query("ALTER TABLE users ADD COLUMN barangay_name VARCHAR(150) DEFAULT NULL");
+ if (!in_array('municipality', $existingCols))
+ $conn->query("ALTER TABLE users ADD COLUMN municipality VARCHAR(150) DEFAULT NULL");
+ if (!in_array('is_approved', $existingCols)) {
+ $conn->query("ALTER TABLE users ADD COLUMN is_approved TINYINT(1) NOT NULL DEFAULT 0");
+ $conn->query("UPDATE users SET is_approved=1 WHERE role IN('user','community','admin')");
+ }
+ if (!in_array('responder_type', $existingCols))
+ $conn->query("ALTER TABLE users ADD COLUMN responder_type VARCHAR(30) DEFAULT NULL");
 
-    $enumRes = $conn->query("SELECT COLUMN_TYPE FROM INFORMATION_SCHEMA.COLUMNS
-                             WHERE TABLE_SCHEMA='$db' AND TABLE_NAME='users' AND COLUMN_NAME='role'");
-    if ($enumRes) {
-        $enumRow = $enumRes->fetch_row();
-        $enumRes->free();
-        if ($enumRow && strpos($enumRow[0], 'first_responder') === false) {
-            $conn->query("ALTER TABLE users MODIFY COLUMN role ENUM('user','community','barangay','lgu','first_responder','admin') NOT NULL DEFAULT 'community'");
-        }
-    }
+ $enumRes = $conn->query("SELECT COLUMN_TYPE FROM INFORMATION_SCHEMA.COLUMNS
+ WHERE TABLE_SCHEMA='$db' AND TABLE_NAME='users' AND COLUMN_NAME='role'");
+ if ($enumRes) {
+ $enumRow = $enumRes->fetch_row();
+ $enumRes->free();
+ if ($enumRow && strpos($enumRow[0], 'first_responder') === false) {
+ $conn->query("ALTER TABLE users MODIFY COLUMN role ENUM('user','community','barangay','lgu','first_responder','admin') NOT NULL DEFAULT 'community'");
+ }
+ }
 
-    // Flush any remaining multi-results from DDL
-    while ($conn->more_results()) $conn->next_result();
+ // Flush any remaining multi-results from DDL
+ while ($conn->more_results()) $conn->next_result();
 } catch (Throwable $migErr) {
-    error_log('SenTri migration error: ' . $migErr->getMessage());
+ error_log('SenTri migration error: ' . $migErr->getMessage());
 }
 // ─────────────────────────────────────────────────────────────────────────────
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    ob_clean();
-    header('Content-Type: application/json');
-    try {
+ ob_clean();
+ header('Content-Type: application/json');
+ try {
 
-    $first    = trim($_POST['first_name']    ?? '');
-    $last     = trim($_POST['last_name']     ?? '');
-    $email    = trim($_POST['email']         ?? '');
-    $pw       = $_POST['password']           ?? '';
-    $pw2      = $_POST['confirm_password']   ?? '';
-    $role_req = trim($_POST['role']          ?? 'community');
-    $org_name = trim($_POST['org_name']      ?? '');
-    $position = trim($_POST['position']      ?? '');
-    $brgy     = trim($_POST['barangay_name'] ?? '');
-    $muni     = trim($_POST['municipality']  ?? '');
-    $rtype    = trim($_POST['responder_type'] ?? '') ?: null;
-    $phone    = trim($_POST['phone']         ?? '');
+ $first = trim($_POST['first_name'] ?? '');
+ $last = trim($_POST['last_name'] ?? '');
+ $email = trim($_POST['email'] ?? '');
+ $pw = $_POST['password'] ?? '';
+ $pw2 = $_POST['confirm_password'] ?? '';
+ $role_req = trim($_POST['role'] ?? 'community');
+ $org_name = trim($_POST['org_name'] ?? '');
+ $position = trim($_POST['position'] ?? '');
+ $brgy = trim($_POST['barangay_name'] ?? '');
+ $muni = trim($_POST['municipality'] ?? '');
+ $rtype = trim($_POST['responder_type'] ?? '') ?: null;
+ $phone = trim($_POST['phone'] ?? '');
 
-    $allowed_roles = ['community','barangay','lgu','first_responder'];
-    if (!in_array($role_req, $allowed_roles, true)) $role_req = 'community';
-    $is_approved = ($role_req === 'community') ? 1 : 0;
+ $allowed_roles = ['community','barangay','lgu','first_responder'];
+ if (!in_array($role_req, $allowed_roles, true)) $role_req = 'community';
+ $is_approved = ($role_req === 'community') ? 1 : 0;
 
-    if (empty($first)||empty($last)||empty($email)||empty($pw)) {
-        echo json_encode(['status'=>'error','message'=>'All fields are required.']); exit;
-    }
-    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        echo json_encode(['status'=>'error','message'=>'Invalid email address.']); exit;
-    }
-    if (strlen($pw) < 8) {
-        echo json_encode(['status'=>'error','message'=>'Password must be at least 8 characters.']); exit;
-    }
-    if ($pw !== $pw2) {
-        echo json_encode(['status'=>'error','message'=>'Passwords do not match.']); exit;
-    }
+ if (empty($first)||empty($last)||empty($email)||empty($pw)) {
+ echo json_encode(['status'=>'error','message'=>'All fields are required.']); exit;
+ }
+ if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+ echo json_encode(['status'=>'error','message'=>'Invalid email address.']); exit;
+ }
+ if (strlen($pw) < 8) {
+ echo json_encode(['status'=>'error','message'=>'Password must be at least 8 characters.']); exit;
+ }
+ if ($pw !== $pw2) {
+ echo json_encode(['status'=>'error','message'=>'Passwords do not match.']); exit;
+ }
 
-    $chk = $conn->prepare("SELECT id FROM users WHERE email=? LIMIT 1");
-    if (!$chk) { echo json_encode(['status'=>'error','message'=>'Database error. Please try again.']); exit; }
-    $chk->bind_param("s", $email); $chk->execute(); $chk->store_result();
-    if ($chk->num_rows > 0) {
-        $chk->close();
-        echo json_encode(['status'=>'error','message'=>'Email is already registered.']); exit;
-    }
-    $chk->close();
+ $chk = $conn->prepare("SELECT id FROM users WHERE email=? LIMIT 1");
+ if (!$chk) { echo json_encode(['status'=>'error','message'=>'Database error. Please try again.']); exit; }
+ $chk->bind_param("s", $email); $chk->execute(); $chk->store_result();
+ if ($chk->num_rows > 0) {
+ $chk->close();
+ echo json_encode(['status'=>'error','message'=>'Email is already registered.']); exit;
+ }
+ $chk->close();
 
-    $token      = bin2hex(random_bytes(32));
-    $expires_at = date('Y-m-d H:i:s', strtotime('+24 hours'));
-    $hash       = password_hash($pw, PASSWORD_BCRYPT, ['cost' => 12]);
+ $token = bin2hex(random_bytes(32));
+ $expires_at = date('Y-m-d H:i:s', strtotime('+24 hours'));
+ $hash = password_hash($pw, PASSWORD_BCRYPT, ['cost' => 12]);
 
-    $official_roles = ['barangay', 'lgu', 'first_responder'];
-    $is_official    = in_array($role_req, $official_roles, true);
-    $email_verified = $is_official ? 1 : 0;
-    $ins_token      = $is_official ? null : $token;
-    $ins_expires    = $is_official ? null : $expires_at;
+ $official_roles = ['barangay', 'lgu', 'first_responder'];
+ $is_official = in_array($role_req, $official_roles, true);
+ $email_verified = $is_official ? 1 : 0;
+ $ins_token = $is_official ? null : $token;
+ $ins_expires = $is_official ? null : $expires_at;
 
-    // Explicitly cast nullable string params to avoid driver-level bind issues
-    $bind_phone    = $phone    ?: null;
-    $bind_org      = $org_name ?: null;
-    $bind_position = $position ?: null;
-    $bind_brgy     = $brgy     ?: null;
-    $bind_muni     = $muni     ?: null;
+ // Explicitly cast nullable string params to avoid driver-level bind issues
+ $bind_phone = $phone ?: null;
+ $bind_org = $org_name ?: null;
+ $bind_position = $position ?: null;
+ $bind_brgy = $brgy ?: null;
+ $bind_muni = $muni ?: null;
 
-    $ins = $conn->prepare(
-        "INSERT INTO users
-         (first_name, last_name, email, password, role,
-          phone_number, org_name, `position`, barangay_name, municipality,
-          responder_type, is_approved, email_verified, verification_token, token_expires_at)
-         VALUES (?,?,?,?,?, ?,?,?,?,?, ?,?,?,?,?)"
-    );
-    if (!$ins) {
-        echo json_encode(['status'=>'error','message'=>'Prepare error: '.$conn->error]); exit;
-    }
-    $ins->bind_param(
-        "sssssssssssiiss",
-        $first, $last, $email, $hash, $role_req,
-        $bind_phone, $bind_org, $bind_position, $bind_brgy, $bind_muni,
-        $rtype, $is_approved, $email_verified, $ins_token, $ins_expires
-    );
-    if (!$ins->execute()) {
-        echo json_encode(['status'=>'error','message'=>'Registration failed: '.$ins->error]); exit;
-    }
-    $ins->close();
+ $ins = $conn->prepare(
+ "INSERT INTO users
+ (first_name, last_name, email, password, role,
+ phone_number, org_name, `position`, barangay_name, municipality,
+ responder_type, is_approved, email_verified, verification_token, token_expires_at)
+ VALUES (?,?,?,?,?, ?,?,?,?,?, ?,?,?,?,?)"
+ );
+ if (!$ins) {
+ echo json_encode(['status'=>'error','message'=>'Prepare error: '.$conn->error]); exit;
+ }
+ $ins->bind_param(
+ "sssssssssssiiss",
+ $first, $last, $email, $hash, $role_req,
+ $bind_phone, $bind_org, $bind_position, $bind_brgy, $bind_muni,
+ $rtype, $is_approved, $email_verified, $ins_token, $ins_expires
+ );
+ if (!$ins->execute()) {
+ echo json_encode(['status'=>'error','message'=>'Registration failed: '.$ins->error]); exit;
+ }
+ $ins->close();
 
-    if ($is_official) {
-        $message = 'Account created! Your account is now pending administrator approval. You will be notified once approved.';
-        echo json_encode(['status'=>'success','message'=>$message,'redirect'=>'login.php?pending=1']);
-        exit;
-    }
+ if ($is_official) {
+ $message = 'Account created! Your account is now pending administrator approval. You will be notified once approved.';
+ echo json_encode(['status'=>'success','message'=>$message,'redirect'=>'login.php?pending=1']);
+ exit;
+ }
 
-    $emailSent = false;
-    try {
-        require_once __DIR__ . '/core/SenTriMailer.php';
-        $emailSent = sendVerificationEmail($email, $first, $token);
-    } catch (Throwable $e) {
-        error_log('SenTri email error: ' . $e->getMessage());
-    }
+ $emailSent = false;
+ try {
+ require_once __DIR__ . '/core/SenTriMailer.php';
+ $emailSent = sendVerificationEmail($email, $first, $token);
+ } catch (Throwable $e) {
+ error_log('SenTri email error: ' . $e->getMessage());
+ }
 
-    $message = $emailSent
-        ? 'Account created! Please check your inbox and verify your email before signing in.'
-        : 'Account created! We had trouble sending the verification email — use the "Resend" option on the login page.';
+ $message = $emailSent
+ ? 'Account created! Please check your inbox and verify your email before signing in.'
+ : 'Account created! We had trouble sending the verification email - use the "Resend" option on the login page.';
 
-    echo json_encode(['status'=>'success','message'=>$message,'redirect'=>'login.php?verify_sent=1']);
-    exit;
-    } catch (Throwable $e) {
-        ob_clean();
-        error_log('SenTri signup error: ' . $e->getMessage());
-        echo json_encode(['status'=>'error','message'=>'Server error: ' . $e->getMessage()]);
-        exit;
-    }
+ echo json_encode(['status'=>'success','message'=>$message,'redirect'=>'login.php?verify_sent=1']);
+ exit;
+ } catch (Throwable $e) {
+ ob_clean();
+ error_log('SenTri signup error: ' . $e->getMessage());
+ echo json_encode(['status'=>'error','message'=>'Server error: ' . $e->getMessage()]);
+ exit;
+ }
 }
 ?>
 <!DOCTYPE html>
@@ -179,7 +179,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Register — SenTri</title>
+<title>Register | SenTri</title>
 <link rel="stylesheet" href="assets/vendor/fonts/fonts.css">
 <link rel="stylesheet" href="assets/vendor/fontawesome/css/all.min.css">
 <style>
@@ -241,154 +241,154 @@ body{background:var(--bg);min-height:100vh;display:flex;flex-direction:column;}
 </head>
 <body>
 <header class="gov-bar">
-  <a href="index.php" class="gov-brand">
-    <div class="gov-seal"><i class="fas fa-shield-halved"></i></div>
-    <div class="gov-text"><h1>SenTri</h1><p>Community Safety Incident Reporting System</p></div>
-  </a>
-  <nav class="gov-links">
-    <a href="login.php">Sign In</a>
-    <a href="index.php">Home</a>
-  </nav>
+ <a href="index.php" class="gov-brand">
+ <div class="gov-seal"><i class="fas fa-shield-halved"></i></div>
+ <div class="gov-text"><h1>SenTri</h1><p>Community Safety Incident Reporting System</p></div>
+ </a>
+ <nav class="gov-links">
+ <a href="login.php">Sign In</a>
+ <a href="index.php">Home</a>
+ </nav>
 </header>
 
 <div class="page-wrap">
-  <div class="page-header">
-    <h2>Create Your Account</h2>
-    <p>Select your role then fill in your details. Official accounts require administrator approval.</p>
-  </div>
+ <div class="page-header">
+ <h2>Create Your Account</h2>
+ <p>Select your role then fill in your details. Official accounts require administrator approval.</p>
+ </div>
 
-  <!-- Role selector -->
-  <div class="role-grid" id="roleGrid">
-    <div class="role-card r-community selected" onclick="selectRole('community',this)">
-      <div class="role-icon"><i class="fas fa-users"></i></div>
-      <div class="role-name">Community</div>
-      <div class="role-sub">Citizen / Resident</div>
-    </div>
-    <div class="role-card r-barangay" onclick="selectRole('barangay',this)">
-      <div class="role-icon"><i class="fas fa-house-flag"></i></div>
-      <div class="role-name">Barangay</div>
-      <div class="role-sub">Barangay Official</div>
-    </div>
-    <div class="role-card r-lgu" onclick="selectRole('lgu',this)">
-      <div class="role-icon"><i class="fas fa-landmark"></i></div>
-      <div class="role-name">LGU</div>
-      <div class="role-sub">City / Municipal</div>
-    </div>
-    <div class="role-card r-responder" onclick="selectRole('first_responder',this)">
-      <div class="role-icon"><i class="fas fa-truck-medical"></i></div>
-      <div class="role-name">First Responder</div>
-      <div class="role-sub">BFP / PNP / EMS</div>
-    </div>
-  </div>
+ <!-- Role selector -->
+ <div class="role-grid" id="roleGrid">
+ <div class="role-card r-community selected" onclick="selectRole('community',this)">
+ <div class="role-icon"><i class="fas fa-users"></i></div>
+ <div class="role-name">Community</div>
+ <div class="role-sub">Citizen / Resident</div>
+ </div>
+ <div class="role-card r-barangay" onclick="selectRole('barangay',this)">
+ <div class="role-icon"><i class="fas fa-house-flag"></i></div>
+ <div class="role-name">Barangay</div>
+ <div class="role-sub">Barangay Official</div>
+ </div>
+ <div class="role-card r-lgu" onclick="selectRole('lgu',this)">
+ <div class="role-icon"><i class="fas fa-landmark"></i></div>
+ <div class="role-name">LGU</div>
+ <div class="role-sub">City / Municipal</div>
+ </div>
+ <div class="role-card r-responder" onclick="selectRole('first_responder',this)">
+ <div class="role-icon"><i class="fas fa-truck-medical"></i></div>
+ <div class="role-name">First Responder</div>
+ <div class="role-sub">BFP / PNP / EMS</div>
+ </div>
+ </div>
 
-  <div class="form-card">
-    <div id="regMsg" class="msg"></div>
-    <div class="approval-notice" id="approvalNotice">
-      <i class="fas fa-clock"></i>
-      <span>Official accounts do not require email verification. Your account will be reviewed and activated by the system administrator. You will be notified once your account is approved.</span>
-    </div>
+ <div class="form-card">
+ <div id="regMsg" class="msg"></div>
+ <div class="approval-notice" id="approvalNotice">
+ <i class="fas fa-clock"></i>
+ <span>Official accounts do not require email verification. Your account will be reviewed and activated by the system administrator. You will be notified once your account is approved.</span>
+ </div>
 
-    <form id="regForm" novalidate>
-      <input type="hidden" name="role" id="roleField" value="community">
+ <form id="regForm" novalidate>
+ <input type="hidden" name="role" id="roleField" value="community">
 
-      <div class="section-title">Personal Information</div>
-      <div class="form-row">
-        <div class="form-group"><label>First Name</label><input type="text" name="first_name" placeholder="Juan" required></div>
-        <div class="form-group"><label>Last Name</label><input type="text" name="last_name" placeholder="dela Cruz" required></div>
-      </div>
-      <div class="form-row">
-        <div class="form-group"><label>Email Address</label><input type="email" name="email" placeholder="you@example.com" required></div>
-        <div class="form-group"><label>Phone Number <span style="color:var(--muted);font-weight:400;">(optional)</span></label><input type="tel" name="phone" placeholder="+63 9XX XXX XXXX"></div>
-      </div>
-      <div class="form-row">
-        <div class="form-group"><label>Password</label><div class="pw-wrap"><input type="password" name="password" id="pw1" placeholder="Min. 8 characters" required><button type="button" onclick="togglePw('pw1',this)">SHOW</button></div></div>
-        <div class="form-group"><label>Confirm Password</label><div class="pw-wrap"><input type="password" name="confirm_password" id="pw2" placeholder="Re-enter password" required><button type="button" onclick="togglePw('pw2',this)">SHOW</button></div></div>
-      </div>
+ <div class="section-title">Personal Information</div>
+ <div class="form-row">
+ <div class="form-group"><label>First Name</label><input type="text" name="first_name" placeholder="Juan" required></div>
+ <div class="form-group"><label>Last Name</label><input type="text" name="last_name" placeholder="dela Cruz" required></div>
+ </div>
+ <div class="form-row">
+ <div class="form-group"><label>Email Address</label><input type="email" name="email" placeholder="you@example.com" required></div>
+ <div class="form-group"><label>Phone Number <span style="color:var(--muted);font-weight:400;">(optional)</span></label><input type="tel" name="phone" placeholder="+63 9XX XXX XXXX"></div>
+ </div>
+ <div class="form-row">
+ <div class="form-group"><label>Password</label><div class="pw-wrap"><input type="password" name="password" id="pw1" placeholder="Min. 8 characters" required><button type="button" onclick="togglePw('pw1',this)">SHOW</button></div></div>
+ <div class="form-group"><label>Confirm Password</label><div class="pw-wrap"><input type="password" name="confirm_password" id="pw2" placeholder="Re-enter password" required><button type="button" onclick="togglePw('pw2',this)">SHOW</button></div></div>
+ </div>
 
-      <!-- Official fields shown for barangay / lgu / responder -->
-      <div class="official-fields card-section" id="officialFields">
-        <div class="section-title" id="officialSectionTitle">Official Information</div>
-        <div class="form-row">
-          <div class="form-group"><label id="orgLabel">Office / Unit Name</label><input type="text" name="org_name" id="orgName" placeholder="e.g. Brgy. Malagasang I-A Hall"></div>
-          <div class="form-group"><label>Position / Rank</label><input type="text" name="position" placeholder="e.g. Barangay Captain"></div>
-        </div>
-        <div class="form-row" id="geoFields">
-          <div class="form-group"><label id="brgyLabel">Barangay</label><input type="text" name="barangay_name" placeholder="e.g. Malagasang I-A"></div>
-          <div class="form-group"><label>City / Municipality</label><input type="text" name="municipality" placeholder="e.g. Imus"></div>
-        </div>
-        <div class="form-group" id="responderTypeWrap" style="display:none;">
-          <label>Responder Type</label>
-          <select name="responder_type">
-            <option value="">Select type...</option>
-            <option value="bfp">BFP — Bureau of Fire Protection</option>
-            <option value="pnp">PNP — Philippine National Police</option>
-            <option value="ems">EMS — Emergency Medical Services</option>
-            <option value="drrmo">DRRMO — Disaster Risk Reduction</option>
-            <option value="mdrrmo">MDRRMO — Municipal DRRMO</option>
-            <option value="hospital">Hospital / Medical Facility</option>
-            <option value="other">Other</option>
-          </select>
-        </div>
-      </div>
+ <!-- Official fields shown for barangay / lgu / responder -->
+ <div class="official-fields card-section" id="officialFields">
+ <div class="section-title" id="officialSectionTitle">Official Information</div>
+ <div class="form-row">
+ <div class="form-group"><label id="orgLabel">Office / Unit Name</label><input type="text" name="org_name" id="orgName" placeholder="e.g. Brgy. Malagasang I-A Hall"></div>
+ <div class="form-group"><label>Position / Rank</label><input type="text" name="position" placeholder="e.g. Barangay Captain"></div>
+ </div>
+ <div class="form-row" id="geoFields">
+ <div class="form-group"><label id="brgyLabel">Barangay</label><input type="text" name="barangay_name" placeholder="e.g. Malagasang I-A"></div>
+ <div class="form-group"><label>City / Municipality</label><input type="text" name="municipality" placeholder="e.g. Imus"></div>
+ </div>
+ <div class="form-group" id="responderTypeWrap" style="display:none;">
+ <label>Responder Type</label>
+ <select name="responder_type">
+ <option value="">Select type...</option>
+ <option value="bfp">BFP - Bureau of Fire Protection</option>
+ <option value="pnp">PNP - Philippine National Police</option>
+ <option value="ems">EMS - Emergency Medical Services</option>
+ <option value="drrmo">DRRMO - Disaster Risk Reduction</option>
+ <option value="mdrrmo">MDRRMO - Municipal DRRMO</option>
+ <option value="hospital">Hospital / Medical Facility</option>
+ <option value="other">Other</option>
+ </select>
+ </div>
+ </div>
 
-      <div style="margin-top:20px;">
-        <button type="submit" class="btn-register" id="regBtn"><i class="fas fa-user-plus"></i> <span id="regBtnLabel">Create Community Account</span></button>
-      </div>
-    </form>
+ <div style="margin-top:20px;">
+ <button type="submit" class="btn-register" id="regBtn"><i class="fas fa-user-plus"></i> <span id="regBtnLabel">Create Community Account</span></button>
+ </div>
+ </form>
 
-    <div class="login-row">Already have an account? <a href="login.php">Sign in here</a></div>
-    <p class="terms">By registering you agree to use this system solely for legitimate community safety reporting. Misuse is subject to legal action under applicable Philippine laws.</p>
-  </div>
+ <div class="login-row">Already have an account? <a href="login.php">Sign in here</a></div>
+ <p class="terms">By registering you agree to use this system solely for legitimate community safety reporting. Misuse is subject to legal action under applicable Philippine laws.</p>
+ </div>
 </div>
 
 <script>
 const roleConfig = {
-  community:      { label:'Create Community Account',   btn:'linear-gradient(135deg,#3b82f6,#2563eb)',  official:false },
-  barangay:       { label:'Create Barangay Account',    btn:'linear-gradient(135deg,#16a34a,#166534)', official:true  },
-  lgu:            { label:'Create LGU Account',         btn:'linear-gradient(135deg,#1a5276,#062444)', official:true  },
-  first_responder:{ label:'Create Responder Account',   btn:'linear-gradient(135deg,#ef4444,#b91c1c)', official:true  },
+ community: { label:'Create Community Account', btn:'linear-gradient(135deg,#3b82f6,#2563eb)', official:false },
+ barangay: { label:'Create Barangay Account', btn:'linear-gradient(135deg,#16a34a,#166534)', official:true },
+ lgu: { label:'Create LGU Account', btn:'linear-gradient(135deg,#1a5276,#062444)', official:true },
+ first_responder:{ label:'Create Responder Account', btn:'linear-gradient(135deg,#ef4444,#b91c1c)', official:true },
 };
 let currentRole = 'community';
 function selectRole(role, el) {
-  currentRole = role;
-  document.querySelectorAll('.role-card').forEach(c=>c.classList.remove('selected'));
-  el.classList.add('selected');
-  const cfg = roleConfig[role];
-  document.getElementById('roleField').value = role;
-  document.getElementById('regBtnLabel').textContent = cfg.label;
-  document.getElementById('regBtn').style.background = cfg.btn;
-  const of = document.getElementById('officialFields');
-  of.classList.toggle('show', cfg.official);
-  document.getElementById('approvalNotice').classList.toggle('show', cfg.official);
-  document.getElementById('responderTypeWrap').style.display = (role==='first_responder') ? 'block' : 'none';
-  if (role==='lgu') {
-    document.getElementById('orgLabel').textContent = 'Office / Agency Name';
-    document.getElementById('brgyLabel').textContent = 'Coverage Barangay (optional)';
-    document.getElementById('orgName').placeholder = 'e.g. Imus City DRRMO';
-  } else if (role==='first_responder') {
-    document.getElementById('orgLabel').textContent = 'Unit / Station Name';
-    document.getElementById('brgyLabel').textContent = 'Coverage Barangay (optional)';
-    document.getElementById('orgName').placeholder = 'e.g. BFP Imus City Fire Station';
-  } else {
-    document.getElementById('orgLabel').textContent = 'Office / Unit Name';
-    document.getElementById('brgyLabel').textContent = 'Barangay';
-    document.getElementById('orgName').placeholder = 'e.g. Brgy. Malagasang I-A Hall';
-  }
+ currentRole = role;
+ document.querySelectorAll('.role-card').forEach(c=>c.classList.remove('selected'));
+ el.classList.add('selected');
+ const cfg = roleConfig[role];
+ document.getElementById('roleField').value = role;
+ document.getElementById('regBtnLabel').textContent = cfg.label;
+ document.getElementById('regBtn').style.background = cfg.btn;
+ const of = document.getElementById('officialFields');
+ of.classList.toggle('show', cfg.official);
+ document.getElementById('approvalNotice').classList.toggle('show', cfg.official);
+ document.getElementById('responderTypeWrap').style.display = (role==='first_responder') ? 'block' : 'none';
+ if (role==='lgu') {
+ document.getElementById('orgLabel').textContent = 'Office / Agency Name';
+ document.getElementById('brgyLabel').textContent = 'Coverage Barangay (optional)';
+ document.getElementById('orgName').placeholder = 'e.g. Imus City DRRMO';
+ } else if (role==='first_responder') {
+ document.getElementById('orgLabel').textContent = 'Unit / Station Name';
+ document.getElementById('brgyLabel').textContent = 'Coverage Barangay (optional)';
+ document.getElementById('orgName').placeholder = 'e.g. BFP Imus City Fire Station';
+ } else {
+ document.getElementById('orgLabel').textContent = 'Office / Unit Name';
+ document.getElementById('brgyLabel').textContent = 'Barangay';
+ document.getElementById('orgName').placeholder = 'e.g. Brgy. Malagasang I-A Hall';
+ }
 }
 function togglePw(id,btn){const f=document.getElementById(id);const s=f.type==='password';f.type=s?'text':'password';btn.textContent=s?'HIDE':'SHOW';}
 document.getElementById('regForm').addEventListener('submit',async e=>{
-  e.preventDefault();
-  const btn=document.getElementById('regBtn');const msg=document.getElementById('regMsg');
-  const orig=btn.innerHTML;btn.disabled=true;btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Creating account...';
-  msg.style.display='none';
-  try{
-    const res=await fetch('signup.php',{method:'POST',body:new FormData(e.target)});
-    const data=await res.json();
-    if(data.status==='success'){
-      showMsg('success',data.message);
-      setTimeout(()=>window.location.href=data.redirect,1800);
-    }else{showMsg('error',data.message||'Registration failed.');btn.disabled=false;btn.innerHTML=orig;}
-  }catch(err){showMsg('error','Error: '+err.message);btn.disabled=false;btn.innerHTML=orig;}
+ e.preventDefault();
+ const btn=document.getElementById('regBtn');const msg=document.getElementById('regMsg');
+ const orig=btn.innerHTML;btn.disabled=true;btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Creating account...';
+ msg.style.display='none';
+ try{
+ const res=await fetch('signup.php',{method:'POST',body:new FormData(e.target)});
+ const data=await res.json();
+ if(data.status==='success'){
+ showMsg('success',data.message);
+ setTimeout(()=>window.location.href=data.redirect,1800);
+ }else{showMsg('error',data.message||'Registration failed.');btn.disabled=false;btn.innerHTML=orig;}
+ }catch(err){showMsg('error','Error: '+err.message);btn.disabled=false;btn.innerHTML=orig;}
 });
 function showMsg(type,text){const el=document.getElementById('regMsg');el.className='msg '+type;el.textContent=text;el.style.display='block';}
 </script>

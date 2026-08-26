@@ -6,20 +6,20 @@ header('Content-Type: application/json');
 
 // Global safety net: if anything dies unexpectedly, always return valid JSON
 set_exception_handler(function($e) {
-    if (!headers_sent()) header('Content-Type: application/json');
-    echo json_encode(['status'=>'error','message'=>'Server error: '.$e->getMessage()]);
-    exit;
+ if (!headers_sent()) header('Content-Type: application/json');
+ echo json_encode(['status'=>'error','message'=>'Server error: '.$e->getMessage()]);
+ exit;
 });
 register_shutdown_function(function() {
-    $err = error_get_last();
-    if ($err && in_array($err['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR])) {
-        if (!headers_sent()) header('Content-Type: application/json');
-        echo json_encode(['status'=>'error','message'=>'Fatal server error. Check server logs.']);
-    }
+ $err = error_get_last();
+ if ($err && in_array($err['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR])) {
+ if (!headers_sent()) header('Content-Type: application/json');
+ echo json_encode(['status'=>'error','message'=>'Fatal server error. Check server logs.']);
+ }
 });
 
 if (!isset($_SESSION['user_id'])) {
-    echo json_encode(['status'=>'error','message'=>'Unauthorized. Please log in.']); exit;
+ echo json_encode(['status'=>'error','message'=>'Unauthorized. Please log in.']); exit;
 }
 
 require __DIR__ . '/../config/db.php';
@@ -27,827 +27,827 @@ require_once __DIR__ . '/../config/csrf.php';
 csrf_validate();
 
 $user_id = (int)($_SESSION['user_id'] ?? 0);
-$role    = $_SESSION['role'] ?? 'user';
-$action  = trim($_REQUEST['action'] ?? '');
+$role = $_SESSION['role'] ?? 'user';
+$action = trim($_REQUEST['action'] ?? '');
 $has_assigned_to = sentri_table_has_column($conn, 'reports', 'assigned_to');
 
 // ── Ensure geo columns exist (compatible with all MySQL versions) ─────────
 // Uses INFORMATION_SCHEMA instead of "IF NOT EXISTS" which requires MySQL 8+
 function ensureGeoColumns($conn) {
-    static $checked = false;
-    if ($checked) return;
-    $checked = true;
+ static $checked = false;
+ if ($checked) return;
+ $checked = true;
 
-    $db = $conn->query("SELECT DATABASE()")->fetch_row()[0];
+ $db = $conn->query("SELECT DATABASE()")->fetch_row()[0];
 
-    $cols = [];
-    $res  = $conn->query("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS
-                          WHERE TABLE_SCHEMA = '$db' AND TABLE_NAME = 'reports'");
-    while ($r = $res->fetch_row()) $cols[] = $r[0];
+ $cols = [];
+ $res = $conn->query("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS
+ WHERE TABLE_SCHEMA = '$db' AND TABLE_NAME = 'reports'");
+ while ($r = $res->fetch_row()) $cols[] = $r[0];
 
-    if (!in_array('latitude',  $cols)) $conn->query("ALTER TABLE reports ADD COLUMN latitude  DECIMAL(10,7) DEFAULT NULL");
-    if (!in_array('longitude', $cols)) $conn->query("ALTER TABLE reports ADD COLUMN longitude DECIMAL(10,7) DEFAULT NULL");
-    if (!in_array('radius_m',  $cols)) $conn->query("ALTER TABLE reports ADD COLUMN radius_m  INT(11) NOT NULL DEFAULT 200");
+ if (!in_array('latitude', $cols)) $conn->query("ALTER TABLE reports ADD COLUMN latitude DECIMAL(10,7) DEFAULT NULL");
+ if (!in_array('longitude', $cols)) $conn->query("ALTER TABLE reports ADD COLUMN longitude DECIMAL(10,7) DEFAULT NULL");
+ if (!in_array('radius_m', $cols)) $conn->query("ALTER TABLE reports ADD COLUMN radius_m INT(11) NOT NULL DEFAULT 200");
 }
 // ─────────────────────────────────────────────────────────────────────────
 
 switch ($action) {
 
-    case 'get_reports':
-        ensureGeoColumns($conn);
-        $page = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
-        $limit = isset($_GET['limit']) ? max(1, (int)$_GET['limit']) : 200;
-        $offset = ($page - 1) * $limit;
-        $search = $_GET['search'] ?? '';
-        $search_sql = $search ? " AND (r.title LIKE '%" . $conn->real_escape_string($search) . "%' OR r.description LIKE '%" . $conn->real_escape_string($search) . "%') " : "";
-        $sql = "
-            SELECT r.id, r.user_id, r.title, r.description, r.location_name, r.barangay,
-                   r.city, r.province, r.latitude, r.longitude, r.radius_m,
-                   r.status, r.category, r.upvotes, r.downvotes, r.created_at,
-                   CONCAT(u.first_name,' ',u.last_name) AS poster_name,
-                   v.vote AS user_vote
-            FROM reports r
-            INNER JOIN users u ON r.user_id = u.id
-            LEFT JOIN report_votes v ON v.report_id = r.id AND v.user_id = ?
-            WHERE r.is_archived = 0 $search_sql
-            ORDER BY r.created_at DESC LIMIT ? OFFSET ?";
-        $stmt = $conn->prepare($sql);
-        if (!$stmt) { echo json_encode(['status'=>'error','message'=>'DB error: '.$conn->error]); exit; }
-        $stmt->bind_param("iii", $user_id, $limit, $offset);
-        $stmt->execute();
-        $res = $stmt->get_result();
-        $reports = [];
-        while ($row = $res->fetch_assoc()) {
-            $row['id']        = (int)$row['id'];
-            $row['user_id']   = (int)$row['user_id'];
-            $row['upvotes']   = (int)$row['upvotes'];
-            $row['downvotes'] = (int)$row['downvotes'];
-            $row['latitude']  = $row['latitude']  !== null ? (float)$row['latitude']  : null;
-            $row['longitude'] = $row['longitude'] !== null ? (float)$row['longitude'] : null;
-            $row['radius_m']  = (int)($row['radius_m'] ?? 200);
-            $reports[] = $row;
-        }
-        $stmt->close();
+ case 'get_reports':
+ ensureGeoColumns($conn);
+ $page = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
+ $limit = isset($_GET['limit']) ? max(1, (int)$_GET['limit']) : 200;
+ $offset = ($page - 1) * $limit;
+ $search = $_GET['search'] ?? '';
+ $search_sql = $search ? " AND (r.title LIKE '%" . $conn->real_escape_string($search) . "%' OR r.description LIKE '%" . $conn->real_escape_string($search) . "%') " : "";
+ $sql = "
+ SELECT r.id, r.user_id, r.title, r.description, r.location_name, r.barangay,
+ r.city, r.province, r.latitude, r.longitude, r.radius_m,
+ r.status, r.category, r.upvotes, r.downvotes, r.created_at,
+ CONCAT(u.first_name,' ',u.last_name) AS poster_name,
+ v.vote AS user_vote
+ FROM reports r
+ INNER JOIN users u ON r.user_id = u.id
+ LEFT JOIN report_votes v ON v.report_id = r.id AND v.user_id = ?
+ WHERE r.is_archived = 0 $search_sql
+ ORDER BY r.created_at DESC LIMIT ? OFFSET ?";
+ $stmt = $conn->prepare($sql);
+ if (!$stmt) { echo json_encode(['status'=>'error','message'=>'DB error: '.$conn->error]); exit; }
+ $stmt->bind_param("iii", $user_id, $limit, $offset);
+ $stmt->execute();
+ $res = $stmt->get_result();
+ $reports = [];
+ while ($row = $res->fetch_assoc()) {
+ $row['id'] = (int)$row['id'];
+ $row['user_id'] = (int)$row['user_id'];
+ $row['upvotes'] = (int)$row['upvotes'];
+ $row['downvotes'] = (int)$row['downvotes'];
+ $row['latitude'] = $row['latitude'] !== null ? (float)$row['latitude'] : null;
+ $row['longitude'] = $row['longitude'] !== null ? (float)$row['longitude'] : null;
+ $row['radius_m'] = (int)($row['radius_m'] ?? 200);
+ $reports[] = $row;
+ }
+ $stmt->close();
 
-        // ── Attach images to each report ──────────────────────────────────
-        if (!empty($reports)) {
-            $images_map = [];
-            $chk_tbl = $conn->query("SHOW TABLES LIKE 'report_images'");
-            if ($chk_tbl && $chk_tbl->num_rows > 0) {
-                $ids_str = implode(',', array_column($reports, 'id'));
-                $img_res = $conn->query(
-                    "SELECT report_id, file_name FROM report_images
-                     WHERE report_id IN ($ids_str) ORDER BY uploaded_at ASC"
-                );
-                if ($img_res) {
-                    while ($img_row = $img_res->fetch_assoc()) {
-                        $rid = (int)$img_row['report_id'];
-                        if (!isset($images_map[$rid])) $images_map[$rid] = [];
-                        $images_map[$rid][] = 'uploads/reports/' . rawurlencode($img_row['file_name']);
-                    }
-                }
-            }
-            foreach ($reports as &$report) {
-                $report['images'] = $images_map[$report['id']] ?? [];
-            }
-            unset($report);
-        }
+ // ── Attach images to each report ──────────────────────────────────
+ if (!empty($reports)) {
+ $images_map = [];
+ $chk_tbl = $conn->query("SHOW TABLES LIKE 'report_images'");
+ if ($chk_tbl && $chk_tbl->num_rows > 0) {
+ $ids_str = implode(',', array_column($reports, 'id'));
+ $img_res = $conn->query(
+ "SELECT report_id, file_name FROM report_images
+ WHERE report_id IN ($ids_str) ORDER BY uploaded_at ASC"
+ );
+ if ($img_res) {
+ while ($img_row = $img_res->fetch_assoc()) {
+ $rid = (int)$img_row['report_id'];
+ if (!isset($images_map[$rid])) $images_map[$rid] = [];
+ $images_map[$rid][] = 'uploads/reports/' . rawurlencode($img_row['file_name']);
+ }
+ }
+ }
+ foreach ($reports as &$report) {
+ $report['images'] = $images_map[$report['id']] ?? [];
+ }
+ unset($report);
+ }
 
-        echo json_encode(['status'=>'success','reports'=>$reports]);
-        break;
+ echo json_encode(['status'=>'success','reports'=>$reports]);
+ break;
 
-    case 'post_report':
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') { echo json_encode(['status'=>'error','message'=>'POST required.']); exit; }
-        $title         = trim($_POST['title']         ?? '');
-        $description   = trim($_POST['description']   ?? '');
-        $location_name = trim($_POST['location_name'] ?? '');
-        $barangay      = trim($_POST['barangay']      ?? '');
-        $city          = trim($_POST['city']          ?? '');
-        $province      = trim($_POST['province']      ?? '');
-        $status_val    = trim($_POST['status']        ?? '');
-        $category      = trim($_POST['category']      ?? '');
+ case 'post_report':
+ if ($_SERVER['REQUEST_METHOD'] !== 'POST') { echo json_encode(['status'=>'error','message'=>'POST required.']); exit; }
+ $title = trim($_POST['title'] ?? '');
+ $description = trim($_POST['description'] ?? '');
+ $location_name = trim($_POST['location_name'] ?? '');
+ $barangay = trim($_POST['barangay'] ?? '');
+ $city = trim($_POST['city'] ?? '');
+ $province = trim($_POST['province'] ?? '');
+ $status_val = trim($_POST['status'] ?? '');
+ $category = trim($_POST['category'] ?? '');
 
-        // Lat/lng: keep as string or null — 's' type in bind_param handles nullable
-        // decimals correctly on all MySQL versions (null → SQL NULL, "14.35" → DECIMAL)
-        $lat = (isset($_POST['latitude'])  && $_POST['latitude']  !== '') ? $_POST['latitude']  : null;
-        $lng = (isset($_POST['longitude']) && $_POST['longitude'] !== '') ? $_POST['longitude'] : null;
-        $rad = (isset($_POST['radius_m'])  && $_POST['radius_m']  !== '') ? (int)$_POST['radius_m'] : 200;
+ // Lat/lng: keep as string or null - 's' type in bind_param handles nullable
+ // decimals correctly on all MySQL versions (null → SQL NULL, "14.35" → DECIMAL)
+ $lat = (isset($_POST['latitude']) && $_POST['latitude'] !== '') ? $_POST['latitude'] : null;
+ $lng = (isset($_POST['longitude']) && $_POST['longitude'] !== '') ? $_POST['longitude'] : null;
+ $rad = (isset($_POST['radius_m']) && $_POST['radius_m'] !== '') ? (int)$_POST['radius_m'] : 200;
 
-        $allowed_s = ['dangerous','caution','safe'];
-        $allowed_c = ['crime','accident','flooding','fire','health','infrastructure','other'];
+ $allowed_s = ['dangerous','caution','safe'];
+ $allowed_c = ['crime','accident','flooding','fire','health','infrastructure','other'];
 
-        if (empty($title)||empty($description)||empty($location_name)||empty($city)) {
-            echo json_encode(['status'=>'error','message'=>'Required fields missing.']); exit;
-        }
-        if (!in_array($status_val,$allowed_s)) { echo json_encode(['status'=>'error','message'=>'Invalid status.']); exit; }
-        if (!in_array($category,$allowed_c))   { echo json_encode(['status'=>'error','message'=>'Invalid category.']); exit; }
+ if (empty($title)||empty($description)||empty($location_name)||empty($city)) {
+ echo json_encode(['status'=>'error','message'=>'Required fields missing.']); exit;
+ }
+ if (!in_array($status_val,$allowed_s)) { echo json_encode(['status'=>'error','message'=>'Invalid status.']); exit; }
+ if (!in_array($category,$allowed_c)) { echo json_encode(['status'=>'error','message'=>'Invalid category.']); exit; }
 
-        $rate = $conn->prepare("SELECT COUNT(*) FROM reports WHERE user_id=? AND created_at>DATE_SUB(NOW(),INTERVAL 1 HOUR)");
-        $rate->bind_param("i",$user_id); $rate->execute(); $rate->bind_result($cnt); $rate->fetch(); $rate->close();
-        if ($cnt >= 10) { echo json_encode(['status'=>'error','message'=>'Posting limit reached (10/hr).']); exit; }
+ $rate = $conn->prepare("SELECT COUNT(*) FROM reports WHERE user_id=? AND created_at>DATE_SUB(NOW(),INTERVAL 1 HOUR)");
+ $rate->bind_param("i",$user_id); $rate->execute(); $rate->bind_result($cnt); $rate->fetch(); $rate->close();
+ if ($cnt >= 10) { echo json_encode(['status'=>'error','message'=>'Posting limit reached (10/hr).']); exit; }
 
-        ensureGeoColumns($conn);
+ ensureGeoColumns($conn);
 
-        // Type string: i=user_id, s×7=text fields, s=lat, s=lng, i=radius, s=status, s=category
-        // Using 's' (not 'd') for lat/lng so PHP null becomes SQL NULL safely
-        $ins = $conn->prepare("INSERT INTO reports (user_id,title,description,location_name,barangay,city,province,latitude,longitude,radius_m,status,category) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)");
-        if (!$ins) { echo json_encode(['status'=>'error','message'=>'Prepare failed: '.$conn->error]); exit; }
-        $ins->bind_param("issssssssiss",
-            $user_id,$title,$description,$location_name,$barangay,$city,$province,
-            $lat,$lng,$rad,$status_val,$category);
-        if ($ins->execute()) {
-            $new_id = (int)$conn->insert_id;
-            $ins->close();
+ // Type string: i=user_id, s×7=text fields, s=lat, s=lng, i=radius, s=status, s=category
+ // Using 's' (not 'd') for lat/lng so PHP null becomes SQL NULL safely
+ $ins = $conn->prepare("INSERT INTO reports (user_id,title,description,location_name,barangay,city,province,latitude,longitude,radius_m,status,category) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)");
+ if (!$ins) { echo json_encode(['status'=>'error','message'=>'Prepare failed: '.$conn->error]); exit; }
+ $ins->bind_param("issssssssiss",
+ $user_id,$title,$description,$location_name,$barangay,$city,$province,
+ $lat,$lng,$rad,$status_val,$category);
+ if ($ins->execute()) {
+ $new_id = (int)$conn->insert_id;
+ $ins->close();
 
-            // ── Photo upload (optional, up to 3 images) ────────────────────
-            $uploaded_images = [];
-            if (!empty($_FILES['photos']['name'][0])) {
-                $upload_dir = __DIR__ . '/../uploads/reports/';
-                if (!is_dir($upload_dir)) @mkdir($upload_dir, 0755, true);
+ // ── Photo upload (optional, up to 3 images) ────────────────────
+ $uploaded_images = [];
+ if (!empty($_FILES['photos']['name'][0])) {
+ $upload_dir = __DIR__ . '/../uploads/reports/';
+ if (!is_dir($upload_dir)) @mkdir($upload_dir, 0755, true);
 
-                // Ensure report_images table exists
-                $conn->query("
-                    CREATE TABLE IF NOT EXISTS `report_images` (
-                      `id`            int(11)      NOT NULL AUTO_INCREMENT,
-                      `report_id`     int(11)      NOT NULL,
-                      `file_name`     varchar(255) NOT NULL,
-                      `original_name` varchar(255) DEFAULT NULL,
-                      `mime_type`     varchar(100) DEFAULT NULL,
-                      `file_size`     int(11)      DEFAULT NULL,
-                      `uploaded_at`   timestamp    NOT NULL DEFAULT current_timestamp(),
-                      PRIMARY KEY (`id`),
-                      KEY `report_id` (`report_id`)
-                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-                ");
+ // Ensure report_images table exists
+ $conn->query("
+ CREATE TABLE IF NOT EXISTS `report_images` (
+ `id` int(11) NOT NULL AUTO_INCREMENT,
+ `report_id` int(11) NOT NULL,
+ `file_name` varchar(255) NOT NULL,
+ `original_name` varchar(255) DEFAULT NULL,
+ `mime_type` varchar(100) DEFAULT NULL,
+ `file_size` int(11) DEFAULT NULL,
+ `uploaded_at` timestamp NOT NULL DEFAULT current_timestamp(),
+ PRIMARY KEY (`id`),
+ KEY `report_id` (`report_id`)
+ ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+ ");
 
-                $allowed_mime = ['image/jpeg','image/png','image/webp','image/gif'];
-                $max_size     = 5 * 1024 * 1024; // 5 MB per image
-                $max_images   = 3;
-                $count        = min(count($_FILES['photos']['name']), $max_images);
+ $allowed_mime = ['image/jpeg','image/png','image/webp','image/gif'];
+ $max_size = 5 * 1024 * 1024; // 5 MB per image
+ $max_images = 3;
+ $count = min(count($_FILES['photos']['name']), $max_images);
 
-                for ($i = 0; $i < $count; $i++) {
-                    $tmp  = $_FILES['photos']['tmp_name'][$i];
-                    $orig = basename($_FILES['photos']['name'][$i]);
-                    $mime = mime_content_type($tmp);
-                    $size = $_FILES['photos']['size'][$i];
+ for ($i = 0; $i < $count; $i++) {
+ $tmp = $_FILES['photos']['tmp_name'][$i];
+ $orig = basename($_FILES['photos']['name'][$i]);
+ $mime = mime_content_type($tmp);
+ $size = $_FILES['photos']['size'][$i];
 
-                    if ($_FILES['photos']['error'][$i] !== UPLOAD_ERR_OK) continue;
-                    if (!in_array($mime, $allowed_mime))                  continue;
-                    if ($size > $max_size)                                 continue;
+ if ($_FILES['photos']['error'][$i] !== UPLOAD_ERR_OK) continue;
+ if (!in_array($mime, $allowed_mime)) continue;
+ if ($size > $max_size) continue;
 
-                    $mime_ext_map = ['image/jpeg'=>'jpg','image/png'=>'png','image/webp'=>'webp','image/gif'=>'gif'];
-                    $ext      = $mime_ext_map[$mime] ?? 'jpg';
-                    $filename = 'report_' . $new_id . '_' . uniqid() . '.' . $ext;
-                    $dest     = $upload_dir . $filename;
+ $mime_ext_map = ['image/jpeg'=>'jpg','image/png'=>'png','image/webp'=>'webp','image/gif'=>'gif'];
+ $ext = $mime_ext_map[$mime] ?? 'jpg';
+ $filename = 'report_' . $new_id . '_' . uniqid() . '.' . $ext;
+ $dest = $upload_dir . $filename;
 
-                    if (move_uploaded_file($tmp, $dest)) {
-                        $si = $conn->prepare("INSERT INTO report_images (report_id, file_name, original_name, mime_type, file_size) VALUES (?,?,?,?,?)");
-                        $si->bind_param('isssi', $new_id, $filename, $orig, $mime, $size);
-                        $si->execute();
-                        $si->close();
-                        $uploaded_images[] = $filename;
-                    }
-                }
-            }
+ if (move_uploaded_file($tmp, $dest)) {
+ $si = $conn->prepare("INSERT INTO report_images (report_id, file_name, original_name, mime_type, file_size) VALUES (?,?,?,?,?)");
+ $si->bind_param('isssi', $new_id, $filename, $orig, $mime, $size);
+ $si->execute();
+ $si->close();
+ $uploaded_images[] = $filename;
+ }
+ }
+ }
 
-            echo json_encode([
-                'status'  => 'success',
-                'message' => 'Report posted.',
-                'id'      => $new_id,
-                'images'  => $uploaded_images,
-            ]);
-        } else {
-            echo json_encode(['status'=>'error','message'=>'Save failed: '.$ins->error]);
-            $ins->close();
-        }
-        break;
+ echo json_encode([
+ 'status' => 'success',
+ 'message' => 'Report posted.',
+ 'id' => $new_id,
+ 'images' => $uploaded_images,
+ ]);
+ } else {
+ echo json_encode(['status'=>'error','message'=>'Save failed: '.$ins->error]);
+ $ins->close();
+ }
+ break;
 
-    case 'vote':
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') { echo json_encode(['status'=>'error','message'=>'POST required.']); exit; }
-        $report_id=(int)($_POST['report_id']??0); $vote=trim($_POST['vote']??'');
-        if(!$report_id||!in_array($vote,['up','down'])){echo json_encode(['status'=>'error','message'=>'Invalid vote.']);exit;}
-        $chk=$conn->prepare("SELECT id FROM reports WHERE id=? AND is_archived=0 LIMIT 1");
-        $chk->bind_param("i",$report_id); $chk->execute(); $chk->store_result();
-        if($chk->num_rows===0){echo json_encode(['status'=>'error','message'=>'Report not found.']);exit;}
-        $chk->close();
-        $ex=$conn->prepare("SELECT id,vote FROM report_votes WHERE report_id=? AND user_id=? LIMIT 1");
-        $ex->bind_param("ii",$report_id,$user_id); $ex->execute(); $ex->store_result();
-        $ex->bind_result($vid,$ev); $ex->fetch(); $has=$ex->num_rows>0; $ex->close();
-        $new_uv=null;
-        if($has){
-            if($ev===$vote){$d=$conn->prepare("DELETE FROM report_votes WHERE id=?");$d->bind_param("i",$vid);$d->execute();$d->close();}
-            else{$u=$conn->prepare("UPDATE report_votes SET vote=?,created_at=NOW() WHERE id=?");$u->bind_param("si",$vote,$vid);$u->execute();$u->close();$new_uv=$vote;}
-        } else {
-            $i=$conn->prepare("INSERT INTO report_votes (report_id,user_id,vote) VALUES (?,?,?)");$i->bind_param("iis",$report_id,$user_id,$vote);$i->execute();$i->close();$new_uv=$vote;
-        }
-        $cnt=$conn->prepare("SELECT SUM(CASE WHEN vote='up' THEN 1 ELSE 0 END),SUM(CASE WHEN vote='down' THEN 1 ELSE 0 END) FROM report_votes WHERE report_id=?");
-        $cnt->bind_param("i",$report_id);$cnt->execute();$cnt->bind_result($ups,$downs);$cnt->fetch();$cnt->close();
-        $ups=(int)($ups??0);$downs=(int)($downs??0);
-        $u=$conn->prepare("UPDATE reports SET upvotes=?,downvotes=? WHERE id=?");$u->bind_param("iii",$ups,$downs,$report_id);$u->execute();$u->close();
-        echo json_encode(['status'=>'success','upvotes'=>$ups,'downvotes'=>$downs,'user_vote'=>$new_uv]);
-        break;
+ case 'vote':
+ if ($_SERVER['REQUEST_METHOD'] !== 'POST') { echo json_encode(['status'=>'error','message'=>'POST required.']); exit; }
+ $report_id=(int)($_POST['report_id']??0); $vote=trim($_POST['vote']??'');
+ if(!$report_id||!in_array($vote,['up','down'])){echo json_encode(['status'=>'error','message'=>'Invalid vote.']);exit;}
+ $chk=$conn->prepare("SELECT id FROM reports WHERE id=? AND is_archived=0 LIMIT 1");
+ $chk->bind_param("i",$report_id); $chk->execute(); $chk->store_result();
+ if($chk->num_rows===0){echo json_encode(['status'=>'error','message'=>'Report not found.']);exit;}
+ $chk->close();
+ $ex=$conn->prepare("SELECT id,vote FROM report_votes WHERE report_id=? AND user_id=? LIMIT 1");
+ $ex->bind_param("ii",$report_id,$user_id); $ex->execute(); $ex->store_result();
+ $ex->bind_result($vid,$ev); $ex->fetch(); $has=$ex->num_rows>0; $ex->close();
+ $new_uv=null;
+ if($has){
+ if($ev===$vote){$d=$conn->prepare("DELETE FROM report_votes WHERE id=?");$d->bind_param("i",$vid);$d->execute();$d->close();}
+ else{$u=$conn->prepare("UPDATE report_votes SET vote=?,created_at=NOW() WHERE id=?");$u->bind_param("si",$vote,$vid);$u->execute();$u->close();$new_uv=$vote;}
+ } else {
+ $i=$conn->prepare("INSERT INTO report_votes (report_id,user_id,vote) VALUES (?,?,?)");$i->bind_param("iis",$report_id,$user_id,$vote);$i->execute();$i->close();$new_uv=$vote;
+ }
+ $cnt=$conn->prepare("SELECT SUM(CASE WHEN vote='up' THEN 1 ELSE 0 END),SUM(CASE WHEN vote='down' THEN 1 ELSE 0 END) FROM report_votes WHERE report_id=?");
+ $cnt->bind_param("i",$report_id);$cnt->execute();$cnt->bind_result($ups,$downs);$cnt->fetch();$cnt->close();
+ $ups=(int)($ups??0);$downs=(int)($downs??0);
+ $u=$conn->prepare("UPDATE reports SET upvotes=?,downvotes=? WHERE id=?");$u->bind_param("iii",$ups,$downs,$report_id);$u->execute();$u->close();
+ echo json_encode(['status'=>'success','upvotes'=>$ups,'downvotes'=>$downs,'user_vote'=>$new_uv]);
+ break;
 
-    case 'delete_report':
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') { echo json_encode(['status'=>'error','message'=>'POST required.']); exit; }
-        $report_id=(int)($_POST['report_id']??0);
-        if(!$report_id){echo json_encode(['status'=>'error','message'=>'Invalid ID.']);exit;}
-        if($role==='admin'){$d=$conn->prepare("UPDATE reports SET is_archived=1 WHERE id=?");$d->bind_param("i",$report_id);}
-        else{$d=$conn->prepare("UPDATE reports SET is_archived=1 WHERE id=? AND user_id=?");$d->bind_param("ii",$report_id,$user_id);}
-        $d->execute();
-        if($d->affected_rows>0){
-            $_r_stmt = $conn->prepare("SELECT title FROM reports WHERE id=? LIMIT 1");
-            $_r_stmt->bind_param('i', $report_id);
-            $_r_stmt->execute();
-            $_r_row = $_r_stmt->get_result()->fetch_assoc();
-            $_r_stmt->close();
-            $_audit = $conn->prepare("INSERT INTO report_audit_logs (report_id,report_title,action,performed_by,performed_by_name) VALUES (?,?,?,?,?)");
-            $_audit_title = $_r_row['title'] ?? 'Unknown';
-            $_audit_by = (int)$_SESSION['user_id'];
-            $_audit_name = ($_SESSION['first_name'] ?? '') . ' ' . ($_SESSION['last_name'] ?? '');
-            $_audit_action = 'archived';
-            $_audit->bind_param('issss', $report_id, $_audit_title, $_audit_action, $_audit_by, $_audit_name);
-            $_audit->execute();
-            $_audit->close();
-            echo json_encode(['status'=>'success','message'=>'Report removed.']);
-        } else { echo json_encode(['status'=>'error','message'=>'Could not delete.']); }
-        $d->close();
-        break;
+ case 'delete_report':
+ if ($_SERVER['REQUEST_METHOD'] !== 'POST') { echo json_encode(['status'=>'error','message'=>'POST required.']); exit; }
+ $report_id=(int)($_POST['report_id']??0);
+ if(!$report_id){echo json_encode(['status'=>'error','message'=>'Invalid ID.']);exit;}
+ if($role==='admin'){$d=$conn->prepare("UPDATE reports SET is_archived=1 WHERE id=?");$d->bind_param("i",$report_id);}
+ else{$d=$conn->prepare("UPDATE reports SET is_archived=1 WHERE id=? AND user_id=?");$d->bind_param("ii",$report_id,$user_id);}
+ $d->execute();
+ if($d->affected_rows>0){
+ $_r_stmt = $conn->prepare("SELECT title FROM reports WHERE id=? LIMIT 1");
+ $_r_stmt->bind_param('i', $report_id);
+ $_r_stmt->execute();
+ $_r_row = $_r_stmt->get_result()->fetch_assoc();
+ $_r_stmt->close();
+ $_audit = $conn->prepare("INSERT INTO report_audit_logs (report_id,report_title,action,performed_by,performed_by_name) VALUES (?,?,?,?,?)");
+ $_audit_title = $_r_row['title'] ?? 'Unknown';
+ $_audit_by = (int)$_SESSION['user_id'];
+ $_audit_name = ($_SESSION['first_name'] ?? '') . ' ' . ($_SESSION['last_name'] ?? '');
+ $_audit_action = 'archived';
+ $_audit->bind_param('issss', $report_id, $_audit_title, $_audit_action, $_audit_by, $_audit_name);
+ $_audit->execute();
+ $_audit->close();
+ echo json_encode(['status'=>'success','message'=>'Report removed.']);
+ } else { echo json_encode(['status'=>'error','message'=>'Could not delete.']); }
+ $d->close();
+ break;
 
-    case 'restore_report':
-        if($role!=='admin'){echo json_encode(['status'=>'error','message'=>'Admin required.']);exit;}
-        $report_id=(int)($_POST['report_id']??0);
-        $u=$conn->prepare("UPDATE reports SET is_archived=0 WHERE id=?");$u->bind_param("i",$report_id);$u->execute();
-        if($u->affected_rows>0){
-            $_r_stmt = $conn->prepare("SELECT title FROM reports WHERE id=? LIMIT 1");
-            $_r_stmt->bind_param('i', $report_id);
-            $_r_stmt->execute();
-            $_r_row = $_r_stmt->get_result()->fetch_assoc();
-            $_r_stmt->close();
-            $_audit = $conn->prepare("INSERT INTO report_audit_logs (report_id,report_title,action,performed_by,performed_by_name) VALUES (?,?,?,?,?)");
-            $_audit_title = $_r_row['title'] ?? 'Unknown';
-            $_audit_by = (int)$_SESSION['user_id'];
-            $_audit_name = ($_SESSION['first_name'] ?? '') . ' ' . ($_SESSION['last_name'] ?? '');
-            $_audit_action = 'restored';
-            $_audit->bind_param('issss', $report_id, $_audit_title, $_audit_action, $_audit_by, $_audit_name);
-            $_audit->execute();
-            $_audit->close();
-        }
-        echo json_encode(['status'=>'success','message'=>'Report restored.']); $u->close();
-        break;
+ case 'restore_report':
+ if($role!=='admin'){echo json_encode(['status'=>'error','message'=>'Admin required.']);exit;}
+ $report_id=(int)($_POST['report_id']??0);
+ $u=$conn->prepare("UPDATE reports SET is_archived=0 WHERE id=?");$u->bind_param("i",$report_id);$u->execute();
+ if($u->affected_rows>0){
+ $_r_stmt = $conn->prepare("SELECT title FROM reports WHERE id=? LIMIT 1");
+ $_r_stmt->bind_param('i', $report_id);
+ $_r_stmt->execute();
+ $_r_row = $_r_stmt->get_result()->fetch_assoc();
+ $_r_stmt->close();
+ $_audit = $conn->prepare("INSERT INTO report_audit_logs (report_id,report_title,action,performed_by,performed_by_name) VALUES (?,?,?,?,?)");
+ $_audit_title = $_r_row['title'] ?? 'Unknown';
+ $_audit_by = (int)$_SESSION['user_id'];
+ $_audit_name = ($_SESSION['first_name'] ?? '') . ' ' . ($_SESSION['last_name'] ?? '');
+ $_audit_action = 'restored';
+ $_audit->bind_param('issss', $report_id, $_audit_title, $_audit_action, $_audit_by, $_audit_name);
+ $_audit->execute();
+ $_audit->close();
+ }
+ echo json_encode(['status'=>'success','message'=>'Report restored.']); $u->close();
+ break;
 
-    case 'admin_get_reports':
-        if($role!=='admin'){echo json_encode(['status'=>'error','message'=>'Admin required.']);exit;}
-        ensureGeoColumns($conn);
-        $page = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
-        $limit = isset($_GET['limit']) ? max(1, (int)$_GET['limit']) : 500;
-        $offset = ($page - 1) * $limit;
-        $search = $_GET['search'] ?? '';
-        $search_sql = $search ? " WHERE (r.title LIKE '%" . $conn->real_escape_string($search) . "%') " : "";
-        $sql="SELECT r.id,r.user_id,r.title,r.status,r.category,r.city,r.location_name,r.latitude,r.longitude,r.radius_m,r.is_archived,r.upvotes,r.downvotes,r.created_at,CONCAT(u.first_name,' ',u.last_name) AS poster_name FROM reports r INNER JOIN users u ON r.user_id=u.id $search_sql ORDER BY r.created_at DESC LIMIT $limit OFFSET $offset";
-        $res=$conn->query($sql); $reports=[];
-        while($row=$res->fetch_assoc()){
-            $row['id']=(int)$row['id'];$row['upvotes']=(int)$row['upvotes'];$row['downvotes']=(int)$row['downvotes'];$row['is_archived']=(int)$row['is_archived'];
-            $row['latitude']  = $row['latitude']  !== null ? (float)$row['latitude']  : null;
-            $row['longitude'] = $row['longitude'] !== null ? (float)$row['longitude'] : null;
-            $row['radius_m']  = (int)($row['radius_m'] ?? 200);
-            $reports[]=$row;
-        }
-        echo json_encode(['status'=>'success','reports'=>$reports]);
-        break;
+ case 'admin_get_reports':
+ if($role!=='admin'){echo json_encode(['status'=>'error','message'=>'Admin required.']);exit;}
+ ensureGeoColumns($conn);
+ $page = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
+ $limit = isset($_GET['limit']) ? max(1, (int)$_GET['limit']) : 500;
+ $offset = ($page - 1) * $limit;
+ $search = $_GET['search'] ?? '';
+ $search_sql = $search ? " WHERE (r.title LIKE '%" . $conn->real_escape_string($search) . "%') " : "";
+ $sql="SELECT r.id,r.user_id,r.title,r.status,r.category,r.city,r.location_name,r.latitude,r.longitude,r.radius_m,r.is_archived,r.upvotes,r.downvotes,r.created_at,CONCAT(u.first_name,' ',u.last_name) AS poster_name FROM reports r INNER JOIN users u ON r.user_id=u.id $search_sql ORDER BY r.created_at DESC LIMIT $limit OFFSET $offset";
+ $res=$conn->query($sql); $reports=[];
+ while($row=$res->fetch_assoc()){
+ $row['id']=(int)$row['id'];$row['upvotes']=(int)$row['upvotes'];$row['downvotes']=(int)$row['downvotes'];$row['is_archived']=(int)$row['is_archived'];
+ $row['latitude'] = $row['latitude'] !== null ? (float)$row['latitude'] : null;
+ $row['longitude'] = $row['longitude'] !== null ? (float)$row['longitude'] : null;
+ $row['radius_m'] = (int)($row['radius_m'] ?? 200);
+ $reports[]=$row;
+ }
+ echo json_encode(['status'=>'success','reports'=>$reports]);
+ break;
 
-    case 'admin_get_users':
-        if($role!=='admin'){echo json_encode(['status'=>'error','message'=>'Admin required.']);exit;}
-        $sql="SELECT u.id,u.first_name,u.last_name,u.email,u.role,u.org_name,u.position,u.barangay_name,u.municipality,u.is_approved,u.created_at,COUNT(r.id) AS report_count FROM users u LEFT JOIN reports r ON r.user_id=u.id GROUP BY u.id ORDER BY u.is_approved ASC, u.created_at DESC";
-        $res=$conn->query($sql); $users=[];
-        while($row=$res->fetch_assoc()){$row['id']=(int)$row['id'];$row['report_count']=(int)$row['report_count'];$row['is_approved']=(int)$row['is_approved'];$users[]=$row;}
-        echo json_encode(['status'=>'success','users'=>$users]);
-        break;
+ case 'admin_get_users':
+ if($role!=='admin'){echo json_encode(['status'=>'error','message'=>'Admin required.']);exit;}
+ $sql="SELECT u.id,u.first_name,u.last_name,u.email,u.role,u.org_name,u.position,u.barangay_name,u.municipality,u.is_approved,u.created_at,COUNT(r.id) AS report_count FROM users u LEFT JOIN reports r ON r.user_id=u.id GROUP BY u.id ORDER BY u.is_approved ASC, u.created_at DESC";
+ $res=$conn->query($sql); $users=[];
+ while($row=$res->fetch_assoc()){$row['id']=(int)$row['id'];$row['report_count']=(int)$row['report_count'];$row['is_approved']=(int)$row['is_approved'];$users[]=$row;}
+ echo json_encode(['status'=>'success','users'=>$users]);
+ break;
 
-    case 'admin_approve_user':
-        if($role!=='admin'){echo json_encode(['status'=>'error','message'=>'Admin required.']);exit;}
-        $target=(int)($_POST['user_id']??0);
-        if(!$target){echo json_encode(['status'=>'error','message'=>'Invalid user ID.']);exit;}
-        $s=$conn->prepare("UPDATE users SET is_approved=1 WHERE id=?");
-        $s->bind_param("i",$target); $s->execute(); $s->close();
-        echo json_encode(['status'=>'success','message'=>'Account approved.']);
-        break;
+ case 'admin_approve_user':
+ if($role!=='admin'){echo json_encode(['status'=>'error','message'=>'Admin required.']);exit;}
+ $target=(int)($_POST['user_id']??0);
+ if(!$target){echo json_encode(['status'=>'error','message'=>'Invalid user ID.']);exit;}
+ $s=$conn->prepare("UPDATE users SET is_approved=1 WHERE id=?");
+ $s->bind_param("i",$target); $s->execute(); $s->close();
+ echo json_encode(['status'=>'success','message'=>'Account approved.']);
+ break;
 
-    case 'admin_reject_user':
-        if($role!=='admin'){echo json_encode(['status'=>'error','message'=>'Admin required.']);exit;}
-        $target=(int)($_POST['user_id']??0);
-        if(!$target||$target===$user_id){echo json_encode(['status'=>'error','message'=>'Invalid.']);exit;}
-        $s=$conn->prepare("DELETE FROM users WHERE id=? AND role!='admin'");
-        $s->bind_param("i",$target); $s->execute(); $s->close();
-        echo json_encode(['status'=>'success','message'=>'Account rejected and removed.']);
-        break;
+ case 'admin_reject_user':
+ if($role!=='admin'){echo json_encode(['status'=>'error','message'=>'Admin required.']);exit;}
+ $target=(int)($_POST['user_id']??0);
+ if(!$target||$target===$user_id){echo json_encode(['status'=>'error','message'=>'Invalid.']);exit;}
+ $s=$conn->prepare("DELETE FROM users WHERE id=? AND role!='admin'");
+ $s->bind_param("i",$target); $s->execute(); $s->close();
+ echo json_encode(['status'=>'success','message'=>'Account rejected and removed.']);
+ break;
 
-    case 'admin_delete_user':
-        if($role!=='admin'){echo json_encode(['status'=>'error','message'=>'Admin required.']);exit;}
-        $target=(int)($_POST['user_id']??0);
-        if(!$target){echo json_encode(['status'=>'error','message'=>'Invalid user ID.']);exit;}
-        if($target===$user_id){echo json_encode(['status'=>'error','message'=>'Cannot delete yourself.']);exit;}
-        $_del1 = $conn->prepare("DELETE FROM report_votes WHERE user_id=?"); $_del1->bind_param('i',$target); $_del1->execute(); $_del1->close();
-        $_del2 = $conn->prepare("DELETE FROM report_votes WHERE report_id IN (SELECT id FROM reports WHERE user_id=?)"); $_del2->bind_param('i',$target); $_del2->execute(); $_del2->close();
-        $_del3 = $conn->prepare("DELETE FROM reports WHERE user_id=?"); $_del3->bind_param('i',$target); $_del3->execute(); $_del3->close();
-        $d=$conn->prepare("DELETE FROM users WHERE id=? AND role!='admin'");
-        $d->bind_param("i",$target); $d->execute();
-        if($d->affected_rows>0){echo json_encode(['status'=>'success','message'=>'User removed.']);}
-        else{echo json_encode(['status'=>'error','message'=>'Could not delete user (admin accounts are protected).']);}
-        $d->close();
-        break;
+ case 'admin_delete_user':
+ if($role!=='admin'){echo json_encode(['status'=>'error','message'=>'Admin required.']);exit;}
+ $target=(int)($_POST['user_id']??0);
+ if(!$target){echo json_encode(['status'=>'error','message'=>'Invalid user ID.']);exit;}
+ if($target===$user_id){echo json_encode(['status'=>'error','message'=>'Cannot delete yourself.']);exit;}
+ $_del1 = $conn->prepare("DELETE FROM report_votes WHERE user_id=?"); $_del1->bind_param('i',$target); $_del1->execute(); $_del1->close();
+ $_del2 = $conn->prepare("DELETE FROM report_votes WHERE report_id IN (SELECT id FROM reports WHERE user_id=?)"); $_del2->bind_param('i',$target); $_del2->execute(); $_del2->close();
+ $_del3 = $conn->prepare("DELETE FROM reports WHERE user_id=?"); $_del3->bind_param('i',$target); $_del3->execute(); $_del3->close();
+ $d=$conn->prepare("DELETE FROM users WHERE id=? AND role!='admin'");
+ $d->bind_param("i",$target); $d->execute();
+ if($d->affected_rows>0){echo json_encode(['status'=>'success','message'=>'User removed.']);}
+ else{echo json_encode(['status'=>'error','message'=>'Could not delete user (admin accounts are protected).']);}
+ $d->close();
+ break;
 
-    case 'admin_get_logs':
-        if($role!=='admin'){echo json_encode(['status'=>'error','message'=>'Admin required.']);exit;}
-        $sql="SELECT id,email,ip_address,device,status,created_at FROM login_logs ORDER BY created_at DESC LIMIT 100";
-        $res=$conn->query($sql); $logs=[];
-        while($row=$res->fetch_assoc()){$row['id']=(int)$row['id'];$logs[]=$row;}
-        echo json_encode(['status'=>'success','logs'=>$logs]);
-        break;
+ case 'admin_get_logs':
+ if($role!=='admin'){echo json_encode(['status'=>'error','message'=>'Admin required.']);exit;}
+ $sql="SELECT id,email,ip_address,device,status,created_at FROM login_logs ORDER BY created_at DESC LIMIT 100";
+ $res=$conn->query($sql); $logs=[];
+ while($row=$res->fetch_assoc()){$row['id']=(int)$row['id'];$logs[]=$row;}
+ echo json_encode(['status'=>'success','logs'=>$logs]);
+ break;
 
-    // ─── Save user GPS coordinates ───────────────────────────────────────────
-    case 'save_gps':
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') { echo json_encode(['status'=>'error','message'=>'POST required.']); exit; }
-        $lat = isset($_POST['latitude'])  && $_POST['latitude']  !== '' ? (float)$_POST['latitude']  : null;
-        $lng = isset($_POST['longitude']) && $_POST['longitude'] !== '' ? (float)$_POST['longitude'] : null;
-        if ($lat === null || $lng === null || $lat < -90 || $lat > 90 || $lng < -180 || $lng > 180) {
-            echo json_encode(['status'=>'error','message'=>'Invalid coordinates.']); exit;
-        }
-        // Ensure GPS columns exist on users table
-        $db2 = $conn->query("SELECT DATABASE()")->fetch_row()[0];
-        $colRes = $conn->query("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA='$db2' AND TABLE_NAME='users'");
-        $existCols2 = [];
-        while($rc2 = $colRes->fetch_row()) $existCols2[] = $rc2[0];
-        if (!in_array('gps_lat', $existCols2)) $conn->query("ALTER TABLE users ADD COLUMN gps_lat DECIMAL(10,7) DEFAULT NULL");
-        if (!in_array('gps_lng', $existCols2)) $conn->query("ALTER TABLE users ADD COLUMN gps_lng DECIMAL(10,7) DEFAULT NULL");
+ // ─── Save user GPS coordinates ───────────────────────────────────────────
+ case 'save_gps':
+ if ($_SERVER['REQUEST_METHOD'] !== 'POST') { echo json_encode(['status'=>'error','message'=>'POST required.']); exit; }
+ $lat = isset($_POST['latitude']) && $_POST['latitude'] !== '' ? (float)$_POST['latitude'] : null;
+ $lng = isset($_POST['longitude']) && $_POST['longitude'] !== '' ? (float)$_POST['longitude'] : null;
+ if ($lat === null || $lng === null || $lat < -90 || $lat > 90 || $lng < -180 || $lng > 180) {
+ echo json_encode(['status'=>'error','message'=>'Invalid coordinates.']); exit;
+ }
+ // Ensure GPS columns exist on users table
+ $db2 = $conn->query("SELECT DATABASE()")->fetch_row()[0];
+ $colRes = $conn->query("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA='$db2' AND TABLE_NAME='users'");
+ $existCols2 = [];
+ while($rc2 = $colRes->fetch_row()) $existCols2[] = $rc2[0];
+ if (!in_array('gps_lat', $existCols2)) $conn->query("ALTER TABLE users ADD COLUMN gps_lat DECIMAL(10,7) DEFAULT NULL");
+ if (!in_array('gps_lng', $existCols2)) $conn->query("ALTER TABLE users ADD COLUMN gps_lng DECIMAL(10,7) DEFAULT NULL");
 
-        $upd = $conn->prepare("UPDATE users SET gps_lat=?, gps_lng=? WHERE id=?");
-        $upd->bind_param("ddi", $lat, $lng, $user_id);
-        if ($upd->execute()) {
-            $_SESSION['gps_lat'] = $lat;
-            $_SESSION['gps_lng'] = $lng;
-            echo json_encode(['status'=>'success','lat'=>$lat,'lng'=>$lng]);
-        } else {
-            echo json_encode(['status'=>'error','message'=>'Failed to save GPS: '.$upd->error]);
-        }
-        $upd->close();
-        break;
+ $upd = $conn->prepare("UPDATE users SET gps_lat=?, gps_lng=? WHERE id=?");
+ $upd->bind_param("ddi", $lat, $lng, $user_id);
+ if ($upd->execute()) {
+ $_SESSION['gps_lat'] = $lat;
+ $_SESSION['gps_lng'] = $lng;
+ echo json_encode(['status'=>'success','lat'=>$lat,'lng'=>$lng]);
+ } else {
+ echo json_encode(['status'=>'error','message'=>'Failed to save GPS: '.$upd->error]);
+ }
+ $upd->close();
+ break;
 
-    // ─── Profile update ──────────────────────────────────────────────────────
-    case 'update_profile':
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') { echo json_encode(['status'=>'error','message'=>'POST required.']); exit; }
+ // ─── Profile update ──────────────────────────────────────────────────────
+ case 'update_profile':
+ if ($_SERVER['REQUEST_METHOD'] !== 'POST') { echo json_encode(['status'=>'error','message'=>'POST required.']); exit; }
 
-        $first_name   = trim($_POST['first_name']   ?? '');
-        $last_name    = trim($_POST['last_name']    ?? '');
-        $email        = trim($_POST['email']        ?? '');
-        $avatar_color = trim($_POST['avatar_color'] ?? '#1c57b2');
-        $current_pw   = $_POST['current_password']  ?? '';
-        $new_pw       = $_POST['new_password']      ?? '';
+ $first_name = trim($_POST['first_name'] ?? '');
+ $last_name = trim($_POST['last_name'] ?? '');
+ $email = trim($_POST['email'] ?? '');
+ $avatar_color = trim($_POST['avatar_color'] ?? '#1c57b2');
+ $current_pw = $_POST['current_password'] ?? '';
+ $new_pw = $_POST['new_password'] ?? '';
 
-        if (empty($first_name) || empty($last_name) || empty($email)) {
-            echo json_encode(['status'=>'error','message'=>'First name, last name and email are required.']); exit;
-        }
-        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            echo json_encode(['status'=>'error','message'=>'Invalid email address.']); exit;
-        }
-        // Validate avatar color (hex)
-        if (!preg_match('/^#[0-9a-fA-F]{6}$/', $avatar_color)) $avatar_color = '#1c57b2';
+ if (empty($first_name) || empty($last_name) || empty($email)) {
+ echo json_encode(['status'=>'error','message'=>'First name, last name and email are required.']); exit;
+ }
+ if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+ echo json_encode(['status'=>'error','message'=>'Invalid email address.']); exit;
+ }
+ // Validate avatar color (hex)
+ if (!preg_match('/^#[0-9a-fA-F]{6}$/', $avatar_color)) $avatar_color = '#1c57b2';
 
-        // Ensure avatar_color column exists
-        $db = $conn->query("SELECT DATABASE()")->fetch_row()[0];
-        $chkCols = $conn->query("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA='$db' AND TABLE_NAME='users'");
-        $existCols = [];
-        while($rc = $chkCols->fetch_row()) $existCols[] = $rc[0];
-        if (!in_array('avatar_color', $existCols)) {
-            $conn->query("ALTER TABLE users ADD COLUMN avatar_color VARCHAR(7) NOT NULL DEFAULT '#1c57b2'");
-        }
+ // Ensure avatar_color column exists
+ $db = $conn->query("SELECT DATABASE()")->fetch_row()[0];
+ $chkCols = $conn->query("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA='$db' AND TABLE_NAME='users'");
+ $existCols = [];
+ while($rc = $chkCols->fetch_row()) $existCols[] = $rc[0];
+ if (!in_array('avatar_color', $existCols)) {
+ $conn->query("ALTER TABLE users ADD COLUMN avatar_color VARCHAR(7) NOT NULL DEFAULT '#1c57b2'");
+ }
 
-        // Check email uniqueness (exclude current user)
-        $ck = $conn->prepare("SELECT id FROM users WHERE email=? AND id!=? LIMIT 1");
-        $ck->bind_param("si", $email, $user_id); $ck->execute(); $ck->store_result();
-        if ($ck->num_rows > 0) { echo json_encode(['status'=>'error','message'=>'That email is already in use.']); exit; }
-        $ck->close();
+ // Check email uniqueness (exclude current user)
+ $ck = $conn->prepare("SELECT id FROM users WHERE email=? AND id!=? LIMIT 1");
+ $ck->bind_param("si", $email, $user_id); $ck->execute(); $ck->store_result();
+ if ($ck->num_rows > 0) { echo json_encode(['status'=>'error','message'=>'That email is already in use.']); exit; }
+ $ck->close();
 
-        // Password change requested?
-        if (!empty($new_pw)) {
-            if (strlen($new_pw) < 8) { echo json_encode(['status'=>'error','message'=>'New password must be at least 8 characters.']); exit; }
-            // Verify current password
-            $pw_stmt = $conn->prepare("SELECT password FROM users WHERE id=? LIMIT 1");
-            $pw_stmt->bind_param("i", $user_id); $pw_stmt->execute(); $pw_stmt->bind_result($hashed); $pw_stmt->fetch(); $pw_stmt->close();
-            if (!password_verify($current_pw, $hashed)) {
-                echo json_encode(['status'=>'error','message'=>'Current password is incorrect.']); exit;
-            }
-            $new_hash = password_hash($new_pw, PASSWORD_DEFAULT);
-            $upd = $conn->prepare("UPDATE users SET first_name=?, last_name=?, email=?, avatar_color=?, password=? WHERE id=?");
-            $upd->bind_param("sssssi", $first_name, $last_name, $email, $avatar_color, $new_hash, $user_id);
-        } else {
-            $upd = $conn->prepare("UPDATE users SET first_name=?, last_name=?, email=?, avatar_color=? WHERE id=?");
-            $upd->bind_param("ssssi", $first_name, $last_name, $email, $avatar_color, $user_id);
-        }
+ // Password change requested?
+ if (!empty($new_pw)) {
+ if (strlen($new_pw) < 8) { echo json_encode(['status'=>'error','message'=>'New password must be at least 8 characters.']); exit; }
+ // Verify current password
+ $pw_stmt = $conn->prepare("SELECT password FROM users WHERE id=? LIMIT 1");
+ $pw_stmt->bind_param("i", $user_id); $pw_stmt->execute(); $pw_stmt->bind_result($hashed); $pw_stmt->fetch(); $pw_stmt->close();
+ if (!password_verify($current_pw, $hashed)) {
+ echo json_encode(['status'=>'error','message'=>'Current password is incorrect.']); exit;
+ }
+ $new_hash = password_hash($new_pw, PASSWORD_DEFAULT);
+ $upd = $conn->prepare("UPDATE users SET first_name=?, last_name=?, email=?, avatar_color=?, password=? WHERE id=?");
+ $upd->bind_param("sssssi", $first_name, $last_name, $email, $avatar_color, $new_hash, $user_id);
+ } else {
+ $upd = $conn->prepare("UPDATE users SET first_name=?, last_name=?, email=?, avatar_color=? WHERE id=?");
+ $upd->bind_param("ssssi", $first_name, $last_name, $email, $avatar_color, $user_id);
+ }
 
-        if ($upd->execute()) {
-            // Update session
-            $_SESSION['first_name'] = $first_name;
-            $_SESSION['last_name']  = $last_name;
-            echo json_encode(['status'=>'success','message'=>'Profile updated.']);
-        } else {
-            echo json_encode(['status'=>'error','message'=>'Update failed: '.$upd->error]);
-        }
-        $upd->close();
-        break;
+ if ($upd->execute()) {
+ // Update session
+ $_SESSION['first_name'] = $first_name;
+ $_SESSION['last_name'] = $last_name;
+ echo json_encode(['status'=>'success','message'=>'Profile updated.']);
+ } else {
+ echo json_encode(['status'=>'error','message'=>'Update failed: '.$upd->error]);
+ }
+ $upd->close();
+ break;
 
-    // ── Get images for a report ──────────────────────────────────────────
-    case 'get_report_images':
-        $report_id = (int)($_GET['report_id'] ?? 0);
-        if (!$report_id) { echo json_encode(['status'=>'error','message'=>'Invalid ID.']); exit; }
-        $_img_stmt = $conn->prepare("SELECT id, file_name, original_name, mime_type, file_size, uploaded_at FROM report_images WHERE report_id=? ORDER BY uploaded_at ASC");
-        $_img_stmt->bind_param('i', $report_id);
-        $_img_stmt->execute();
-        $res = $_img_stmt->get_result();
-        $images = [];
-        if ($res) {
-            while ($row = $res->fetch_assoc()) {
-                $row['id']        = (int)$row['id'];
-                $row['file_size'] = (int)$row['file_size'];
-                $row['url']       = 'uploads/reports/' . rawurlencode($row['file_name']);
-                $images[]         = $row;
-            }
-            $_img_stmt->close();
-        }
-        echo json_encode(['status'=>'success','images'=>$images]);
-        break;
+ // ── Get images for a report ──────────────────────────────────────────
+ case 'get_report_images':
+ $report_id = (int)($_GET['report_id'] ?? 0);
+ if (!$report_id) { echo json_encode(['status'=>'error','message'=>'Invalid ID.']); exit; }
+ $_img_stmt = $conn->prepare("SELECT id, file_name, original_name, mime_type, file_size, uploaded_at FROM report_images WHERE report_id=? ORDER BY uploaded_at ASC");
+ $_img_stmt->bind_param('i', $report_id);
+ $_img_stmt->execute();
+ $res = $_img_stmt->get_result();
+ $images = [];
+ if ($res) {
+ while ($row = $res->fetch_assoc()) {
+ $row['id'] = (int)$row['id'];
+ $row['file_size'] = (int)$row['file_size'];
+ $row['url'] = 'uploads/reports/' . rawurlencode($row['file_name']);
+ $images[] = $row;
+ }
+ $_img_stmt->close();
+ }
+ echo json_encode(['status'=>'success','images'=>$images]);
+ break;
 
-    case 'accept_assignment':
-    case 'assign_report':
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') { echo json_encode(['status'=>'error','message'=>'POST required.']); exit; }
-        if (!in_array($role, ['first_responder', 'admin'], true)) { echo json_encode(['status'=>'error','message'=>'Unauthorized.']); exit; }
-        $report_id = (int)($_POST['report_id'] ?? 0);
-        if (!$report_id) { echo json_encode(['status'=>'error','message'=>'Invalid report ID.']); exit; }
-        if (!$has_assigned_to) {
-            echo json_encode(['status'=>'error','message'=>'Dispatch schema is missing. Run the database migration for reports.assigned_to.']);
-            exit;
-        }
-        $stmt = $conn->prepare("UPDATE reports SET accepted_at=COALESCE(accepted_at,NOW()) WHERE id=? AND assigned_to=? AND is_archived=0 AND status='dangerous'");
-        $stmt->bind_param("ii", $report_id, $user_id);
-        $stmt->execute();
-        if ($stmt->affected_rows > 0) {
-            $r_res = $conn->query("SELECT title FROM reports WHERE id=$report_id")->fetch_assoc();
-            $_audit = $conn->prepare("INSERT INTO report_audit_logs (report_id,report_title,action,performed_by,performed_by_name) VALUES (?,?,?,?,?)");
-            $_audit_title = $r_res['title'] ?? 'Unknown';
-            $_audit_by = (int)$_SESSION['user_id'];
-            $_audit_name = ($_SESSION['first_name'] ?? '') . ' ' . ($_SESSION['last_name'] ?? '');
-            $_audit_action = 'accepted';
-            $_audit->bind_param('issss', $report_id, $_audit_title, $_audit_action, $_audit_by, $_audit_name);
-            $_audit->execute();
-            $_audit->close();
-            echo json_encode(['status'=>'success','message'=>'Assignment accepted.']);
-        } else {
-            $chk = $conn->prepare("SELECT assigned_to,status,is_archived FROM reports WHERE id=? LIMIT 1");
-            $chk->bind_param("i",$report_id); $chk->execute(); $chk->bind_result($cur_assigned,$cur_status,$cur_archived); $chk->fetch(); $chk->close();
-            if ((int)$cur_assigned !== $user_id) {
-                echo json_encode(['status'=>'error','message'=>'This report is not assigned to you by LGU.']);
-            } elseif ($cur_archived) {
-                echo json_encode(['status'=>'error','message'=>'Report is archived.']);
-            } elseif ($cur_status !== 'dangerous') {
-                echo json_encode(['status'=>'error','message'=>'Only dangerous reports can be accepted by responders.']);
-            } else {
-                echo json_encode(['status'=>'error','message'=>'Assignment could not be accepted.']);
-            }
-        }
-        $stmt->close();
-        break;
+ case 'accept_assignment':
+ case 'assign_report':
+ if ($_SERVER['REQUEST_METHOD'] !== 'POST') { echo json_encode(['status'=>'error','message'=>'POST required.']); exit; }
+ if (!in_array($role, ['first_responder', 'admin'], true)) { echo json_encode(['status'=>'error','message'=>'Unauthorized.']); exit; }
+ $report_id = (int)($_POST['report_id'] ?? 0);
+ if (!$report_id) { echo json_encode(['status'=>'error','message'=>'Invalid report ID.']); exit; }
+ if (!$has_assigned_to) {
+ echo json_encode(['status'=>'error','message'=>'Dispatch schema is missing. Run the database migration for reports.assigned_to.']);
+ exit;
+ }
+ $stmt = $conn->prepare("UPDATE reports SET accepted_at=COALESCE(accepted_at,NOW()) WHERE id=? AND assigned_to=? AND is_archived=0 AND status='dangerous'");
+ $stmt->bind_param("ii", $report_id, $user_id);
+ $stmt->execute();
+ if ($stmt->affected_rows > 0) {
+ $r_res = $conn->query("SELECT title FROM reports WHERE id=$report_id")->fetch_assoc();
+ $_audit = $conn->prepare("INSERT INTO report_audit_logs (report_id,report_title,action,performed_by,performed_by_name) VALUES (?,?,?,?,?)");
+ $_audit_title = $r_res['title'] ?? 'Unknown';
+ $_audit_by = (int)$_SESSION['user_id'];
+ $_audit_name = ($_SESSION['first_name'] ?? '') . ' ' . ($_SESSION['last_name'] ?? '');
+ $_audit_action = 'accepted';
+ $_audit->bind_param('issss', $report_id, $_audit_title, $_audit_action, $_audit_by, $_audit_name);
+ $_audit->execute();
+ $_audit->close();
+ echo json_encode(['status'=>'success','message'=>'Assignment accepted.']);
+ } else {
+ $chk = $conn->prepare("SELECT assigned_to,status,is_archived FROM reports WHERE id=? LIMIT 1");
+ $chk->bind_param("i",$report_id); $chk->execute(); $chk->bind_result($cur_assigned,$cur_status,$cur_archived); $chk->fetch(); $chk->close();
+ if ((int)$cur_assigned !== $user_id) {
+ echo json_encode(['status'=>'error','message'=>'This report is not assigned to you by LGU.']);
+ } elseif ($cur_archived) {
+ echo json_encode(['status'=>'error','message'=>'Report is archived.']);
+ } elseif ($cur_status !== 'dangerous') {
+ echo json_encode(['status'=>'error','message'=>'Only dangerous reports can be accepted by responders.']);
+ } else {
+ echo json_encode(['status'=>'error','message'=>'Assignment could not be accepted.']);
+ }
+ }
+ $stmt->close();
+ break;
 
-    case 'report_responded':
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') { echo json_encode(['status'=>'error','message'=>'POST required.']); exit; }
-        if (!in_array($role, ['first_responder', 'admin'], true)) { echo json_encode(['status'=>'error','message'=>'Unauthorized.']); exit; }
-        $report_id = (int)($_POST['report_id'] ?? 0);
-        if (!$report_id) { echo json_encode(['status'=>'error','message'=>'Invalid report ID.']); exit; }
-        $stmt = $conn->prepare("UPDATE reports SET responded_at=COALESCE(responded_at,NOW()) WHERE id=? AND assigned_to=? AND is_archived=0 AND status='dangerous'");
-        $stmt->bind_param("ii", $report_id, $user_id);
-        $stmt->execute();
-        if ($stmt->affected_rows > 0) {
-            $r_res = $conn->query("SELECT title FROM reports WHERE id=$report_id")->fetch_assoc();
-            $_audit = $conn->prepare("INSERT INTO report_audit_logs (report_id,report_title,action,performed_by,performed_by_name) VALUES (?,?,?,?,?)");
-            $_audit_title = $r_res['title'] ?? 'Unknown';
-            $_audit_by = (int)$_SESSION['user_id'];
-            $_audit_name = ($_SESSION['first_name'] ?? '') . ' ' . ($_SESSION['last_name'] ?? '');
-            $_audit_action = 'responded';
-            $_audit->bind_param('issss', $report_id, $_audit_title, $_audit_action, $_audit_by, $_audit_name);
-            $_audit->execute();
-            $_audit->close();
-            echo json_encode(['status'=>'success','message'=>'Reported as responded to LGU.']);
-        } else {
-            echo json_encode(['status'=>'error','message'=>'This report must be assigned to you before you can mark it responded.']);
-        }
-        $stmt->close();
-        break;
+ case 'report_responded':
+ if ($_SERVER['REQUEST_METHOD'] !== 'POST') { echo json_encode(['status'=>'error','message'=>'POST required.']); exit; }
+ if (!in_array($role, ['first_responder', 'admin'], true)) { echo json_encode(['status'=>'error','message'=>'Unauthorized.']); exit; }
+ $report_id = (int)($_POST['report_id'] ?? 0);
+ if (!$report_id) { echo json_encode(['status'=>'error','message'=>'Invalid report ID.']); exit; }
+ $stmt = $conn->prepare("UPDATE reports SET responded_at=COALESCE(responded_at,NOW()) WHERE id=? AND assigned_to=? AND is_archived=0 AND status='dangerous'");
+ $stmt->bind_param("ii", $report_id, $user_id);
+ $stmt->execute();
+ if ($stmt->affected_rows > 0) {
+ $r_res = $conn->query("SELECT title FROM reports WHERE id=$report_id")->fetch_assoc();
+ $_audit = $conn->prepare("INSERT INTO report_audit_logs (report_id,report_title,action,performed_by,performed_by_name) VALUES (?,?,?,?,?)");
+ $_audit_title = $r_res['title'] ?? 'Unknown';
+ $_audit_by = (int)$_SESSION['user_id'];
+ $_audit_name = ($_SESSION['first_name'] ?? '') . ' ' . ($_SESSION['last_name'] ?? '');
+ $_audit_action = 'responded';
+ $_audit->bind_param('issss', $report_id, $_audit_title, $_audit_action, $_audit_by, $_audit_name);
+ $_audit->execute();
+ $_audit->close();
+ echo json_encode(['status'=>'success','message'=>'Reported as responded to LGU.']);
+ } else {
+ echo json_encode(['status'=>'error','message'=>'This report must be assigned to you before you can mark it responded.']);
+ }
+ $stmt->close();
+ break;
 
-    case 'resolve_report':
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') { echo json_encode(['status'=>'error','message'=>'POST required.']); exit; }
-        if (!in_array($role, ['first_responder', 'barangay', 'lgu', 'admin'], true)) { echo json_encode(['status'=>'error','message'=>'Unauthorized.']); exit; }
-        $report_id = (int)($_POST['report_id'] ?? 0);
-        if (!$report_id) { echo json_encode(['status'=>'error','message'=>'Invalid report ID.']); exit; }
-        if ($role === 'first_responder') {
-            $stmt = $conn->prepare("UPDATE reports SET status='safe', responded_at=COALESCE(responded_at,NOW()), resolved_at=NOW() WHERE id=? AND assigned_to=? AND is_archived=0 AND status='dangerous'");
-            $stmt->bind_param("ii", $report_id, $user_id);
-        } else {
-            $stmt = $conn->prepare("UPDATE reports SET status='safe', resolved_at=NOW() WHERE id=? AND is_archived=0");
-            $stmt->bind_param("i", $report_id);
-        }
-        $stmt->execute();
-        if ($stmt->affected_rows > 0) {
-            $r_res = $conn->query("SELECT title FROM reports WHERE id=$report_id")->fetch_assoc();
-            $_audit = $conn->prepare("INSERT INTO report_audit_logs (report_id,report_title,action,performed_by,performed_by_name) VALUES (?,?,?,?,?)");
-            $_audit_title = $r_res['title'] ?? 'Unknown';
-            $_audit_by = (int)$_SESSION['user_id'];
-            $_audit_name = ($_SESSION['first_name'] ?? '') . ' ' . ($_SESSION['last_name'] ?? '');
-            $_audit_action = 'resolved';
-            $_audit->bind_param('issss', $report_id, $_audit_title, $_audit_action, $_audit_by, $_audit_name);
-            $_audit->execute();
-            $_audit->close();
-            echo json_encode(['status'=>'success','message'=>'Report marked as resolved.']);
-        } else {
-            echo json_encode(['status'=>'error','message'=>'Report not found or not assigned to you.']);
-        }
-        $stmt->close();
-        break;
+ case 'resolve_report':
+ if ($_SERVER['REQUEST_METHOD'] !== 'POST') { echo json_encode(['status'=>'error','message'=>'POST required.']); exit; }
+ if (!in_array($role, ['first_responder', 'barangay', 'lgu', 'admin'], true)) { echo json_encode(['status'=>'error','message'=>'Unauthorized.']); exit; }
+ $report_id = (int)($_POST['report_id'] ?? 0);
+ if (!$report_id) { echo json_encode(['status'=>'error','message'=>'Invalid report ID.']); exit; }
+ if ($role === 'first_responder') {
+ $stmt = $conn->prepare("UPDATE reports SET status='safe', responded_at=COALESCE(responded_at,NOW()), resolved_at=NOW() WHERE id=? AND assigned_to=? AND is_archived=0 AND status='dangerous'");
+ $stmt->bind_param("ii", $report_id, $user_id);
+ } else {
+ $stmt = $conn->prepare("UPDATE reports SET status='safe', resolved_at=NOW() WHERE id=? AND is_archived=0");
+ $stmt->bind_param("i", $report_id);
+ }
+ $stmt->execute();
+ if ($stmt->affected_rows > 0) {
+ $r_res = $conn->query("SELECT title FROM reports WHERE id=$report_id")->fetch_assoc();
+ $_audit = $conn->prepare("INSERT INTO report_audit_logs (report_id,report_title,action,performed_by,performed_by_name) VALUES (?,?,?,?,?)");
+ $_audit_title = $r_res['title'] ?? 'Unknown';
+ $_audit_by = (int)$_SESSION['user_id'];
+ $_audit_name = ($_SESSION['first_name'] ?? '') . ' ' . ($_SESSION['last_name'] ?? '');
+ $_audit_action = 'resolved';
+ $_audit->bind_param('issss', $report_id, $_audit_title, $_audit_action, $_audit_by, $_audit_name);
+ $_audit->execute();
+ $_audit->close();
+ echo json_encode(['status'=>'success','message'=>'Report marked as resolved.']);
+ } else {
+ echo json_encode(['status'=>'error','message'=>'Report not found or not assigned to you.']);
+ }
+ $stmt->close();
+ break;
 
-    case 'admin_get_audit_logs':
-        if($role!=='admin'){echo json_encode(['status'=>'error','message'=>'Admin required.']);exit;}
-        $logs=[];
-        $result=$conn->query("SELECT * FROM report_audit_logs ORDER BY performed_at DESC LIMIT 200");
-        while($row=$result->fetch_assoc()) $logs[]=$row;
-        echo json_encode(['status'=>'success','logs'=>$logs]);
-        break;
+ case 'admin_get_audit_logs':
+ if($role!=='admin'){echo json_encode(['status'=>'error','message'=>'Admin required.']);exit;}
+ $logs=[];
+ $result=$conn->query("SELECT * FROM report_audit_logs ORDER BY performed_at DESC LIMIT 200");
+ while($row=$result->fetch_assoc()) $logs[]=$row;
+ echo json_encode(['status'=>'success','logs'=>$logs]);
+ break;
 
 
-    case 'escalate_report':
-        // Barangay can escalate a report to LGU (sets escalated_to_lgu flag and logs it)
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') { echo json_encode(['status'=>'error','message'=>'POST required.']); exit; }
-        if (!in_array($role, ['barangay','lgu','admin'], true)) { echo json_encode(['status'=>'error','message'=>'Unauthorized.']); exit; }
-        $report_id = (int)($_POST['report_id'] ?? 0);
-        if (!$report_id) { echo json_encode(['status'=>'error','message'=>'Invalid report ID.']); exit; }
-        // Ensure escalated_to_lgu column exists
-        $db_esc = $conn->query("SELECT DATABASE()")->fetch_row()[0];
-        $esc_cols = $conn->query("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA='$db_esc' AND TABLE_NAME='reports'");
-        $ec_list = [];
-        while($ec_r = $esc_cols->fetch_row()) $ec_list[] = $ec_r[0];
-        if (!in_array('escalated_to_lgu', $ec_list)) {
-            $conn->query("ALTER TABLE reports ADD COLUMN escalated_to_lgu TINYINT(1) NOT NULL DEFAULT 0 AFTER resolved_at");
-        }
-        $upd_esc = $conn->prepare("UPDATE reports SET escalated_to_lgu=1 WHERE id=? AND is_archived=0");
-        $upd_esc->bind_param("i", $report_id);
-        $upd_esc->execute();
-        if ($upd_esc->affected_rows > 0) {
-            // Log to audit
-            $r_info = $conn->query("SELECT title FROM reports WHERE id=$report_id")->fetch_assoc();
-            $_audit = $conn->prepare("INSERT INTO report_audit_logs (report_id,report_title,action,performed_by,performed_by_name) VALUES (?,?,?,?,?)");
-            $_audit_title = $r_info['title'] ?? 'Unknown';
-            $_audit_by = (int)$_SESSION['user_id'];
-            $_audit_name = ($_SESSION['first_name'] ?? '') . ' ' . ($_SESSION['last_name'] ?? '');
-            $_audit_action = 'escalated_to_lgu';
-            $_audit->bind_param('issss', $report_id, $_audit_title, $_audit_action, $_audit_by, $_audit_name);
-            $_audit->execute();
-            $_audit->close();
-            echo json_encode(['status'=>'success','message'=>'Report escalated to LGU.']);
-        } else {
-            echo json_encode(['status'=>'error','message'=>'Report not found.']);
-        }
-        $upd_esc->close();
-        break;
+ case 'escalate_report':
+ // Barangay can escalate a report to LGU (sets escalated_to_lgu flag and logs it)
+ if ($_SERVER['REQUEST_METHOD'] !== 'POST') { echo json_encode(['status'=>'error','message'=>'POST required.']); exit; }
+ if (!in_array($role, ['barangay','lgu','admin'], true)) { echo json_encode(['status'=>'error','message'=>'Unauthorized.']); exit; }
+ $report_id = (int)($_POST['report_id'] ?? 0);
+ if (!$report_id) { echo json_encode(['status'=>'error','message'=>'Invalid report ID.']); exit; }
+ // Ensure escalated_to_lgu column exists
+ $db_esc = $conn->query("SELECT DATABASE()")->fetch_row()[0];
+ $esc_cols = $conn->query("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA='$db_esc' AND TABLE_NAME='reports'");
+ $ec_list = [];
+ while($ec_r = $esc_cols->fetch_row()) $ec_list[] = $ec_r[0];
+ if (!in_array('escalated_to_lgu', $ec_list)) {
+ $conn->query("ALTER TABLE reports ADD COLUMN escalated_to_lgu TINYINT(1) NOT NULL DEFAULT 0 AFTER resolved_at");
+ }
+ $upd_esc = $conn->prepare("UPDATE reports SET escalated_to_lgu=1 WHERE id=? AND is_archived=0");
+ $upd_esc->bind_param("i", $report_id);
+ $upd_esc->execute();
+ if ($upd_esc->affected_rows > 0) {
+ // Log to audit
+ $r_info = $conn->query("SELECT title FROM reports WHERE id=$report_id")->fetch_assoc();
+ $_audit = $conn->prepare("INSERT INTO report_audit_logs (report_id,report_title,action,performed_by,performed_by_name) VALUES (?,?,?,?,?)");
+ $_audit_title = $r_info['title'] ?? 'Unknown';
+ $_audit_by = (int)$_SESSION['user_id'];
+ $_audit_name = ($_SESSION['first_name'] ?? '') . ' ' . ($_SESSION['last_name'] ?? '');
+ $_audit_action = 'escalated_to_lgu';
+ $_audit->bind_param('issss', $report_id, $_audit_title, $_audit_action, $_audit_by, $_audit_name);
+ $_audit->execute();
+ $_audit->close();
+ echo json_encode(['status'=>'success','message'=>'Report escalated to LGU.']);
+ } else {
+ echo json_encode(['status'=>'error','message'=>'Report not found.']);
+ }
+ $upd_esc->close();
+ break;
 
-    case 'lgu_dispatch':
-        // LGU can directly assign a report to a specific responder
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') { echo json_encode(['status'=>'error','message'=>'POST required.']); exit; }
-        if (!in_array($role, ['lgu','admin'], true)) { echo json_encode(['status'=>'error','message'=>'Unauthorized.']); exit; }
-        $report_id    = (int)($_POST['report_id']    ?? 0);
-        $responder_id = (int)($_POST['responder_id'] ?? 0);
-        if (!$report_id || !$responder_id) { echo json_encode(['status'=>'error','message'=>'Invalid IDs.']); exit; }
-        // Verify responder is approved
-        $chk_resp = $conn->prepare("SELECT id FROM users WHERE id=? AND role='first_responder' AND is_approved=1 LIMIT 1");
-        $chk_resp->bind_param("i", $responder_id); $chk_resp->execute(); $chk_resp->store_result();
-        if ($chk_resp->num_rows === 0) { echo json_encode(['status'=>'error','message'=>'Responder not found or not approved.']); exit; }
-        $chk_resp->close();
-        if (!$has_assigned_to) {
-            echo json_encode(['status'=>'error','message'=>'Dispatch schema is missing. Run the database migration for reports.assigned_to.']);
-            break;
-        }
-        $chk_rep = $conn->prepare("SELECT status FROM reports WHERE id=? AND is_archived=0 LIMIT 1");
-        $chk_rep->bind_param("i", $report_id); $chk_rep->execute(); $chk_rep->bind_result($rep_status); $chk_rep->fetch(); $chk_rep->close();
-        if ($rep_status !== 'dangerous') {
-            echo json_encode(['status'=>'error','message'=>'LGU may only dispatch dangerous reports to responders.']);
-            break;
-        }
-        $dis = $conn->prepare("UPDATE reports SET assigned_to=?, accepted_at=NULL, responded_at=NULL, resolved_at=NULL WHERE id=? AND is_archived=0");
-        $dis->bind_param("ii", $responder_id, $report_id);
-        $dis->execute();
-        echo json_encode(['status'=>'success','message'=>'Report dispatched to responder.']);
-        $dis->close();
-        break;
+ case 'lgu_dispatch':
+ // LGU can directly assign a report to a specific responder
+ if ($_SERVER['REQUEST_METHOD'] !== 'POST') { echo json_encode(['status'=>'error','message'=>'POST required.']); exit; }
+ if (!in_array($role, ['lgu','admin'], true)) { echo json_encode(['status'=>'error','message'=>'Unauthorized.']); exit; }
+ $report_id = (int)($_POST['report_id'] ?? 0);
+ $responder_id = (int)($_POST['responder_id'] ?? 0);
+ if (!$report_id || !$responder_id) { echo json_encode(['status'=>'error','message'=>'Invalid IDs.']); exit; }
+ // Verify responder is approved
+ $chk_resp = $conn->prepare("SELECT id FROM users WHERE id=? AND role='first_responder' AND is_approved=1 LIMIT 1");
+ $chk_resp->bind_param("i", $responder_id); $chk_resp->execute(); $chk_resp->store_result();
+ if ($chk_resp->num_rows === 0) { echo json_encode(['status'=>'error','message'=>'Responder not found or not approved.']); exit; }
+ $chk_resp->close();
+ if (!$has_assigned_to) {
+ echo json_encode(['status'=>'error','message'=>'Dispatch schema is missing. Run the database migration for reports.assigned_to.']);
+ break;
+ }
+ $chk_rep = $conn->prepare("SELECT status FROM reports WHERE id=? AND is_archived=0 LIMIT 1");
+ $chk_rep->bind_param("i", $report_id); $chk_rep->execute(); $chk_rep->bind_result($rep_status); $chk_rep->fetch(); $chk_rep->close();
+ if ($rep_status !== 'dangerous') {
+ echo json_encode(['status'=>'error','message'=>'LGU may only dispatch dangerous reports to responders.']);
+ break;
+ }
+ $dis = $conn->prepare("UPDATE reports SET assigned_to=?, accepted_at=NULL, responded_at=NULL, resolved_at=NULL WHERE id=? AND is_archived=0");
+ $dis->bind_param("ii", $responder_id, $report_id);
+ $dis->execute();
+ echo json_encode(['status'=>'success','message'=>'Report dispatched to responder.']);
+ $dis->close();
+ break;
 
-    case 'update_report_status':
-        // LGU/Barangay can change status of any active report
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') { echo json_encode(['status'=>'error','message'=>'POST required.']); exit; }
-        if (!in_array($role, ['barangay','lgu','admin'], true)) { echo json_encode(['status'=>'error','message'=>'Unauthorized.']); exit; }
-        $report_id  = (int)($_POST['report_id'] ?? 0);
-        $new_status = trim($_POST['status'] ?? '');
-        $allowed_statuses = ['dangerous','caution','safe'];
-        if (!$report_id || !in_array($new_status, $allowed_statuses)) { echo json_encode(['status'=>'error','message'=>'Invalid parameters.']); exit; }
-        $res_at = ($new_status === 'safe') ? ', resolved_at=NOW()' : ', accepted_at=NULL, responded_at=NULL';
-        $s_upd = $conn->prepare("UPDATE reports SET status=? $res_at WHERE id=? AND is_archived=0");
-        $s_upd->bind_param("si", $new_status, $report_id);
-        $s_upd->execute();
-        if ($s_upd->affected_rows > 0) {
-            $r_info2 = $conn->query("SELECT title FROM reports WHERE id=$report_id")->fetch_assoc();
-            $_audit = $conn->prepare("INSERT INTO report_audit_logs (report_id,report_title,action,performed_by,performed_by_name) VALUES (?,?,?,?,?)");
-            $_audit_title = $r_info2['title'] ?? 'Unknown';
-            $_audit_by = (int)$_SESSION['user_id'];
-            $_audit_name = ($_SESSION['first_name'] ?? '') . ' ' . ($_SESSION['last_name'] ?? '');
-            $_audit_action = 'status_changed_to_' . $new_status;
-            $_audit->bind_param('issss', $report_id, $_audit_title, $_audit_action, $_audit_by, $_audit_name);
-            $_audit->execute();
-            $_audit->close();
-            echo json_encode(['status'=>'success','message'=>"Status updated to $new_status."]);
-        } else {
-            echo json_encode(['status'=>'error','message'=>'Report not found.']);
-        }
-        $s_upd->close();
-        break;
+ case 'update_report_status':
+ // LGU/Barangay can change status of any active report
+ if ($_SERVER['REQUEST_METHOD'] !== 'POST') { echo json_encode(['status'=>'error','message'=>'POST required.']); exit; }
+ if (!in_array($role, ['barangay','lgu','admin'], true)) { echo json_encode(['status'=>'error','message'=>'Unauthorized.']); exit; }
+ $report_id = (int)($_POST['report_id'] ?? 0);
+ $new_status = trim($_POST['status'] ?? '');
+ $allowed_statuses = ['dangerous','caution','safe'];
+ if (!$report_id || !in_array($new_status, $allowed_statuses)) { echo json_encode(['status'=>'error','message'=>'Invalid parameters.']); exit; }
+ $res_at = ($new_status === 'safe') ? ', resolved_at=NOW()' : ', accepted_at=NULL, responded_at=NULL';
+ $s_upd = $conn->prepare("UPDATE reports SET status=? $res_at WHERE id=? AND is_archived=0");
+ $s_upd->bind_param("si", $new_status, $report_id);
+ $s_upd->execute();
+ if ($s_upd->affected_rows > 0) {
+ $r_info2 = $conn->query("SELECT title FROM reports WHERE id=$report_id")->fetch_assoc();
+ $_audit = $conn->prepare("INSERT INTO report_audit_logs (report_id,report_title,action,performed_by,performed_by_name) VALUES (?,?,?,?,?)");
+ $_audit_title = $r_info2['title'] ?? 'Unknown';
+ $_audit_by = (int)$_SESSION['user_id'];
+ $_audit_name = ($_SESSION['first_name'] ?? '') . ' ' . ($_SESSION['last_name'] ?? '');
+ $_audit_action = 'status_changed_to_' . $new_status;
+ $_audit->bind_param('issss', $report_id, $_audit_title, $_audit_action, $_audit_by, $_audit_name);
+ $_audit->execute();
+ $_audit->close();
+ echo json_encode(['status'=>'success','message'=>"Status updated to $new_status."]);
+ } else {
+ echo json_encode(['status'=>'error','message'=>'Report not found.']);
+ }
+ $s_upd->close();
+ break;
 
-    case 'get_timeline':
-    case 'get_lifecycle':
-        $report_id = (int)($_GET['report_id'] ?? 0);
-        if (!$report_id) { echo json_encode(['status'=>'error','message'=>'Invalid report ID.']); exit; }
-        $s = $conn->prepare("
-            SELECT r.id, r.title, r.status, r.category, r.location_name, r.barangay, r.city,
-                   r.upvotes, r.downvotes, r.escalated_to_lgu, r.created_at, r.accepted_at,
-                   r.responded_at, r.resolved_at, r.assigned_to,
-                   CONCAT(u.first_name, ' ', u.last_name) AS reporter_name,
-                   CONCAT(resp.first_name, ' ', resp.last_name) AS responder_name,
-                   resp.responder_type AS responder_agency
-            FROM reports r
-            JOIN users u ON u.id = r.user_id
-            LEFT JOIN users resp ON resp.id = r.assigned_to
-            WHERE r.id = ? AND r.is_archived = 0
-            LIMIT 1
-        ");
-        $s->bind_param('i', $report_id);
-        $s->execute();
-        $rep = $s->get_result()->fetch_assoc();
-        $s->close();
+ case 'get_timeline':
+ case 'get_lifecycle':
+ $report_id = (int)($_GET['report_id'] ?? 0);
+ if (!$report_id) { echo json_encode(['status'=>'error','message'=>'Invalid report ID.']); exit; }
+ $s = $conn->prepare("
+ SELECT r.id, r.title, r.status, r.category, r.location_name, r.barangay, r.city,
+ r.upvotes, r.downvotes, r.escalated_to_lgu, r.created_at, r.accepted_at,
+ r.responded_at, r.resolved_at, r.assigned_to,
+ CONCAT(u.first_name, ' ', u.last_name) AS reporter_name,
+ CONCAT(resp.first_name, ' ', resp.last_name) AS responder_name,
+ resp.responder_type AS responder_agency
+ FROM reports r
+ JOIN users u ON u.id = r.user_id
+ LEFT JOIN users resp ON resp.id = r.assigned_to
+ WHERE r.id = ? AND r.is_archived = 0
+ LIMIT 1
+ ");
+ $s->bind_param('i', $report_id);
+ $s->execute();
+ $rep = $s->get_result()->fetch_assoc();
+ $s->close();
 
-        if (!$rep) { echo json_encode(['status'=>'error','message'=>'Report not found.']); exit; }
+ if (!$rep) { echo json_encode(['status'=>'error','message'=>'Report not found.']); exit; }
 
-        // Fetch audit trail
-        $audits = [];
-        $sa = $conn->prepare("SELECT action, performed_by_name, performed_at FROM report_audit_logs WHERE report_id = ? ORDER BY performed_at ASC");
-        $sa->bind_param('i', $report_id);
-        $sa->execute();
-        $res_a = $sa->get_result();
-        while ($row = $res_a->fetch_assoc()) {
-            $audits[] = $row;
-        }
-        $sa->close();
+ // Fetch audit trail
+ $audits = [];
+ $sa = $conn->prepare("SELECT action, performed_by_name, performed_at FROM report_audit_logs WHERE report_id = ? ORDER BY performed_at ASC");
+ $sa->bind_param('i', $report_id);
+ $sa->execute();
+ $res_a = $sa->get_result();
+ while ($row = $res_a->fetch_assoc()) {
+ $audits[] = $row;
+ }
+ $sa->close();
 
-        echo json_encode([
-            'status' => 'success',
-            'report' => $rep,
-            'audits' => $audits
-        ]);
-        break;
+ echo json_encode([
+ 'status' => 'success',
+ 'report' => $rep,
+ 'audits' => $audits
+ ]);
+ break;
 
-    case 'export':
-        if (!in_array($role, ['admin', 'lgu', 'barangay'])) {
-            echo json_encode(['status'=>'error','message'=>'Unauthorized for export.']); exit;
-        }
-        $export_type = $_GET['type'] ?? 'reports';
-        $format = strtolower($_GET['format'] ?? 'csv');
+ case 'export':
+ if (!in_array($role, ['admin', 'lgu', 'barangay'])) {
+ echo json_encode(['status'=>'error','message'=>'Unauthorized for export.']); exit;
+ }
+ $export_type = $_GET['type'] ?? 'reports';
+ $format = strtolower($_GET['format'] ?? 'csv');
 
-        if ($export_type === 'audit_logs') {
-            if ($role !== 'admin') {
-                echo json_encode(['status'=>'error','message'=>'Admin role required to export audit trail.']); exit;
-            }
-            $log_res = $conn->query("SELECT id, report_id, report_title, action, performed_by, performed_by_name, performed_at FROM report_audit_logs ORDER BY performed_at DESC");
-            $logs = [];
-            while ($row = $log_res->fetch_assoc()) {
-                $logs[] = $row;
-            }
+ if ($export_type === 'audit_logs') {
+ if ($role !== 'admin') {
+ echo json_encode(['status'=>'error','message'=>'Admin role required to export audit trail.']); exit;
+ }
+ $log_res = $conn->query("SELECT id, report_id, report_title, action, performed_by, performed_by_name, performed_at FROM report_audit_logs ORDER BY performed_at DESC");
+ $logs = [];
+ while ($row = $log_res->fetch_assoc()) {
+ $logs[] = $row;
+ }
 
-            if ($format === 'json') {
-                header('Content-Type: application/json');
-                header('Content-Disposition: attachment; filename="sentri_audit_trail_'.date('Ymd_His').'.json"');
-                echo json_encode(['status'=>'success','count'=>count($logs),'generated_at'=>date('c'),'audit_logs'=>$logs], JSON_PRETTY_PRINT);
-                exit;
-            } else {
-                header('Content-Type: text/csv; charset=utf-8');
-                header('Content-Disposition: attachment; filename="sentri_audit_trail_'.date('Ymd_His').'.csv"');
-                $out = fopen('php://output', 'w');
-                fputcsv($out, ['Audit ID', 'Report ID', 'Report Title', 'Action Performed', 'User ID', 'Performed By', 'Timestamp']);
-                foreach ($logs as $l) {
-                    fputcsv($out, [$l['id'], $l['report_id'], $l['report_title'], $l['action'], $l['performed_by'], $l['performed_by_name'], $l['performed_at']]);
-                }
-                fclose($out);
-                exit;
-            }
-        }
+ if ($format === 'json') {
+ header('Content-Type: application/json');
+ header('Content-Disposition: attachment; filename="sentri_audit_trail_'.date('Ymd_His').'.json"');
+ echo json_encode(['status'=>'success','count'=>count($logs),'generated_at'=>date('c'),'audit_logs'=>$logs], JSON_PRETTY_PRINT);
+ exit;
+ } else {
+ header('Content-Type: text/csv; charset=utf-8');
+ header('Content-Disposition: attachment; filename="sentri_audit_trail_'.date('Ymd_His').'.csv"');
+ $out = fopen('php://output', 'w');
+ fputcsv($out, ['Audit ID', 'Report ID', 'Report Title', 'Action Performed', 'User ID', 'Performed By', 'Timestamp']);
+ foreach ($logs as $l) {
+ fputcsv($out, [$l['id'], $l['report_id'], $l['report_title'], $l['action'], $l['performed_by'], $l['performed_by_name'], $l['performed_at']]);
+ }
+ fclose($out);
+ exit;
+ }
+ }
 
-        // Reports export with full telemetry
-        $filter_status = $_GET['status'] ?? '';
-        $filter_cat = $_GET['category'] ?? '';
-        $filter_brgy = $_GET['barangay'] ?? '';
-        $filter_city = $_GET['city'] ?? '';
+ // Reports export with full telemetry
+ $filter_status = $_GET['status'] ?? '';
+ $filter_cat = $_GET['category'] ?? '';
+ $filter_brgy = $_GET['barangay'] ?? '';
+ $filter_city = $_GET['city'] ?? '';
 
-        $where_clauses = ["r.is_archived = 0"];
-        if ($filter_status && in_array($filter_status, ['dangerous','caution','safe'])) {
-            $where_clauses[] = "r.status = '".$conn->real_escape_string($filter_status)."'";
-        }
-        if ($filter_cat) {
-            $where_clauses[] = "r.category = '".$conn->real_escape_string($filter_cat)."'";
-        }
-        if ($filter_brgy) {
-            $where_clauses[] = "r.barangay = '".$conn->real_escape_string($filter_brgy)."'";
-        }
-        if ($filter_city) {
-            $where_clauses[] = "r.city = '".$conn->real_escape_string($filter_city)."'";
-        }
+ $where_clauses = ["r.is_archived = 0"];
+ if ($filter_status && in_array($filter_status, ['dangerous','caution','safe'])) {
+ $where_clauses[] = "r.status = '".$conn->real_escape_string($filter_status)."'";
+ }
+ if ($filter_cat) {
+ $where_clauses[] = "r.category = '".$conn->real_escape_string($filter_cat)."'";
+ }
+ if ($filter_brgy) {
+ $where_clauses[] = "r.barangay = '".$conn->real_escape_string($filter_brgy)."'";
+ }
+ if ($filter_city) {
+ $where_clauses[] = "r.city = '".$conn->real_escape_string($filter_city)."'";
+ }
 
-        $where_sql = implode(' AND ', $where_clauses);
-        $rpt_sql = "
-            SELECT r.id, r.title, r.description, r.category, r.status, r.location_name,
-                   r.barangay, r.city, r.province, r.latitude, r.longitude, r.radius_m,
-                   r.upvotes, r.downvotes, r.escalated_to_lgu,
-                   CONCAT(u.first_name, ' ', u.last_name) AS reporter_name,
-                   u.email AS reporter_email,
-                   r.assigned_to,
-                   CONCAT(resp.first_name, ' ', resp.last_name) AS responder_name,
-                   resp.email AS responder_email,
-                   resp.responder_type AS responder_agency,
-                   r.accepted_at, r.responded_at, r.resolved_at,
-                   TIMESTAMPDIFF(MINUTE, r.created_at, r.resolved_at) AS resolution_minutes,
-                   r.created_at, r.updated_at
-            FROM reports r
-            JOIN users u ON u.id = r.user_id
-            LEFT JOIN users resp ON resp.id = r.assigned_to
-            WHERE $where_sql
-            ORDER BY r.created_at DESC";
+ $where_sql = implode(' AND ', $where_clauses);
+ $rpt_sql = "
+ SELECT r.id, r.title, r.description, r.category, r.status, r.location_name,
+ r.barangay, r.city, r.province, r.latitude, r.longitude, r.radius_m,
+ r.upvotes, r.downvotes, r.escalated_to_lgu,
+ CONCAT(u.first_name, ' ', u.last_name) AS reporter_name,
+ u.email AS reporter_email,
+ r.assigned_to,
+ CONCAT(resp.first_name, ' ', resp.last_name) AS responder_name,
+ resp.email AS responder_email,
+ resp.responder_type AS responder_agency,
+ r.accepted_at, r.responded_at, r.resolved_at,
+ TIMESTAMPDIFF(MINUTE, r.created_at, r.resolved_at) AS resolution_minutes,
+ r.created_at, r.updated_at
+ FROM reports r
+ JOIN users u ON u.id = r.user_id
+ LEFT JOIN users resp ON resp.id = r.assigned_to
+ WHERE $where_sql
+ ORDER BY r.created_at DESC";
 
-        $rpt_res = $conn->query($rpt_sql);
-        $export_data = [];
-        while ($row = $rpt_res->fetch_assoc()) {
-            $export_data[] = $row;
-        }
+ $rpt_res = $conn->query($rpt_sql);
+ $export_data = [];
+ while ($row = $rpt_res->fetch_assoc()) {
+ $export_data[] = $row;
+ }
 
-        if ($format === 'json') {
-            header('Content-Type: application/json');
-            header('Content-Disposition: attachment; filename="sentri_reports_export_'.date('Ymd_His').'.json"');
-            echo json_encode([
-                'status' => 'success',
-                'count' => count($export_data),
-                'generated_at' => date('c'),
-                'reports' => $export_data
-            ], JSON_PRETTY_PRINT);
-            exit;
-        } else {
-            header('Content-Type: text/csv; charset=utf-8');
-            header('Content-Disposition: attachment; filename="sentri_reports_export_'.date('Ymd_His').'.csv"');
-            $out = fopen('php://output', 'w');
-            fputcsv($out, [
-                'ID', 'Title', 'Category', 'Status', 'Location Details', 'Barangay', 'City', 'Province',
-                'Latitude', 'Longitude', 'Radius (m)', 'Community Upvotes', 'Downvotes', 'Escalated to LGU',
-                'Reporter Name', 'Reporter Email', 'Assigned Responder', 'Responder Agency',
-                'Accepted At', 'Responded At', 'Resolved At', 'Resolution Duration (Mins)', 'Created At'
-            ]);
-            foreach ($export_data as $row) {
-                fputcsv($out, [
-                    $row['id'],
-                    $row['title'],
-                    $row['category'],
-                    $row['status'],
-                    $row['location_name'],
-                    $row['barangay'],
-                    $row['city'],
-                    $row['province'],
-                    $row['latitude'],
-                    $row['longitude'],
-                    $row['radius_m'],
-                    $row['upvotes'],
-                    $row['downvotes'],
-                    $row['escalated_to_lgu'] ? 'Yes' : 'No',
-                    $row['reporter_name'],
-                    $row['reporter_email'],
-                    $row['responder_name'] ?: 'Unassigned',
-                    $row['responder_agency'] ? strtoupper($row['responder_agency']) : 'N/A',
-                    $row['accepted_at'] ?: 'N/A',
-                    $row['responded_at'] ?: 'N/A',
-                    $row['resolved_at'] ?: 'N/A',
-                    $row['resolution_minutes'] !== null ? $row['resolution_minutes'] : 'N/A',
-                    $row['created_at']
-                ]);
-            }
-            fclose($out);
-            exit;
-        }
+ if ($format === 'json') {
+ header('Content-Type: application/json');
+ header('Content-Disposition: attachment; filename="sentri_reports_export_'.date('Ymd_His').'.json"');
+ echo json_encode([
+ 'status' => 'success',
+ 'count' => count($export_data),
+ 'generated_at' => date('c'),
+ 'reports' => $export_data
+ ], JSON_PRETTY_PRINT);
+ exit;
+ } else {
+ header('Content-Type: text/csv; charset=utf-8');
+ header('Content-Disposition: attachment; filename="sentri_reports_export_'.date('Ymd_His').'.csv"');
+ $out = fopen('php://output', 'w');
+ fputcsv($out, [
+ 'ID', 'Title', 'Category', 'Status', 'Location Details', 'Barangay', 'City', 'Province',
+ 'Latitude', 'Longitude', 'Radius (m)', 'Community Upvotes', 'Downvotes', 'Escalated to LGU',
+ 'Reporter Name', 'Reporter Email', 'Assigned Responder', 'Responder Agency',
+ 'Accepted At', 'Responded At', 'Resolved At', 'Resolution Duration (Mins)', 'Created At'
+ ]);
+ foreach ($export_data as $row) {
+ fputcsv($out, [
+ $row['id'],
+ $row['title'],
+ $row['category'],
+ $row['status'],
+ $row['location_name'],
+ $row['barangay'],
+ $row['city'],
+ $row['province'],
+ $row['latitude'],
+ $row['longitude'],
+ $row['radius_m'],
+ $row['upvotes'],
+ $row['downvotes'],
+ $row['escalated_to_lgu'] ? 'Yes' : 'No',
+ $row['reporter_name'],
+ $row['reporter_email'],
+ $row['responder_name'] ?: 'Unassigned',
+ $row['responder_agency'] ? strtoupper($row['responder_agency']) : 'N/A',
+ $row['accepted_at'] ?: 'N/A',
+ $row['responded_at'] ?: 'N/A',
+ $row['resolved_at'] ?: 'N/A',
+ $row['resolution_minutes'] !== null ? $row['resolution_minutes'] : 'N/A',
+ $row['created_at']
+ ]);
+ }
+ fclose($out);
+ exit;
+ }
 
-    default:
-        echo json_encode(['status'=>'error','message'=>'Unknown action.']);
+ default:
+ echo json_encode(['status'=>'error','message'=>'Unknown action.']);
 }
 $conn->close();

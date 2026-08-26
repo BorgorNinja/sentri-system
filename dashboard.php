@@ -1,6 +1,6 @@
 <?php
 /**
- * dashboard.php — Legacy entry point
+ * dashboard.php - Legacy entry point
  *
  * This file has been superseded by the role-based portal system.
  * All users arriving here are routed to their dedicated portal via
@@ -11,14 +11,14 @@
  */
 
 session_start([
-    'cookie_httponly' => true,
-    'cookie_samesite' => 'Lax',
-    'cookie_secure'  => !empty($_SERVER['HTTPS']),
+ 'cookie_httponly' => true,
+ 'cookie_samesite' => 'Lax',
+ 'cookie_secure' => !empty($_SERVER['HTTPS']),
 ]);
 
 if (!isset($_SESSION['user_id'])) {
-    header('Location: login.php');
-    exit;
+ header('Location: login.php');
+ exit;
 }
 
 require_once __DIR__ . '/config/auth.php';

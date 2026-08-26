@@ -4,47 +4,47 @@ if (isset($_SESSION['user_id'])) { require_once __DIR__ . '/config/auth.php'; re
 require __DIR__ . '/config/db.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    header('Content-Type: application/json');
-    $email = trim($_POST['email'] ?? '');
-    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        echo json_encode(['status'=>'error','message'=>'Please enter a valid email address.']); exit;
-    }
-    // Look up user
-    $stmt = $conn->prepare("SELECT id, first_name FROM users WHERE email=? LIMIT 1");
-    $stmt->bind_param("s", $email);
-    $stmt->execute();
-    $res  = $stmt->get_result();
-    $user = $res->fetch_assoc();
-    $stmt->close();
+ header('Content-Type: application/json');
+ $email = trim($_POST['email'] ?? '');
+ if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+ echo json_encode(['status'=>'error','message'=>'Please enter a valid email address.']); exit;
+ }
+ // Look up user
+ $stmt = $conn->prepare("SELECT id, first_name FROM users WHERE email=? LIMIT 1");
+ $stmt->bind_param("s", $email);
+ $stmt->execute();
+ $res = $stmt->get_result();
+ $user = $res->fetch_assoc();
+ $stmt->close();
 
-    if ($user) {
-        $token = bin2hex(random_bytes(32));
-        // Use DATE_ADD(NOW(), INTERVAL 1 HOUR) so both the write and the later
-        // WHERE reset_token_expires > NOW() check use MySQL's clock — no PHP/MySQL
-        // timezone mismatch possible.
-        $upd = $conn->prepare(
-            "UPDATE users SET reset_token=?, reset_token_expires=DATE_ADD(NOW(), INTERVAL 1 HOUR) WHERE id=?"
-        );
-        if (!$upd) {
-            error_log('SenTri reset prepare error: ' . $conn->error . ' — ensure migration 002 has been run (reset_token column may be missing).');
-        } else {
-            $upd->bind_param("si", $token, $user['id']);
-            $upd->execute();
-            $upd->close();
-        }
-        try {
-            require_once __DIR__ . '/core/SenTriMailer.php';
-            sendPasswordResetEmail($email, $user['first_name'], $token);
-        } catch (Throwable $e) {
-            error_log('SenTri reset email error: ' . $e->getMessage());
-        }
-    }
-    // Always show the same message (don't reveal if email exists)
-    echo json_encode([
-        'status'  => 'success',
-        'message' => 'If that email is registered, you\'ll receive a password reset link shortly. Check your inbox and spam folder.',
-    ]);
-    exit;
+ if ($user) {
+ $token = bin2hex(random_bytes(32));
+ // Use DATE_ADD(NOW(), INTERVAL 1 HOUR) so both the write and the later
+ // WHERE reset_token_expires > NOW() check use MySQL's clock - no PHP/MySQL
+ // timezone mismatch possible.
+ $upd = $conn->prepare(
+ "UPDATE users SET reset_token=?, reset_token_expires=DATE_ADD(NOW(), INTERVAL 1 HOUR) WHERE id=?"
+ );
+ if (!$upd) {
+ error_log('SenTri reset prepare error: ' . $conn->error . ' - ensure migration 002 has been run (reset_token column may be missing).');
+ } else {
+ $upd->bind_param("si", $token, $user['id']);
+ $upd->execute();
+ $upd->close();
+ }
+ try {
+ require_once __DIR__ . '/core/SenTriMailer.php';
+ sendPasswordResetEmail($email, $user['first_name'], $token);
+ } catch (Throwable $e) {
+ error_log('SenTri reset email error: ' . $e->getMessage());
+ }
+ }
+ // Always show the same message (don't reveal if email exists)
+ echo json_encode([
+ 'status' => 'success',
+ 'message' => 'If that email is registered, you\'ll receive a password reset link shortly. Check your inbox and spam folder.',
+ ]);
+ exit;
 }
 ?>
 <!DOCTYPE html>
@@ -52,7 +52,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Forgot Password – SenTri</title>
+<title>Forgot Password - SenTri</title>
 <link rel="stylesheet" href="assets/vendor/fonts/fonts.css">
 <link rel="stylesheet" href="assets/vendor/fontawesome/css/all.min.css">
 <style>
@@ -91,58 +91,58 @@ p.sub{font-size:0.9rem;color:var(--muted);line-height:1.7;margin-bottom:24px;}
 <body>
 <div class="bg-canvas"><div id="particles" style="position:absolute;inset:0;overflow:hidden;"></div></div>
 <div class="card">
-  <a href="index.php" class="brand">
-    <div class="brand-icon"><i class="fas fa-shield-halved"></i></div>
-    <span class="brand-name">SenTri</span>
-  </a>
-  <div class="icon-wrap"><i class="fas fa-key"></i></div>
-  <h1>Forgot Your Password?</h1>
-  <p class="sub">Enter your account email and we'll send you a secure link to reset your password. The link expires in 1 hour.</p>
+ <a href="index.php" class="brand">
+ <div class="brand-icon"><i class="fas fa-shield-halved"></i></div>
+ <span class="brand-name">SenTri</span>
+ </a>
+ <div class="icon-wrap"><i class="fas fa-key"></i></div>
+ <h1>Forgot Your Password?</h1>
+ <p class="sub">Enter your account email and we'll send you a secure link to reset your password. The link expires in 1 hour.</p>
 
-  <div id="msg" class="msg"></div>
-  <form id="forgotForm" novalidate>
-    <div class="form-group">
-      <label>Email Address</label>
-      <input type="email" id="email" name="email" placeholder="you@example.com" required autocomplete="email">
-    </div>
-    <button class="btn-primary" type="submit" id="submitBtn"><i class="fas fa-paper-plane"></i> Send Reset Link</button>
-  </form>
-  <a href="login.php" class="back-link"><i class="fas fa-arrow-left"></i> Back to Sign In</a>
+ <div id="msg" class="msg"></div>
+ <form id="forgotForm" novalidate>
+ <div class="form-group">
+ <label>Email Address</label>
+ <input type="email" id="email" name="email" placeholder="you@example.com" required autocomplete="email">
+ </div>
+ <button class="btn-primary" type="submit" id="submitBtn"><i class="fas fa-paper-plane"></i> Send Reset Link</button>
+ </form>
+ <a href="login.php" class="back-link"><i class="fas fa-arrow-left"></i> Back to Sign In</a>
 </div>
 
 <script>
 (function(){
-  const c=document.getElementById('particles');
-  for(let i=0;i<30;i++){const p=document.createElement('div');p.className='particle';p.style.cssText=`left:${Math.random()*100}%;animation-duration:${7+Math.random()*10}s;animation-delay:${-Math.random()*17}s;width:${1+Math.random()*2}px;height:${1+Math.random()*2}px;background:rgba(255,255,255,${0.2+Math.random()*0.4});`;c.appendChild(p);}
+ const c=document.getElementById('particles');
+ for(let i=0;i<30;i++){const p=document.createElement('div');p.className='particle';p.style.cssText=`left:${Math.random()*100}%;animation-duration:${7+Math.random()*10}s;animation-delay:${-Math.random()*17}s;width:${1+Math.random()*2}px;height:${1+Math.random()*2}px;background:rgba(255,255,255,${0.2+Math.random()*0.4});`;c.appendChild(p);}
 })();
 
 document.getElementById('forgotForm').addEventListener('submit', async function(e){
-  e.preventDefault();
-  const btn=document.getElementById('submitBtn');
-  const msgEl=document.getElementById('msg');
-  const fd=new FormData(this);
-  if(!fd.get('email')?.trim()){
-    msgEl.className='msg error';msgEl.textContent='Please enter your email address.';msgEl.style.display='block';return;
-  }
-  const orig=btn.innerHTML;
-  btn.disabled=true;btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Sending...';
-  try{
-    const res=await fetch('forgot_password.php',{method:'POST',body:fd});
-    const data=await res.json();
-    msgEl.className='msg '+(data.status==='success'?'success':'error');
-    msgEl.textContent=data.message;
-    msgEl.style.display='block';
-    if(data.status==='success'){
-      btn.innerHTML='<i class="fas fa-check"></i> Link Sent';
-      // Disable form so user doesn't spam
-      document.getElementById('email').disabled=true;
-    }else{
-      btn.disabled=false;btn.innerHTML=orig;
-    }
-  }catch{
-    msgEl.className='msg error';msgEl.textContent='Something went wrong. Please try again.';msgEl.style.display='block';
-    btn.disabled=false;btn.innerHTML=orig;
-  }
+ e.preventDefault();
+ const btn=document.getElementById('submitBtn');
+ const msgEl=document.getElementById('msg');
+ const fd=new FormData(this);
+ if(!fd.get('email')?.trim()){
+ msgEl.className='msg error';msgEl.textContent='Please enter your email address.';msgEl.style.display='block';return;
+ }
+ const orig=btn.innerHTML;
+ btn.disabled=true;btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Sending...';
+ try{
+ const res=await fetch('forgot_password.php',{method:'POST',body:fd});
+ const data=await res.json();
+ msgEl.className='msg '+(data.status==='success'?'success':'error');
+ msgEl.textContent=data.message;
+ msgEl.style.display='block';
+ if(data.status==='success'){
+ btn.innerHTML='<i class="fas fa-check"></i> Link Sent';
+ // Disable form so user doesn't spam
+ document.getElementById('email').disabled=true;
+ }else{
+ btn.disabled=false;btn.innerHTML=orig;
+ }
+ }catch{
+ msgEl.className='msg error';msgEl.textContent='Something went wrong. Please try again.';msgEl.style.display='block';
+ btn.disabled=false;btn.innerHTML=orig;
+ }
 });
 </script>
 </body>

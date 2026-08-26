@@ -5,34 +5,34 @@ require_role(['first_responder']);
 require_approved();
 require_once __DIR__ . '/../config/db.php';
 
-$uid   = (int)$_SESSION['user_id'];
+$uid = (int)$_SESSION['user_id'];
 $fname = $_SESSION['first_name'];
-$view  = $_GET['view'] ?? 'queue';
+$view = $_GET['view'] ?? 'queue';
 $has_assigned_to = sentri_table_has_column($conn, 'reports', 'assigned_to');
 $has_accepted_at = sentri_table_has_column($conn, 'reports', 'accepted_at');
 $has_responded_at = sentri_table_has_column($conn, 'reports', 'responded_at');
 $saved_gps_lat = $saved_gps_lng = null;
 if (sentri_table_has_column($conn, 'users', 'gps_lat') && sentri_table_has_column($conn, 'users', 'gps_lng')) {
-    $gpsRes = $conn->prepare("SELECT gps_lat,gps_lng FROM users WHERE id=? LIMIT 1");
-    if ($gpsRes) {
-        $gpsRes->bind_param("i", $uid);
-        $gpsRes->execute();
-        $gpsRes->bind_result($saved_gps_lat, $saved_gps_lng);
-        $gpsRes->fetch();
-        $gpsRes->close();
-    }
+ $gpsRes = $conn->prepare("SELECT gps_lat,gps_lng FROM users WHERE id=? LIMIT 1");
+ if ($gpsRes) {
+ $gpsRes->bind_param("i", $uid);
+ $gpsRes->execute();
+ $gpsRes->bind_result($saved_gps_lat, $saved_gps_lng);
+ $gpsRes->fetch();
+ $gpsRes->close();
+ }
 }
 
 $stmt = $conn->prepare("SELECT org_name,`position`,responder_type,barangay_name,municipality FROM users WHERE id=? LIMIT 1");
 $stmt->bind_param("i",$uid); $stmt->execute();
 $prof = $stmt->get_result()->fetch_assoc(); $stmt->close();
-$unit  = $prof['org_name']       ?? 'Responder Unit';
-$pos   = $prof['position']       ?? 'First Responder';
+$unit = $prof['org_name'] ?? 'Responder Unit';
+$pos = $prof['position'] ?? 'First Responder';
 $rtype = strtoupper($prof['responder_type'] ?? 'UNIT');
-$area  = $prof['municipality']   ?? $prof['barangay_name'] ?? '';
+$area = $prof['municipality'] ?? $prof['barangay_name'] ?? '';
 
 $type_colors = ['bfp'=>'#dc2626','pnp'=>'#1d4ed8','ems'=>'#15803d','drrmo'=>'#d97706','mdrrmo'=>'#d97706','hospital'=>'#0e7490','other'=>'#6b7280'];
-$unit_color  = $type_colors[strtolower($prof['responder_type']??'')] ?? '#dc2626';
+$unit_color = $type_colors[strtolower($prof['responder_type']??'')] ?? '#dc2626';
 
 $cat_icons = ['crime'=>'fa-user-slash','accident'=>'fa-car-burst','flooding'=>'fa-water','fire'=>'fa-fire','health'=>'fa-heart-pulse','infrastructure'=>'fa-road-barrier','other'=>'fa-circle-exclamation'];
 $type_icons = ['lgu'=>'fa-landmark','hospital'=>'fa-hospital','traffic'=>'fa-traffic-light','barangay'=>'fa-house-flag','police'=>'fa-shield','fire'=>'fa-fire-extinguisher','other'=>'fa-phone'];
@@ -42,64 +42,64 @@ $accepted_col = $has_accepted_at ? "r.accepted_at," : "NULL AS accepted_at,";
 $responded_col = $has_responded_at ? "r.responded_at," : "NULL AS responded_at,";
 
 function cq($conn,$sql,$t='',$p=[]){
-    $s=$conn->prepare($sql);
-    if($t && count($p)){
-        $refs=[];
-        foreach($p as &$v) $refs[]=&$v;
-        array_unshift($refs,$t);
-        call_user_func_array([$s,'bind_param'],$refs);
-    }
-    $s->execute();$s->bind_result($n);$s->fetch();$s->close();return(int)$n;
+ $s=$conn->prepare($sql);
+ if($t && count($p)){
+ $refs=[];
+ foreach($p as &$v) $refs[]=&$v;
+ array_unshift($refs,$t);
+ call_user_func_array([$s,'bind_param'],$refs);
+ }
+ $s->execute();$s->bind_result($n);$s->fetch();$s->close();return(int)$n;
 }
-$total_active  = cq($conn,"SELECT COUNT(*) FROM reports WHERE status IN('dangerous','caution') AND is_archived=0");
-$danger_count  = cq($conn,"SELECT COUNT(*) FROM reports WHERE status='dangerous' AND is_archived=0");
+$total_active = cq($conn,"SELECT COUNT(*) FROM reports WHERE status IN('dangerous','caution') AND is_archived=0");
+$danger_count = cq($conn,"SELECT COUNT(*) FROM reports WHERE status='dangerous' AND is_archived=0");
 $caution_count = cq($conn,"SELECT COUNT(*) FROM reports WHERE status='caution' AND is_archived=0");
 
 // Per-view data
 $queue = $assigned = $contacts = $resolved = $community_reports = [];
 
 if ($view === 'queue' || $view === 'overview') {
-    $s = $conn->prepare("SELECT r.id,r.title,r.category,r.status,r.barangay,r.city,r.latitude,r.longitude,r.created_at,r.description,r.resolved_at,{$assigned_col}{$accepted_col}{$responded_col}u.first_name,u.last_name FROM reports r JOIN users u ON u.id=r.user_id WHERE r.is_archived=0 AND r.status IN('dangerous','caution') ORDER BY FIELD(r.status,'dangerous','caution'),r.created_at DESC LIMIT 60");
-    if (!$s) { die("DB Error (queue): " . $conn->error); }
-    $s->execute(); $res=$s->get_result();
-    while($row=$res->fetch_assoc()) $queue[]=$row;
-    $s->close();
+ $s = $conn->prepare("SELECT r.id,r.title,r.category,r.status,r.barangay,r.city,r.latitude,r.longitude,r.created_at,r.description,r.resolved_at,{$assigned_col}{$accepted_col}{$responded_col}u.first_name,u.last_name FROM reports r JOIN users u ON u.id=r.user_id WHERE r.is_archived=0 AND r.status IN('dangerous','caution') ORDER BY FIELD(r.status,'dangerous','caution'),r.created_at DESC LIMIT 60");
+ if (!$s) { die("DB Error (queue): " . $conn->error); }
+ $s->execute(); $res=$s->get_result();
+ while($row=$res->fetch_assoc()) $queue[]=$row;
+ $s->close();
 }
 
 if ($view === 'assigned') {
-    if ($has_assigned_to) {
-        $s = $conn->prepare("SELECT r.id,r.title,r.category,r.status,r.barangay,r.city,r.latitude,r.longitude,r.created_at,r.description,r.resolved_at,{$accepted_col}{$responded_col}u.first_name,u.last_name FROM reports r JOIN users u ON u.id=r.user_id WHERE r.assigned_to=? AND r.is_archived=0 ORDER BY r.created_at DESC");
-        if (!$s) { die("DB Error (assigned): " . $conn->error); }
-        $s->bind_param("i",$uid); $s->execute(); $res=$s->get_result();
-        while($row=$res->fetch_assoc()) $assigned[]=$row;
-        $s->close();
-    }
+ if ($has_assigned_to) {
+ $s = $conn->prepare("SELECT r.id,r.title,r.category,r.status,r.barangay,r.city,r.latitude,r.longitude,r.created_at,r.description,r.resolved_at,{$accepted_col}{$responded_col}u.first_name,u.last_name FROM reports r JOIN users u ON u.id=r.user_id WHERE r.assigned_to=? AND r.is_archived=0 ORDER BY r.created_at DESC");
+ if (!$s) { die("DB Error (assigned): " . $conn->error); }
+ $s->bind_param("i",$uid); $s->execute(); $res=$s->get_result();
+ while($row=$res->fetch_assoc()) $assigned[]=$row;
+ $s->close();
+ }
 }
 
 if ($view === 'resolved') {
-    if ($has_assigned_to) {
-        $s = $conn->prepare("SELECT r.id,r.title,r.category,r.status,r.barangay,r.city,r.created_at,r.resolved_at,{$responded_col}u.first_name,u.last_name FROM reports r JOIN users u ON r.user_id=u.id WHERE r.assigned_to=? AND r.resolved_at IS NOT NULL ORDER BY r.resolved_at DESC LIMIT 50");
-        if (!$s) { die("DB Error (resolved): " . $conn->error); }
-        $s->bind_param("i",$uid); $s->execute(); $res=$s->get_result();
-        while($row=$res->fetch_assoc()) $resolved[]=$row;
-        $s->close();
-    }
+ if ($has_assigned_to) {
+ $s = $conn->prepare("SELECT r.id,r.title,r.category,r.status,r.barangay,r.city,r.created_at,r.resolved_at,{$responded_col}u.first_name,u.last_name FROM reports r JOIN users u ON r.user_id=u.id WHERE r.assigned_to=? AND r.resolved_at IS NOT NULL ORDER BY r.resolved_at DESC LIMIT 50");
+ if (!$s) { die("DB Error (resolved): " . $conn->error); }
+ $s->bind_param("i",$uid); $s->execute(); $res=$s->get_result();
+ while($row=$res->fetch_assoc()) $resolved[]=$row;
+ $s->close();
+ }
 }
 
 if ($view === 'community') {
-    $s = $conn->prepare("SELECT r.id,r.user_id,r.title,r.description,r.location_name,r.barangay,r.city,r.province,r.latitude,r.longitude,r.radius_m,r.status,r.category,r.upvotes,r.downvotes,r.created_at,r.resolved_at,u.first_name,u.last_name,u.role FROM reports r JOIN users u ON u.id=r.user_id WHERE r.is_archived=0 AND u.role IN('community','user') ORDER BY FIELD(r.status,'dangerous','caution','safe'), r.created_at DESC LIMIT 120");
-    if (!$s) { die("DB Error (community): " . $conn->error); }
-    $s->execute(); $res=$s->get_result();
-    while($row=$res->fetch_assoc()) $community_reports[]=$row;
-    $s->close();
+ $s = $conn->prepare("SELECT r.id,r.user_id,r.title,r.description,r.location_name,r.barangay,r.city,r.province,r.latitude,r.longitude,r.radius_m,r.status,r.category,r.upvotes,r.downvotes,r.created_at,r.resolved_at,u.first_name,u.last_name,u.role FROM reports r JOIN users u ON u.id=r.user_id WHERE r.is_archived=0 AND u.role IN('community','user') ORDER BY FIELD(r.status,'dangerous','caution','safe'), r.created_at DESC LIMIT 120");
+ if (!$s) { die("DB Error (community): " . $conn->error); }
+ $s->execute(); $res=$s->get_result();
+ while($row=$res->fetch_assoc()) $community_reports[]=$row;
+ $s->close();
 }
 
 if ($view === 'contacts') {
-    $s = $conn->prepare("SELECT * FROM emergency_contacts WHERE is_active=1 ORDER BY type,name");
-    if (!$s) { die("DB Error (contacts): " . $conn->error); }
-    $s->execute(); $res=$s->get_result();
-    while($r=$res->fetch_assoc()) $contacts[]=$r;
-    $s->close();
+ $s = $conn->prepare("SELECT * FROM emergency_contacts WHERE is_active=1 ORDER BY type,name");
+ if (!$s) { die("DB Error (contacts): " . $conn->error); }
+ $s->execute(); $res=$s->get_result();
+ while($r=$res->fetch_assoc()) $contacts[]=$r;
+ $s->close();
 }
 
 $my_count = $has_assigned_to ? cq($conn,"SELECT COUNT(*) FROM reports WHERE assigned_to=? AND is_archived=0 AND status IN('dangerous','caution')",'i',[$uid]) : 0;
@@ -108,71 +108,71 @@ $community_count = cq($conn,"SELECT COUNT(*) FROM reports r JOIN users u ON u.id
 // ── MAP DATA ────────────────────────────────────────────────────────────────
 $map_reports = [];
 if ($view === 'map') {
-    $s = $conn->prepare("SELECT r.id,r.title,r.category,r.status,r.barangay,r.city,r.latitude,r.longitude,r.created_at,r.description,u.first_name,u.last_name FROM reports r JOIN users u ON u.id=r.user_id WHERE r.is_archived=0 AND r.status IN('dangerous','caution') AND r.latitude IS NOT NULL AND r.longitude IS NOT NULL ORDER BY FIELD(r.status,'dangerous','caution'),r.created_at DESC LIMIT 500");
-    $s->execute(); $res=$s->get_result();
-    while($row=$res->fetch_assoc()) $map_reports[]=$row;
-    $s->close();
+ $s = $conn->prepare("SELECT r.id,r.title,r.category,r.status,r.barangay,r.city,r.latitude,r.longitude,r.created_at,r.description,u.first_name,u.last_name FROM reports r JOIN users u ON u.id=r.user_id WHERE r.is_archived=0 AND r.status IN('dangerous','caution') AND r.latitude IS NOT NULL AND r.longitude IS NOT NULL ORDER BY FIELD(r.status,'dangerous','caution'),r.created_at DESC LIMIT 500");
+ $s->execute(); $res=$s->get_result();
+ while($row=$res->fetch_assoc()) $map_reports[]=$row;
+ $s->close();
 }
 $map_total_active = cq($conn,"SELECT COUNT(*) FROM reports WHERE status IN('dangerous','caution') AND is_archived=0");
 
 // ── PROFILE POST ─────────────────────────────────────────────────────────────
 $profile_msg = '';
 if ($view === 'profile' && $_SERVER['REQUEST_METHOD']==='POST' && isset($_POST['save_profile'])) {
-    $p_fname = trim($_POST['first_name']   ?? '');
-    $p_lname = trim($_POST['last_name']    ?? '');
-    $p_phone = trim($_POST['phone']        ?? '');
-    $p_org   = trim($_POST['org_name']     ?? '');
-    $p_pos   = trim($_POST['position']     ?? '');
-    $p_muni  = trim($_POST['municipality'] ?? '');
-    $p_pw    = $_POST['new_password']      ?? '';
-    $p_pw2   = $_POST['confirm_password']  ?? '';
-    if ($p_pw && $p_pw !== $p_pw2) {
-        $profile_msg = 'error:Passwords do not match.';
-    } elseif (!$p_fname || !$p_lname) {
-        $profile_msg = 'error:Name fields are required.';
-    } else {
-        if ($p_pw) {
-            $h = password_hash($p_pw, PASSWORD_BCRYPT, ['cost'=>10]);
-            $su=$conn->prepare("UPDATE users SET first_name=?,last_name=?,phone_number=?,org_name=?,`position`=?,municipality=?,password=? WHERE id=?");
-            $su->bind_param("sssssssi",$p_fname,$p_lname,$p_phone,$p_org,$p_pos,$p_muni,$h,$uid);
-        } else {
-            $su=$conn->prepare("UPDATE users SET first_name=?,last_name=?,phone_number=?,org_name=?,`position`=?,municipality=? WHERE id=?");
-            $su->bind_param("ssssssi",$p_fname,$p_lname,$p_phone,$p_org,$p_pos,$p_muni,$uid);
-        }
-        $su->execute(); $su->close();
-        $_SESSION['first_name'] = htmlspecialchars($p_fname, ENT_QUOTES,'UTF-8');
-        $fname=$_SESSION['first_name']; $unit=$p_org?:$unit; $area=$p_muni?:$area; $pos=$p_pos?:$pos;
-        $profile_msg = 'success:Profile updated successfully.';
-    }
-    // Refresh profile vars
-    $stmt2=$conn->prepare("SELECT org_name,`position`,responder_type,barangay_name,municipality FROM users WHERE id=? LIMIT 1");
-    $stmt2->bind_param("i",$uid); $stmt2->execute();
-    $prof=$stmt2->get_result()->fetch_assoc(); $stmt2->close();
+ $p_fname = trim($_POST['first_name'] ?? '');
+ $p_lname = trim($_POST['last_name'] ?? '');
+ $p_phone = trim($_POST['phone'] ?? '');
+ $p_org = trim($_POST['org_name'] ?? '');
+ $p_pos = trim($_POST['position'] ?? '');
+ $p_muni = trim($_POST['municipality'] ?? '');
+ $p_pw = $_POST['new_password'] ?? '';
+ $p_pw2 = $_POST['confirm_password'] ?? '';
+ if ($p_pw && $p_pw !== $p_pw2) {
+ $profile_msg = 'error:Passwords do not match.';
+ } elseif (!$p_fname || !$p_lname) {
+ $profile_msg = 'error:Name fields are required.';
+ } else {
+ if ($p_pw) {
+ $h = password_hash($p_pw, PASSWORD_BCRYPT, ['cost'=>10]);
+ $su=$conn->prepare("UPDATE users SET first_name=?,last_name=?,phone_number=?,org_name=?,`position`=?,municipality=?,password=? WHERE id=?");
+ $su->bind_param("sssssssi",$p_fname,$p_lname,$p_phone,$p_org,$p_pos,$p_muni,$h,$uid);
+ } else {
+ $su=$conn->prepare("UPDATE users SET first_name=?,last_name=?,phone_number=?,org_name=?,`position`=?,municipality=? WHERE id=?");
+ $su->bind_param("ssssssi",$p_fname,$p_lname,$p_phone,$p_org,$p_pos,$p_muni,$uid);
+ }
+ $su->execute(); $su->close();
+ $_SESSION['first_name'] = htmlspecialchars($p_fname, ENT_QUOTES,'UTF-8');
+ $fname=$_SESSION['first_name']; $unit=$p_org?:$unit; $area=$p_muni?:$area; $pos=$p_pos?:$pos;
+ $profile_msg = 'success:Profile updated successfully.';
+ }
+ // Refresh profile vars
+ $stmt2=$conn->prepare("SELECT org_name,`position`,responder_type,barangay_name,municipality FROM users WHERE id=? LIMIT 1");
+ $stmt2->bind_param("i",$uid); $stmt2->execute();
+ $prof=$stmt2->get_result()->fetch_assoc(); $stmt2->close();
 }
 // Fetch phone for profile form
 $p_phone_val = '';
 if ($view === 'profile') {
-    $ph=$conn->prepare("SELECT phone_number FROM users WHERE id=? LIMIT 1");
-    $ph->bind_param("i",$uid); $ph->execute(); $ph->bind_result($p_phone_val); $ph->fetch(); $ph->close();
+ $ph=$conn->prepare("SELECT phone_number FROM users WHERE id=? LIMIT 1");
+ $ph->bind_param("i",$uid); $ph->execute(); $ph->bind_result($p_phone_val); $ph->fetch(); $ph->close();
 }
 
 $nav_items = [
-    'queue'     => ['icon'=>'fa-siren-on',         'label'=>'Dispatch Queue'],
-    'community' => ['icon'=>'fa-users',            'label'=>'Community Reports'],
-    'assigned'  => ['icon'=>'fa-clipboard-check',  'label'=>'My Assignments'],
-    'map'       => ['icon'=>'fa-map-location-dot', 'label'=>'Incident Map'],
-    'resolved'  => ['icon'=>'fa-circle-check',     'label'=>'Resolved by Me'],
-    'contacts'  => ['icon'=>'fa-address-book',     'label'=>'Emergency Contacts'],
-    'profile'   => ['icon'=>'fa-id-card',          'label'=>'My Profile'],
+ 'queue' => ['icon'=>'fa-siren-on', 'label'=>'Dispatch Queue'],
+ 'community' => ['icon'=>'fa-users', 'label'=>'Community Reports'],
+ 'assigned' => ['icon'=>'fa-clipboard-check', 'label'=>'My Assignments'],
+ 'map' => ['icon'=>'fa-map-location-dot', 'label'=>'Incident Map'],
+ 'resolved' => ['icon'=>'fa-circle-check', 'label'=>'Resolved by Me'],
+ 'contacts' => ['icon'=>'fa-address-book', 'label'=>'Emergency Contacts'],
+ 'profile' => ['icon'=>'fa-id-card', 'label'=>'My Profile'],
 ];
 $page_titles = [
-    'queue'     => 'Dispatch Queue',
-    'community' => 'Community Reports',
-    'assigned'  => 'My Assignments',
-    'map'       => 'Incident Map',
-    'resolved'  => 'Resolved by Me',
-    'contacts'  => 'Emergency Contacts',
-    'profile'   => 'My Profile',
+ 'queue' => 'Dispatch Queue',
+ 'community' => 'Community Reports',
+ 'assigned' => 'My Assignments',
+ 'map' => 'Incident Map',
+ 'resolved' => 'Resolved by Me',
+ 'contacts' => 'Emergency Contacts',
+ 'profile' => 'My Profile',
 ];
 ?>
 <!DOCTYPE html>
@@ -180,7 +180,7 @@ $page_titles = [
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title><?= $page_titles[$view] ?? 'Responder Portal' ?> — SenTri</title>
+<title><?= $page_titles[$view] ?? 'Responder Portal' ?> | SenTri</title>
 <?= csrf_meta_tag() ?>
 <link rel="stylesheet" href="../assets/vendor/fonts/fonts.css">
 <link rel="stylesheet" href="../assets/vendor/fontawesome/css/all.min.css">
@@ -329,513 +329,513 @@ tr:hover td{background:#fafafa;}
 <div class="overlay" id="overlay" onclick="closeSidebar()"></div>
 
 <aside class="sidebar" id="sidebar">
-  <div class="sb-header">
-    <div class="sb-brand">
-      <div class="sb-seal"><i class="fas fa-truck-medical"></i></div>
-      <div><div class="sb-title">SenTri</div><div class="sb-sub">Responder Portal</div></div>
-    </div>
-    <button class="sb-close" onclick="closeSidebar()"><i class="fas fa-xmark"></i></button>
-  </div>
-  <div class="sb-unit">
-    <p>Unit</p>
-    <strong><?= htmlspecialchars($unit) ?></strong>
-    <div><span class="unit-badge" style="background:<?= $unit_color ?>;"><?= htmlspecialchars($rtype) ?></span></div>
-  </div>
-  <nav class="sb-nav">
-    <?php foreach($nav_items as $key => $item): ?>
-      <?php if($key === 'contacts'): ?><div class="sb-section">Reference</div><?php endif; ?>
-      <?php if($key === 'profile'): ?><div class="sb-section">Account</div><?php endif; ?>
-      <a href="responder.php?view=<?= $key ?>" class="<?= $view===$key?'active':'' ?>">
-        <i class="fas <?= $item['icon'] ?>"></i> <?= $item['label'] ?>
-        <?php if($key==='assigned' && $my_count > 0): ?><span class="sb-badge"><?= $my_count ?></span><?php endif; ?>
-        <?php if($key==='community' && $community_count > 0): ?><span class="sb-badge"><?= $community_count ?></span><?php endif; ?>
-      </a>
-    <?php endforeach; ?>
-  </nav>
-  <div class="sb-footer">
-    <div class="sb-user">
-      <div class="sb-avatar"><?= strtoupper(substr($fname,0,1)) ?></div>
-      <div style="min-width:0;"><div class="sb-uname"><?= htmlspecialchars($fname) ?></div><div class="sb-upos"><?= htmlspecialchars($pos) ?></div></div>
-    </div>
-    <a href="../logout.php" class="sb-logout"><i class="fas fa-right-from-bracket"></i> Sign Out</a>
-  </div>
+ <div class="sb-header">
+ <div class="sb-brand">
+ <div class="sb-seal"><i class="fas fa-truck-medical"></i></div>
+ <div><div class="sb-title">SenTri</div><div class="sb-sub">Responder Portal</div></div>
+ </div>
+ <button class="sb-close" onclick="closeSidebar()"><i class="fas fa-xmark"></i></button>
+ </div>
+ <div class="sb-unit">
+ <p>Unit</p>
+ <strong><?= htmlspecialchars($unit) ?></strong>
+ <div><span class="unit-badge" style="background:<?= $unit_color ?>;"><?= htmlspecialchars($rtype) ?></span></div>
+ </div>
+ <nav class="sb-nav">
+ <?php foreach($nav_items as $key => $item): ?>
+ <?php if($key === 'contacts'): ?><div class="sb-section">Reference</div><?php endif; ?>
+ <?php if($key === 'profile'): ?><div class="sb-section">Account</div><?php endif; ?>
+ <a href="responder.php?view=<?= $key ?>" class="<?= $view===$key?'active':'' ?>">
+ <i class="fas <?= $item['icon'] ?>"></i> <?= $item['label'] ?>
+ <?php if($key==='assigned' && $my_count > 0): ?><span class="sb-badge"><?= $my_count ?></span><?php endif; ?>
+ <?php if($key==='community' && $community_count > 0): ?><span class="sb-badge"><?= $community_count ?></span><?php endif; ?>
+ </a>
+ <?php endforeach; ?>
+ </nav>
+ <div class="sb-footer">
+ <div class="sb-user">
+ <div class="sb-avatar"><?= strtoupper(substr($fname,0,1)) ?></div>
+ <div style="min-width:0;"><div class="sb-uname"><?= htmlspecialchars($fname) ?></div><div class="sb-upos"><?= htmlspecialchars($pos) ?></div></div>
+ </div>
+ <a href="../logout.php" class="sb-logout"><i class="fas fa-right-from-bracket"></i> Sign Out</a>
+ </div>
 </aside>
 
 <div class="main">
-  <div class="topbar">
-    <div class="topbar-left">
-      <button class="ham-btn" onclick="openSidebar()"><i class="fas fa-bars"></i></button>
-      <div style="min-width:0;">
-        <div class="page-title"><?= htmlspecialchars($page_titles[$view] ?? 'Responder Portal') ?></div>
-        <div class="page-sub"><?= htmlspecialchars($unit) ?><?= $area ? ' &mdash; '.htmlspecialchars($area) : '' ?></div>
-      </div>
-    </div>
-    <div style="display:flex;align-items:center;gap:8px;margin-left:auto;flex-wrap:wrap;">
-      <button type="button" id="btnTestTone" onclick="playDispatchTone()" title="Test Dispatch Acoustic Chime" style="display:inline-flex;align-items:center;gap:5px;background:#fef2f2;border:1px solid #fecaca;color:#dc2626;padding:5px 10px;border-radius:20px;font-size:0.75rem;font-weight:700;cursor:pointer;transition:all 0.2s;">
-        <i class="fas fa-volume-high"></i> Tone Test
-      </button>
-      <button type="button" id="btnHazmat" onclick="openHazmatModal()" title="Tactical HAZMAT & Chemical Emergency Guide" style="display:inline-flex;align-items:center;gap:5px;background:#fffbeb;border:1px solid #fde68a;color:#b45309;padding:5px 10px;border-radius:20px;font-size:0.75rem;font-weight:700;cursor:pointer;transition:all 0.2s;">
-        <i class="fas fa-biohazard"></i> HAZMAT ERG
-      </button>
-      <button type="button" id="btnSafetyCheckin" onclick="openSafetyCheckinModal()" title="Responder PPE & Hazard Exposure Check-In" style="display:inline-flex;align-items:center;gap:5px;background:#eff6ff;border:1px solid #bfdbfe;color:#1d4ed8;padding:5px 10px;border-radius:20px;font-size:0.75rem;font-weight:700;cursor:pointer;transition:all 0.2s;">
-        <i class="fas fa-shield-heart"></i> Safety Check-In
-      </button>
-      <div class="resp-status-picker" style="display:flex;align-items:center;gap:6px;background:#f8fafc;padding:5px 10px;border-radius:20px;border:1px solid var(--border);font-size:0.75rem;font-weight:700;">
-        <span id="dutyStatusDot" style="width:8px;height:8px;border-radius:50%;background:#10b981;box-shadow:0 0 6px #10b981;"></span>
-        <select id="dutyStatusSel" onchange="changeDutyStatus(this.value)" style="border:none;background:transparent;font-size:0.75rem;font-weight:700;color:var(--text);outline:none;cursor:pointer;">
-          <option value="available">On Duty · Ready</option>
-          <option value="en_route">Dispatched · En Route</option>
-          <option value="on_scene">At Scene · Engaged</option>
-          <option value="off_duty">Off Duty</option>
-        </select>
-      </div>
-      <span class="badge-resp" style="color:<?= $unit_color ?>;border-color:<?= $unit_color ?>;background:<?= $unit_color ?>18;">
-        <i class="fas fa-truck-medical"></i>&nbsp; <?= htmlspecialchars($rtype) ?>
-      </span>
-    </div>
-  </div>
+ <div class="topbar">
+ <div class="topbar-left">
+ <button class="ham-btn" onclick="openSidebar()"><i class="fas fa-bars"></i></button>
+ <div style="min-width:0;">
+ <div class="page-title"><?= htmlspecialchars($page_titles[$view] ?? 'Responder Portal') ?></div>
+ <div class="page-sub"><?= htmlspecialchars($unit) ?><?= $area ? ' - '.htmlspecialchars($area) : '' ?></div>
+ </div>
+ </div>
+ <div style="display:flex;align-items:center;gap:8px;margin-left:auto;flex-wrap:wrap;">
+ <button type="button" id="btnTestTone" onclick="playDispatchTone()" title="Test Dispatch Acoustic Chime" style="display:inline-flex;align-items:center;gap:5px;background:#fef2f2;border:1px solid #fecaca;color:#dc2626;padding:5px 10px;border-radius:20px;font-size:0.75rem;font-weight:700;cursor:pointer;transition:all 0.2s;">
+ <i class="fas fa-volume-high"></i> Tone Test
+ </button>
+ <button type="button" id="btnHazmat" onclick="openHazmatModal()" title="Tactical HAZMAT & Chemical Emergency Guide" style="display:inline-flex;align-items:center;gap:5px;background:#fffbeb;border:1px solid #fde68a;color:#b45309;padding:5px 10px;border-radius:20px;font-size:0.75rem;font-weight:700;cursor:pointer;transition:all 0.2s;">
+ <i class="fas fa-biohazard"></i> HAZMAT ERG
+ </button>
+ <button type="button" id="btnSafetyCheckin" onclick="openSafetyCheckinModal()" title="Responder PPE & Hazard Exposure Check-In" style="display:inline-flex;align-items:center;gap:5px;background:#eff6ff;border:1px solid #bfdbfe;color:#1d4ed8;padding:5px 10px;border-radius:20px;font-size:0.75rem;font-weight:700;cursor:pointer;transition:all 0.2s;">
+ <i class="fas fa-shield-heart"></i> Safety Check-In
+ </button>
+ <div class="resp-status-picker" style="display:flex;align-items:center;gap:6px;background:#f8fafc;padding:5px 10px;border-radius:20px;border:1px solid var(--border);font-size:0.75rem;font-weight:700;">
+ <span id="dutyStatusDot" style="width:8px;height:8px;border-radius:50%;background:#10b981;box-shadow:0 0 6px #10b981;"></span>
+ <select id="dutyStatusSel" onchange="changeDutyStatus(this.value)" style="border:none;background:transparent;font-size:0.75rem;font-weight:700;color:var(--text);outline:none;cursor:pointer;">
+ <option value="available">On Duty · Ready</option>
+ <option value="en_route">Dispatched · En Route</option>
+ <option value="on_scene">At Scene · Engaged</option>
+ <option value="off_duty">Off Duty</option>
+ </select>
+ </div>
+ <span class="badge-resp" style="color:<?= $unit_color ?>;border-color:<?= $unit_color ?>;background:<?= $unit_color ?>18;">
+ <i class="fas fa-truck-medical"></i>&nbsp; <?= htmlspecialchars($rtype) ?>
+ </span>
+ </div>
+ </div>
 
-  <?php if($view === 'queue' && $danger_count > 0): ?>
-  <div class="alert-banner">
-    <i class="fas fa-circle-exclamation"></i>
-    <?= $danger_count ?> ACTIVE DANGEROUS INCIDENT<?= $danger_count > 1 ? 'S' : '' ?> — Immediate response required.
-  </div>
-  <?php endif; ?>
+ <?php if($view === 'queue' && $danger_count > 0): ?>
+ <div class="alert-banner">
+ <i class="fas fa-circle-exclamation"></i>
+ <?= $danger_count ?> ACTIVE DANGEROUS INCIDENT<?= $danger_count > 1 ? 'S' : '' ?> - Immediate response required.
+ </div>
+ <?php endif; ?>
 
-  <div class="content">
+ <div class="content">
 
-  <?php if($view === 'queue'): ?>
-    <div class="card" style="margin-bottom:14px;">
-      <div class="card-header">
-        <h3><i class="fas fa-location-crosshairs" style="color:var(--red-light);margin-right:6px;"></i>My GPS Location</h3>
-        <span class="card-meta" id="gpsStatus"><?= $saved_gps_lat !== null && $saved_gps_lng !== null ? 'Saved on profile' : 'Not saved yet' ?></span>
-      </div>
-      <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;justify-content:space-between;">
-        <div style="min-width:0;">
-          <div id="gpsCoords" style="font-size:0.85rem;font-weight:700;color:var(--text);">
-            <?= $saved_gps_lat !== null && $saved_gps_lng !== null ? htmlspecialchars(number_format((float)$saved_gps_lat, 6).', '.number_format((float)$saved_gps_lng, 6)) : 'Tap the button to get and save your current location.' ?>
-          </div>
-          <div style="font-size:0.76rem;color:var(--muted);margin-top:4px;">Used for navigation to assigned dangerous reports.</div>
-        </div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;">
-          <button type="button" class="btn-dispatch" onclick="captureMyGps(this)"><i class="fas fa-crosshairs"></i> Get My GPS</button>
-        </div>
-      </div>
-    </div>
-    <div class="stat-row">
-      <div class="stat-card"><div class="stat-icon" style="background:#fef2f2;color:#dc2626;"><i class="fas fa-triangle-exclamation"></i></div><div><div class="stat-num"><?= $danger_count ?></div><div class="stat-lbl">Dangerous</div></div></div>
-      <div class="stat-card"><div class="stat-icon" style="background:#fffbeb;color:#d97706;"><i class="fas fa-circle-exclamation"></i></div><div><div class="stat-num"><?= $caution_count ?></div><div class="stat-lbl">Caution</div></div></div>
-      <div class="stat-card"><div class="stat-icon" style="background:#f0fdf4;color:#16a34a;"><i class="fas fa-clipboard-check"></i></div><div><div class="stat-num"><?= $my_count ?></div><div class="stat-lbl">My Assignments</div></div></div>
-    </div>
-    <div class="card">
-      <div class="card-header">
-        <h3><i class="fas fa-siren-on" style="color:#dc2626;margin-right:6px;"></i>Active Incidents — Dispatch Queue</h3>
-        <span class="card-meta"><?= count($queue) ?> incidents</span>
-      </div>
-      <?php if(empty($queue)): ?>
-        <div class="empty"><i class="fas fa-shield-check" style="color:#16a34a;opacity:0.4;"></i><p>No active incidents. All clear.</p></div>
-      <?php else: ?>
-      <div class="reports-filter-bar" style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:12px 16px;border-bottom:1px solid var(--border);background:#f8fafc;">
-        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
-          <button class="filter-btn active-all" onclick="filterRespIncidents('all',this)">All</button>
-          <button class="filter-btn" onclick="filterRespIncidents('dangerous',this)"><i class="fas fa-circle" style="color:#dc2626;font-size:0.6rem;"></i> Dangerous</button>
-          <button class="filter-btn" onclick="filterRespIncidents('caution',this)"><i class="fas fa-circle" style="color:#d97706;font-size:0.6rem;"></i> Caution</button>
-        </div>
-        <div style="display:flex;align-items:center;gap:6px;">
-          <div style="position:relative;">
-            <i class="fas fa-magnifying-glass" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:0.8rem;"></i>
-            <input type="text" id="respIncidentSearch" placeholder="Search incidents..." oninput="searchRespIncidents(this.value)" style="padding:6px 12px 6px 28px;border:1.5px solid var(--border);border-radius:8px;font-size:0.8rem;outline:none;font-family:'Inter',sans-serif;background:#fff;width:200px;">
-          </div>
-        </div>
-      </div>
-      <div class="incident-list">
-      <?php foreach($queue as $r):
-        $is_mine = (int)$r['assigned_to'] === $uid;
-        $is_assigned = $r['assigned_to'] !== null;
-        $ibg = $r['status']==='dangerous' ? '#fef2f2' : '#fffbeb';
-        $iclr = $r['status']==='dangerous' ? '#dc2626' : '#d97706';
-      ?>
-        <div class="incident-row" data-status="<?= htmlspecialchars($r['status']) ?>">
-          <div class="inc-icon" style="background:<?= $ibg ?>;color:<?= $iclr ?>;"><i class="fas <?= $cat_icons[$r['category']] ?? 'fa-circle-exclamation' ?>"></i></div>
-          <div class="inc-body">
-            <div class="inc-title"><?= htmlspecialchars($r['title']) ?></div>
-            <div class="inc-meta">
-              <span class="pill pill-<?= $r['status'] ?>"><?= ucfirst($r['status']) ?></span>
-              <?php if(!empty($r['resolved_at'])): ?><span class="pill" style="background:#f0fdf4;color:#166534;">Resolved</span><?php else: ?><span class="pill" style="background:#fef2f2;color:#991b1b;">Unresolved</span><?php endif; ?>
-              <span><i class="fas fa-location-dot"></i> <?= htmlspecialchars($r['barangay'] ?? $r['city'] ?? '') ?></span>
-              <span><?= date('M j, g:ia', strtotime($r['created_at'])) ?></span>
-              <?php if($r['latitude']): ?>
-              <a class="map-link" href="javascript:void(0)" onclick="viewOnMap(<?= (float)$r['latitude'] ?>, <?= (float)$r['longitude'] ?>, <?= htmlspecialchars(json_encode($r['title'] ?? ''), ENT_QUOTES, 'UTF-8') ?>)"><i class="fas fa-map-pin"></i> View Map</a>
-              <?php endif; ?>
-            </div>
-            <?php if($r['description']): ?><div style="font-size:0.76rem;color:var(--muted);margin-top:2px;"><?= htmlspecialchars(mb_strimwidth($r['description'],0,100,'…')) ?></div><?php endif; ?>
-          </div>
-          <div class="inc-actions">
-            <?php if($is_mine): ?>
-              <span class="btn-assigned"><i class="fas fa-check"></i> LGU Assigned</span>
-              <?php if(empty($r['accepted_at'])): ?>
-                <button class="btn-dispatch" onclick="acceptAssignment(<?= $r['id'] ?>,this)"><i class="fas fa-hand-pointer"></i> Accept Assignment</button>
-              <?php endif; ?>
-              <?php if(!empty($r['latitude']) && !empty($r['longitude'])): ?>
-                <button class="btn-dispatch" onclick="openNavigation(<?= (float)$r['latitude'] ?>, <?= (float)$r['longitude'] ?>, <?= $r['id'] ?>)"><i class="fas fa-route"></i> Navigate</button>
-              <?php endif; ?>
-              <?php if(empty($r['responded_at'])): ?>
-                <button class="btn-resolve-sm" onclick="markResponded(<?= $r['id'] ?>,this)"><i class="fas fa-bell"></i> Responded to LGU</button>
-              <?php endif; ?>
-            <?php elseif($is_assigned): ?>
-              <span style="font-size:0.72rem;color:var(--muted);font-weight:600;">Assigned by LGU</span>
-            <?php else: ?>
-              <span style="font-size:0.72rem;color:var(--muted);font-weight:600;">Awaiting LGU dispatch</span>
-            <?php endif; ?>
-          </div>
-        </div>
-      <?php endforeach; ?>
-      </div>
-      <?php endif; ?>
-    </div>
+ <?php if($view === 'queue'): ?>
+ <div class="card" style="margin-bottom:14px;">
+ <div class="card-header">
+ <h3><i class="fas fa-location-crosshairs" style="color:var(--red-light);margin-right:6px;"></i>My GPS Location</h3>
+ <span class="card-meta" id="gpsStatus"><?= $saved_gps_lat !== null && $saved_gps_lng !== null ? 'Saved on profile' : 'Not saved yet' ?></span>
+ </div>
+ <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;justify-content:space-between;">
+ <div style="min-width:0;">
+ <div id="gpsCoords" style="font-size:0.85rem;font-weight:700;color:var(--text);">
+ <?= $saved_gps_lat !== null && $saved_gps_lng !== null ? htmlspecialchars(number_format((float)$saved_gps_lat, 6).', '.number_format((float)$saved_gps_lng, 6)) : 'Tap the button to get and save your current location.' ?>
+ </div>
+ <div style="font-size:0.76rem;color:var(--muted);margin-top:4px;">Used for navigation to assigned dangerous reports.</div>
+ </div>
+ <div style="display:flex;gap:8px;flex-wrap:wrap;">
+ <button type="button" class="btn-dispatch" onclick="captureMyGps(this)"><i class="fas fa-crosshairs"></i> Get My GPS</button>
+ </div>
+ </div>
+ </div>
+ <div class="stat-row">
+ <div class="stat-card"><div class="stat-icon" style="background:#fef2f2;color:#dc2626;"><i class="fas fa-triangle-exclamation"></i></div><div><div class="stat-num"><?= $danger_count ?></div><div class="stat-lbl">Dangerous</div></div></div>
+ <div class="stat-card"><div class="stat-icon" style="background:#fffbeb;color:#d97706;"><i class="fas fa-circle-exclamation"></i></div><div><div class="stat-num"><?= $caution_count ?></div><div class="stat-lbl">Caution</div></div></div>
+ <div class="stat-card"><div class="stat-icon" style="background:#f0fdf4;color:#16a34a;"><i class="fas fa-clipboard-check"></i></div><div><div class="stat-num"><?= $my_count ?></div><div class="stat-lbl">My Assignments</div></div></div>
+ </div>
+ <div class="card">
+ <div class="card-header">
+ <h3><i class="fas fa-siren-on" style="color:#dc2626;margin-right:6px;"></i>Active Incidents - Dispatch Queue</h3>
+ <span class="card-meta"><?= count($queue) ?> incidents</span>
+ </div>
+ <?php if(empty($queue)): ?>
+ <div class="empty"><i class="fas fa-shield-check" style="color:#16a34a;opacity:0.4;"></i><p>No active incidents. All clear.</p></div>
+ <?php else: ?>
+ <div class="reports-filter-bar" style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:12px 16px;border-bottom:1px solid var(--border);background:#f8fafc;">
+ <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+ <button class="filter-btn active-all" onclick="filterRespIncidents('all',this)">All</button>
+ <button class="filter-btn" onclick="filterRespIncidents('dangerous',this)"><i class="fas fa-circle" style="color:#dc2626;font-size:0.6rem;"></i> Dangerous</button>
+ <button class="filter-btn" onclick="filterRespIncidents('caution',this)"><i class="fas fa-circle" style="color:#d97706;font-size:0.6rem;"></i> Caution</button>
+ </div>
+ <div style="display:flex;align-items:center;gap:6px;">
+ <div style="position:relative;">
+ <i class="fas fa-magnifying-glass" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:0.8rem;"></i>
+ <input type="text" id="respIncidentSearch" placeholder="Search incidents..." oninput="searchRespIncidents(this.value)" style="padding:6px 12px 6px 28px;border:1.5px solid var(--border);border-radius:8px;font-size:0.8rem;outline:none;font-family:'Inter',sans-serif;background:#fff;width:200px;">
+ </div>
+ </div>
+ </div>
+ <div class="incident-list">
+ <?php foreach($queue as $r):
+ $is_mine = (int)$r['assigned_to'] === $uid;
+ $is_assigned = $r['assigned_to'] !== null;
+ $ibg = $r['status']==='dangerous' ? '#fef2f2' : '#fffbeb';
+ $iclr = $r['status']==='dangerous' ? '#dc2626' : '#d97706';
+ ?>
+ <div class="incident-row" data-status="<?= htmlspecialchars($r['status']) ?>">
+ <div class="inc-icon" style="background:<?= $ibg ?>;color:<?= $iclr ?>;"><i class="fas <?= $cat_icons[$r['category']] ?? 'fa-circle-exclamation' ?>"></i></div>
+ <div class="inc-body">
+ <div class="inc-title"><?= htmlspecialchars($r['title']) ?></div>
+ <div class="inc-meta">
+ <span class="pill pill-<?= $r['status'] ?>"><?= ucfirst($r['status']) ?></span>
+ <?php if(!empty($r['resolved_at'])): ?><span class="pill" style="background:#f0fdf4;color:#166534;">Resolved</span><?php else: ?><span class="pill" style="background:#fef2f2;color:#991b1b;">Unresolved</span><?php endif; ?>
+ <span><i class="fas fa-location-dot"></i> <?= htmlspecialchars($r['barangay'] ?? $r['city'] ?? '') ?></span>
+ <span><?= date('M j, g:ia', strtotime($r['created_at'])) ?></span>
+ <?php if($r['latitude']): ?>
+ <a class="map-link" href="javascript:void(0)" onclick="viewOnMap(<?= (float)$r['latitude'] ?>, <?= (float)$r['longitude'] ?>, <?= htmlspecialchars(json_encode($r['title'] ?? ''), ENT_QUOTES, 'UTF-8') ?>)"><i class="fas fa-map-pin"></i> View Map</a>
+ <?php endif; ?>
+ </div>
+ <?php if($r['description']): ?><div style="font-size:0.76rem;color:var(--muted);margin-top:2px;"><?= htmlspecialchars(mb_strimwidth($r['description'],0,100,'…')) ?></div><?php endif; ?>
+ </div>
+ <div class="inc-actions">
+ <?php if($is_mine): ?>
+ <span class="btn-assigned"><i class="fas fa-check"></i> LGU Assigned</span>
+ <?php if(empty($r['accepted_at'])): ?>
+ <button class="btn-dispatch" onclick="acceptAssignment(<?= $r['id'] ?>,this)"><i class="fas fa-hand-pointer"></i> Accept Assignment</button>
+ <?php endif; ?>
+ <?php if(!empty($r['latitude']) && !empty($r['longitude'])): ?>
+ <button class="btn-dispatch" onclick="openNavigation(<?= (float)$r['latitude'] ?>, <?= (float)$r['longitude'] ?>, <?= $r['id'] ?>)"><i class="fas fa-route"></i> Navigate</button>
+ <?php endif; ?>
+ <?php if(empty($r['responded_at'])): ?>
+ <button class="btn-resolve-sm" onclick="markResponded(<?= $r['id'] ?>,this)"><i class="fas fa-bell"></i> Responded to LGU</button>
+ <?php endif; ?>
+ <?php elseif($is_assigned): ?>
+ <span style="font-size:0.72rem;color:var(--muted);font-weight:600;">Assigned by LGU</span>
+ <?php else: ?>
+ <span style="font-size:0.72rem;color:var(--muted);font-weight:600;">Awaiting LGU dispatch</span>
+ <?php endif; ?>
+ </div>
+ </div>
+ <?php endforeach; ?>
+ </div>
+ <?php endif; ?>
+ </div>
 
-  <?php elseif($view === 'community'): ?>
-    <div class="stat-row">
-      <div class="stat-card"><div class="stat-icon" style="background:#f0f7ff;color:#0a3d62;"><i class="fas fa-users"></i></div><div><div class="stat-num"><?= $community_count ?></div><div class="stat-lbl">Community Posts</div></div></div>
-      <div class="stat-card"><div class="stat-icon" style="background:#fef2f2;color:#dc2626;"><i class="fas fa-triangle-exclamation"></i></div><div><div class="stat-num"><?= $danger_count ?></div><div class="stat-lbl">Dangerous</div></div></div>
-      <div class="stat-card"><div class="stat-icon" style="background:#fffbeb;color:#d97706;"><i class="fas fa-circle-exclamation"></i></div><div><div class="stat-num"><?= $caution_count ?></div><div class="stat-lbl">Caution</div></div></div>
-    </div>
-    <div class="card">
-      <div class="card-header">
-        <h3><i class="fas fa-users" style="color:#0a3d62;margin-right:6px;"></i>Community Reports</h3>
-        <span class="card-meta"><?= count($community_reports) ?> reports</span>
-      </div>
-      <?php if(empty($community_reports)): ?>
-        <div class="empty"><i class="fas fa-people-group" style="color:#0a3d62;opacity:0.35;"></i><p>No community reports yet.</p></div>
-      <?php else: ?>
-      <div class="reports-filter-bar" style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:12px 16px;border-bottom:1px solid var(--border);background:#f8fafc;">
-        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
-          <button class="filter-btn active-all" onclick="filterRespIncidents('all',this)">All</button>
-          <button class="filter-btn" onclick="filterRespIncidents('dangerous',this)"><i class="fas fa-circle" style="color:#dc2626;font-size:0.6rem;"></i> Dangerous</button>
-          <button class="filter-btn" onclick="filterRespIncidents('caution',this)"><i class="fas fa-circle" style="color:#d97706;font-size:0.6rem;"></i> Caution</button>
-          <button class="filter-btn" onclick="filterRespIncidents('safe',this)"><i class="fas fa-circle" style="color:#16a34a;font-size:0.6rem;"></i> Safe</button>
-        </div>
-        <div style="display:flex;align-items:center;gap:6px;">
-          <div style="position:relative;">
-            <i class="fas fa-magnifying-glass" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:0.8rem;"></i>
-            <input type="text" id="respCommunitySearch" placeholder="Search reports..." oninput="searchRespIncidents(this.value)" style="padding:6px 12px 6px 28px;border:1.5px solid var(--border);border-radius:8px;font-size:0.8rem;outline:none;font-family:'Inter',sans-serif;background:#fff;width:200px;">
-          </div>
-        </div>
-      </div>
-      <div class="incident-list">
-      <?php foreach($community_reports as $r):
-        $is_mine = $has_assigned_to ? ((int)($r['assigned_to'] ?? 0) === $uid) : false;
-        $is_assigned = $has_assigned_to && !empty($r['assigned_to']);
-        $ibg = $r['status']==='dangerous' ? '#fef2f2' : ($r['status']==='caution' ? '#fffbeb' : '#f0fdf4');
-        $iclr = $r['status']==='dangerous' ? '#dc2626' : ($r['status']==='caution' ? '#d97706' : '#16a34a');
-        $reporter = trim(($r['first_name'] ?? '').' '.($r['last_name'] ?? ''));
-      ?>
-        <div class="incident-row" data-status="<?= htmlspecialchars($r['status']) ?>">
-          <div class="inc-icon" style="background:<?= $ibg ?>;color:<?= $iclr ?>;"><i class="fas <?= $cat_icons[$r['category']] ?? 'fa-circle-exclamation' ?>"></i></div>
-          <div class="inc-body">
-            <div class="inc-title"><?= htmlspecialchars($r['title']) ?></div>
-            <div class="inc-meta">
-              <span class="pill pill-<?= $r['status'] ?>"><?= ucfirst($r['status']) ?></span>
-              <?php if(!empty($r['resolved_at'])): ?><span class="pill" style="background:#f0fdf4;color:#166534;">Resolved</span><?php else: ?><span class="pill" style="background:#fef2f2;color:#991b1b;">Unresolved</span><?php endif; ?>
-              <span><i class="fas fa-user"></i> <?= htmlspecialchars($reporter ?: 'Community User') ?></span>
-              <span><i class="fas fa-location-dot"></i> <?= htmlspecialchars($r['barangay'] ?? $r['city'] ?? '') ?></span>
-              <span><?= date('M j, g:ia', strtotime($r['created_at'])) ?></span>
-              <?php if(!empty($r['latitude']) && !empty($r['longitude'])): ?>
-              <a class="map-link" href="javascript:void(0)" onclick="viewOnMap(<?= (float)$r['latitude'] ?>, <?= (float)$r['longitude'] ?>, <?= htmlspecialchars(json_encode($r['title'] ?? ''), ENT_QUOTES, 'UTF-8') ?>)"><i class="fas fa-map-pin"></i> View Map</a>
-              <?php endif; ?>
-            </div>
-            <?php if(!empty($r['description'])): ?><div style="font-size:0.76rem;color:var(--muted);margin-top:2px;"><?= htmlspecialchars(mb_strimwidth($r['description'],0,120,'…')) ?></div><?php endif; ?>
-          </div>
-          <div class="inc-actions">
-            <?php if($is_mine): ?>
-              <span class="btn-assigned"><i class="fas fa-check"></i> LGU Assigned</span>
-            <?php elseif($is_assigned): ?>
-              <span style="font-size:0.72rem;color:var(--muted);font-weight:600;">Assigned by LGU</span>
-            <?php else: ?>
-              <span style="font-size:0.72rem;color:var(--muted);font-weight:600;">LGU dispatch only</span>
-            <?php endif; ?>
-          </div>
-        </div>
-      <?php endforeach; endif; ?>
-    </div>
+ <?php elseif($view === 'community'): ?>
+ <div class="stat-row">
+ <div class="stat-card"><div class="stat-icon" style="background:#f0f7ff;color:#0a3d62;"><i class="fas fa-users"></i></div><div><div class="stat-num"><?= $community_count ?></div><div class="stat-lbl">Community Posts</div></div></div>
+ <div class="stat-card"><div class="stat-icon" style="background:#fef2f2;color:#dc2626;"><i class="fas fa-triangle-exclamation"></i></div><div><div class="stat-num"><?= $danger_count ?></div><div class="stat-lbl">Dangerous</div></div></div>
+ <div class="stat-card"><div class="stat-icon" style="background:#fffbeb;color:#d97706;"><i class="fas fa-circle-exclamation"></i></div><div><div class="stat-num"><?= $caution_count ?></div><div class="stat-lbl">Caution</div></div></div>
+ </div>
+ <div class="card">
+ <div class="card-header">
+ <h3><i class="fas fa-users" style="color:#0a3d62;margin-right:6px;"></i>Community Reports</h3>
+ <span class="card-meta"><?= count($community_reports) ?> reports</span>
+ </div>
+ <?php if(empty($community_reports)): ?>
+ <div class="empty"><i class="fas fa-people-group" style="color:#0a3d62;opacity:0.35;"></i><p>No community reports yet.</p></div>
+ <?php else: ?>
+ <div class="reports-filter-bar" style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:12px 16px;border-bottom:1px solid var(--border);background:#f8fafc;">
+ <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+ <button class="filter-btn active-all" onclick="filterRespIncidents('all',this)">All</button>
+ <button class="filter-btn" onclick="filterRespIncidents('dangerous',this)"><i class="fas fa-circle" style="color:#dc2626;font-size:0.6rem;"></i> Dangerous</button>
+ <button class="filter-btn" onclick="filterRespIncidents('caution',this)"><i class="fas fa-circle" style="color:#d97706;font-size:0.6rem;"></i> Caution</button>
+ <button class="filter-btn" onclick="filterRespIncidents('safe',this)"><i class="fas fa-circle" style="color:#16a34a;font-size:0.6rem;"></i> Safe</button>
+ </div>
+ <div style="display:flex;align-items:center;gap:6px;">
+ <div style="position:relative;">
+ <i class="fas fa-magnifying-glass" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:0.8rem;"></i>
+ <input type="text" id="respCommunitySearch" placeholder="Search reports..." oninput="searchRespIncidents(this.value)" style="padding:6px 12px 6px 28px;border:1.5px solid var(--border);border-radius:8px;font-size:0.8rem;outline:none;font-family:'Inter',sans-serif;background:#fff;width:200px;">
+ </div>
+ </div>
+ </div>
+ <div class="incident-list">
+ <?php foreach($community_reports as $r):
+ $is_mine = $has_assigned_to ? ((int)($r['assigned_to'] ?? 0) === $uid) : false;
+ $is_assigned = $has_assigned_to && !empty($r['assigned_to']);
+ $ibg = $r['status']==='dangerous' ? '#fef2f2' : ($r['status']==='caution' ? '#fffbeb' : '#f0fdf4');
+ $iclr = $r['status']==='dangerous' ? '#dc2626' : ($r['status']==='caution' ? '#d97706' : '#16a34a');
+ $reporter = trim(($r['first_name'] ?? '').' '.($r['last_name'] ?? ''));
+ ?>
+ <div class="incident-row" data-status="<?= htmlspecialchars($r['status']) ?>">
+ <div class="inc-icon" style="background:<?= $ibg ?>;color:<?= $iclr ?>;"><i class="fas <?= $cat_icons[$r['category']] ?? 'fa-circle-exclamation' ?>"></i></div>
+ <div class="inc-body">
+ <div class="inc-title"><?= htmlspecialchars($r['title']) ?></div>
+ <div class="inc-meta">
+ <span class="pill pill-<?= $r['status'] ?>"><?= ucfirst($r['status']) ?></span>
+ <?php if(!empty($r['resolved_at'])): ?><span class="pill" style="background:#f0fdf4;color:#166534;">Resolved</span><?php else: ?><span class="pill" style="background:#fef2f2;color:#991b1b;">Unresolved</span><?php endif; ?>
+ <span><i class="fas fa-user"></i> <?= htmlspecialchars($reporter ?: 'Community User') ?></span>
+ <span><i class="fas fa-location-dot"></i> <?= htmlspecialchars($r['barangay'] ?? $r['city'] ?? '') ?></span>
+ <span><?= date('M j, g:ia', strtotime($r['created_at'])) ?></span>
+ <?php if(!empty($r['latitude']) && !empty($r['longitude'])): ?>
+ <a class="map-link" href="javascript:void(0)" onclick="viewOnMap(<?= (float)$r['latitude'] ?>, <?= (float)$r['longitude'] ?>, <?= htmlspecialchars(json_encode($r['title'] ?? ''), ENT_QUOTES, 'UTF-8') ?>)"><i class="fas fa-map-pin"></i> View Map</a>
+ <?php endif; ?>
+ </div>
+ <?php if(!empty($r['description'])): ?><div style="font-size:0.76rem;color:var(--muted);margin-top:2px;"><?= htmlspecialchars(mb_strimwidth($r['description'],0,120,'…')) ?></div><?php endif; ?>
+ </div>
+ <div class="inc-actions">
+ <?php if($is_mine): ?>
+ <span class="btn-assigned"><i class="fas fa-check"></i> LGU Assigned</span>
+ <?php elseif($is_assigned): ?>
+ <span style="font-size:0.72rem;color:var(--muted);font-weight:600;">Assigned by LGU</span>
+ <?php else: ?>
+ <span style="font-size:0.72rem;color:var(--muted);font-weight:600;">LGU dispatch only</span>
+ <?php endif; ?>
+ </div>
+ </div>
+ <?php endforeach; endif; ?>
+ </div>
 
-  <?php elseif($view === 'assigned'): ?>
-    <div class="card">
-      <div class="card-header"><h3><i class="fas fa-clipboard-check" style="color:var(--red-light);margin-right:6px;"></i>My Active Assignments</h3><span class="card-meta"><?= count($assigned) ?> reports</span></div>
-      <?php if(empty($assigned)): ?>
-        <div class="empty"><i class="fas fa-clipboard"></i><p>No active assignments. Check the dispatch queue.</p></div>
-      <?php else: foreach($assigned as $r):
-        $ibg = $r['status']==='dangerous' ? '#fef2f2' : ($r['status']==='caution' ? '#fffbeb' : '#f0fdf4');
-        $iclr = $r['status']==='dangerous' ? '#dc2626' : ($r['status']==='caution' ? '#d97706' : '#16a34a');
-      ?>
-        <div class="incident-row">
-          <div class="inc-icon" style="background:<?= $ibg ?>;color:<?= $iclr ?>;"><i class="fas <?= $cat_icons[$r['category']] ?? 'fa-circle-exclamation' ?>"></i></div>
-          <div class="inc-body">
-            <div class="inc-title"><?= htmlspecialchars($r['title']) ?></div>
-            <div class="inc-meta">
-              <span class="pill pill-<?= $r['status'] ?>"><?= ucfirst($r['status']) ?></span>
-              <?php if(!empty($r['resolved_at'])): ?><span class="pill" style="background:#f0fdf4;color:#166534;">Resolved</span><?php else: ?><span class="pill" style="background:#fef2f2;color:#991b1b;">Unresolved</span><?php endif; ?>
-              <span><i class="fas fa-location-dot"></i> <?= htmlspecialchars($r['barangay'] ?? $r['city'] ?? '') ?></span>
-              <span><?= date('M j, g:ia', strtotime($r['created_at'])) ?></span>
-              <?php if($r['latitude']): ?>
-              <a class="map-link" href="javascript:void(0)" onclick="viewOnMap(<?= (float)$r['latitude'] ?>, <?= (float)$r['longitude'] ?>, <?= htmlspecialchars(json_encode($r['title'] ?? ''), ENT_QUOTES, 'UTF-8') ?>)"><i class="fas fa-map-pin"></i> View Map</a>
-              <?php endif; ?>
-            </div>
-            <?php
-              $step_acc = !empty($r['accepted_at']);
-              $step_resp = !empty($r['responded_at']);
-              $step_res = !empty($r['resolved_at']);
-            ?>
-            <div class="telemetry-stepper">
-              <span style="font-weight:700;color:var(--text);"><i class="fas fa-tower-broadcast" style="color:var(--red-light);margin-right:3px;"></i>Telemetry:</span>
-              <span class="step-chip done"><i class="fas fa-check"></i> Dispatched</span>
-              <i class="fas fa-chevron-right" style="font-size:0.6rem;color:#cbd5e1;"></i>
-              <span class="step-chip <?= $step_acc ? 'done' : 'active' ?>"><i class="fas <?= $step_acc ? 'fa-check' : 'fa-clock' ?>"></i> <?= $step_acc ? 'Accepted' : 'Pending Accept' ?></span>
-              <i class="fas fa-chevron-right" style="font-size:0.6rem;color:#cbd5e1;"></i>
-              <span class="step-chip <?= $step_resp ? 'done' : ($step_acc ? 'active' : 'pending') ?>"><i class="fas <?= $step_resp ? 'fa-check' : 'fa-truck-fast' ?>"></i> <?= $step_resp ? 'En Route / On Site' : 'Standby' ?></span>
-              <i class="fas fa-chevron-right" style="font-size:0.6rem;color:#cbd5e1;"></i>
-              <span class="step-chip <?= $step_res ? 'done' : 'pending' ?>"><i class="fas <?= $step_res ? 'fa-check' : 'fa-circle-dot' ?>"></i> <?= $step_res ? 'Resolved' : 'Active Operation' ?></span>
-            </div>
-            <div class="sitrep-bar" style="margin-top:8px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
-              <span style="font-size:0.7rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;"><i class="fas fa-bullhorn" style="color:var(--red-light);margin-right:2px;"></i> Tactical SITREP:</span>
-              <button type="button" onclick="logSitrep(<?= $r['id'] ?>, 'Perimeter Secured', this)" style="background:#f8fafc;border:1px solid #cbd5e1;border-radius:6px;padding:2px 8px;font-size:0.7rem;font-weight:600;cursor:pointer;color:#334155;transition:all 0.15s;" onmouseover="this.style.borderColor='#94a3b8'" onmouseout="this.style.borderColor='#cbd5e1'">🛡️ Perimeter Secured</button>
-              <button type="button" onclick="logSitrep(<?= $r['id'] ?>, 'Hazards Isolated', this)" style="background:#f8fafc;border:1px solid #cbd5e1;border-radius:6px;padding:2px 8px;font-size:0.7rem;font-weight:600;cursor:pointer;color:#334155;transition:all 0.15s;" onmouseover="this.style.borderColor='#94a3b8'" onmouseout="this.style.borderColor='#cbd5e1'">🚧 Hazards Isolated</button>
-              <button type="button" onclick="logSitrep(<?= $r['id'] ?>, 'Under Control', this)" style="background:#f8fafc;border:1px solid #cbd5e1;border-radius:6px;padding:2px 8px;font-size:0.7rem;font-weight:600;cursor:pointer;color:#334155;transition:all 0.15s;" onmouseover="this.style.borderColor='#94a3b8'" onmouseout="this.style.borderColor='#cbd5e1'">✅ Under Control</button>
-              <span id="sitrep_badge_<?= $r['id'] ?>" style="font-size:0.7rem;font-weight:700;color:#059669;display:none;background:#ecfdf5;border:1px solid #a7f3d0;padding:2px 7px;border-radius:6px;"></span>
-            </div>
+ <?php elseif($view === 'assigned'): ?>
+ <div class="card">
+ <div class="card-header"><h3><i class="fas fa-clipboard-check" style="color:var(--red-light);margin-right:6px;"></i>My Active Assignments</h3><span class="card-meta"><?= count($assigned) ?> reports</span></div>
+ <?php if(empty($assigned)): ?>
+ <div class="empty"><i class="fas fa-clipboard"></i><p>No active assignments. Check the dispatch queue.</p></div>
+ <?php else: foreach($assigned as $r):
+ $ibg = $r['status']==='dangerous' ? '#fef2f2' : ($r['status']==='caution' ? '#fffbeb' : '#f0fdf4');
+ $iclr = $r['status']==='dangerous' ? '#dc2626' : ($r['status']==='caution' ? '#d97706' : '#16a34a');
+ ?>
+ <div class="incident-row">
+ <div class="inc-icon" style="background:<?= $ibg ?>;color:<?= $iclr ?>;"><i class="fas <?= $cat_icons[$r['category']] ?? 'fa-circle-exclamation' ?>"></i></div>
+ <div class="inc-body">
+ <div class="inc-title"><?= htmlspecialchars($r['title']) ?></div>
+ <div class="inc-meta">
+ <span class="pill pill-<?= $r['status'] ?>"><?= ucfirst($r['status']) ?></span>
+ <?php if(!empty($r['resolved_at'])): ?><span class="pill" style="background:#f0fdf4;color:#166534;">Resolved</span><?php else: ?><span class="pill" style="background:#fef2f2;color:#991b1b;">Unresolved</span><?php endif; ?>
+ <span><i class="fas fa-location-dot"></i> <?= htmlspecialchars($r['barangay'] ?? $r['city'] ?? '') ?></span>
+ <span><?= date('M j, g:ia', strtotime($r['created_at'])) ?></span>
+ <?php if($r['latitude']): ?>
+ <a class="map-link" href="javascript:void(0)" onclick="viewOnMap(<?= (float)$r['latitude'] ?>, <?= (float)$r['longitude'] ?>, <?= htmlspecialchars(json_encode($r['title'] ?? ''), ENT_QUOTES, 'UTF-8') ?>)"><i class="fas fa-map-pin"></i> View Map</a>
+ <?php endif; ?>
+ </div>
+ <?php
+ $step_acc = !empty($r['accepted_at']);
+ $step_resp = !empty($r['responded_at']);
+ $step_res = !empty($r['resolved_at']);
+ ?>
+ <div class="telemetry-stepper">
+ <span style="font-weight:700;color:var(--text);"><i class="fas fa-tower-broadcast" style="color:var(--red-light);margin-right:3px;"></i>Telemetry:</span>
+ <span class="step-chip done"><i class="fas fa-check"></i> Dispatched</span>
+ <i class="fas fa-chevron-right" style="font-size:0.6rem;color:#cbd5e1;"></i>
+ <span class="step-chip <?= $step_acc ? 'done' : 'active' ?>"><i class="fas <?= $step_acc ? 'fa-check' : 'fa-clock' ?>"></i> <?= $step_acc ? 'Accepted' : 'Pending Accept' ?></span>
+ <i class="fas fa-chevron-right" style="font-size:0.6rem;color:#cbd5e1;"></i>
+ <span class="step-chip <?= $step_resp ? 'done' : ($step_acc ? 'active' : 'pending') ?>"><i class="fas <?= $step_resp ? 'fa-check' : 'fa-truck-fast' ?>"></i> <?= $step_resp ? 'En Route / On Site' : 'Standby' ?></span>
+ <i class="fas fa-chevron-right" style="font-size:0.6rem;color:#cbd5e1;"></i>
+ <span class="step-chip <?= $step_res ? 'done' : 'pending' ?>"><i class="fas <?= $step_res ? 'fa-check' : 'fa-circle-dot' ?>"></i> <?= $step_res ? 'Resolved' : 'Active Operation' ?></span>
+ </div>
+ <div class="sitrep-bar" style="margin-top:8px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+ <span style="font-size:0.7rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;"><i class="fas fa-bullhorn" style="color:var(--red-light);margin-right:2px;"></i> Tactical SITREP:</span>
+ <button type="button" onclick="logSitrep(<?= $r['id'] ?>, 'Perimeter Secured', this)" style="background:#f8fafc;border:1px solid #cbd5e1;border-radius:6px;padding:2px 8px;font-size:0.7rem;font-weight:600;cursor:pointer;color:#334155;transition:all 0.15s;" onmouseover="this.style.borderColor='#94a3b8'" onmouseout="this.style.borderColor='#cbd5e1'">🛡️ Perimeter Secured</button>
+ <button type="button" onclick="logSitrep(<?= $r['id'] ?>, 'Hazards Isolated', this)" style="background:#f8fafc;border:1px solid #cbd5e1;border-radius:6px;padding:2px 8px;font-size:0.7rem;font-weight:600;cursor:pointer;color:#334155;transition:all 0.15s;" onmouseover="this.style.borderColor='#94a3b8'" onmouseout="this.style.borderColor='#cbd5e1'">🚧 Hazards Isolated</button>
+ <button type="button" onclick="logSitrep(<?= $r['id'] ?>, 'Under Control', this)" style="background:#f8fafc;border:1px solid #cbd5e1;border-radius:6px;padding:2px 8px;font-size:0.7rem;font-weight:600;cursor:pointer;color:#334155;transition:all 0.15s;" onmouseover="this.style.borderColor='#94a3b8'" onmouseout="this.style.borderColor='#cbd5e1'">✅ Under Control</button>
+ <span id="sitrep_badge_<?= $r['id'] ?>" style="font-size:0.7rem;font-weight:700;color:#059669;display:none;background:#ecfdf5;border:1px solid #a7f3d0;padding:2px 7px;border-radius:6px;"></span>
+ </div>
 
-            <!-- START Field Triage & Resource Request -->
-            <div style="margin-top:10px;padding-top:8px;border-top:1px dashed #e2e8f0;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
-              <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
-                <span style="font-size:0.7rem;font-weight:700;color:var(--muted);text-transform:uppercase;"><i class="fas fa-kit-medical" style="color:#dc2626;margin-right:2px;"></i> START Triage:</span>
-                <span style="font-size:0.72rem;background:#f0fdf4;color:#166534;padding:2px 6px;border-radius:4px;border:1px solid #bbf7d0;font-weight:700;">🟢 Minor: <b id="triage_g_<?= $r['id'] ?>">0</b></span>
-                <button type="button" onclick="adjustTriage(<?= $r['id'] ?>, 'g', 1)" style="border:1px solid #cbd5e1;background:#fff;border-radius:4px;padding:0 5px;font-size:0.7rem;font-weight:700;cursor:pointer;">+1</button>
-                <span style="font-size:0.72rem;background:#fef2f2;color:#dc2626;padding:2px 6px;border-radius:4px;border:1px solid #fecaca;font-weight:700;">🔴 Red (Critical): <b id="triage_r_<?= $r['id'] ?>">0</b></span>
-                <button type="button" onclick="adjustTriage(<?= $r['id'] ?>, 'r', 1)" style="border:1px solid #cbd5e1;background:#fff;border-radius:4px;padding:0 5px;font-size:0.7rem;font-weight:700;cursor:pointer;">+1</button>
-              </div>
-              <div style="display:flex;align-items:center;gap:6px;">
-                <button type="button" onclick="requestBackup(<?= $r['id'] ?>, 'EMS Ambulance')" style="background:#eff6ff;border:1px solid #bfdbfe;color:#1d4ed8;border-radius:6px;padding:2px 8px;font-size:0.7rem;font-weight:600;cursor:pointer;"><i class="fas fa-truck-medical"></i> +EMS Backup</button>
-                <button type="button" onclick="requestBackup(<?= $r['id'] ?>, 'WASAR Rescue Boat')" style="background:#fffbeb;border:1px solid #fde68a;color:#b45309;border-radius:6px;padding:2px 8px;font-size:0.7rem;font-weight:600;cursor:pointer;"><i class="fas fa-life-ring"></i> +WASAR Boat</button>
-              </div>
-            </div>
-          </div>
-          <div class="inc-actions">
-            <?php if(empty($r['accepted_at'])): ?>
-              <button class="btn-dispatch" onclick="acceptAssignment(<?= $r['id'] ?>,this)"><i class="fas fa-hand-pointer"></i> Accept Assignment</button>
-            <?php endif; ?>
-            <?php if(!empty($r['latitude']) && !empty($r['longitude'])): ?>
-              <button class="btn-dispatch" onclick="openNavigation(<?= (float)$r['latitude'] ?>, <?= (float)$r['longitude'] ?>, <?= $r['id'] ?>)"><i class="fas fa-route"></i> Navigate</button>
-            <?php endif; ?>
-            <?php if(empty($r['responded_at'])): ?>
-              <button class="btn-resolve-sm" onclick="markResponded(<?= $r['id'] ?>,this)"><i class="fas fa-bell"></i> Responded to LGU</button>
-            <?php endif; ?>
-            <button class="btn-resolve-sm" onclick="resolve(<?= $r['id'] ?>,this)"><i class="fas fa-circle-check"></i> Resolve</button>
-          </div>
-        </div>
-      <?php endforeach; endif; ?>
-    </div>
+ <!-- START Field Triage & Resource Request -->
+ <div style="margin-top:10px;padding-top:8px;border-top:1px dashed #e2e8f0;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+ <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+ <span style="font-size:0.7rem;font-weight:700;color:var(--muted);text-transform:uppercase;"><i class="fas fa-kit-medical" style="color:#dc2626;margin-right:2px;"></i> START Triage:</span>
+ <span style="font-size:0.72rem;background:#f0fdf4;color:#166534;padding:2px 6px;border-radius:4px;border:1px solid #bbf7d0;font-weight:700;">🟢 Minor: <b id="triage_g_<?= $r['id'] ?>">0</b></span>
+ <button type="button" onclick="adjustTriage(<?= $r['id'] ?>, 'g', 1)" style="border:1px solid #cbd5e1;background:#fff;border-radius:4px;padding:0 5px;font-size:0.7rem;font-weight:700;cursor:pointer;">+1</button>
+ <span style="font-size:0.72rem;background:#fef2f2;color:#dc2626;padding:2px 6px;border-radius:4px;border:1px solid #fecaca;font-weight:700;">🔴 Red (Critical): <b id="triage_r_<?= $r['id'] ?>">0</b></span>
+ <button type="button" onclick="adjustTriage(<?= $r['id'] ?>, 'r', 1)" style="border:1px solid #cbd5e1;background:#fff;border-radius:4px;padding:0 5px;font-size:0.7rem;font-weight:700;cursor:pointer;">+1</button>
+ </div>
+ <div style="display:flex;align-items:center;gap:6px;">
+ <button type="button" onclick="requestBackup(<?= $r['id'] ?>, 'EMS Ambulance')" style="background:#eff6ff;border:1px solid #bfdbfe;color:#1d4ed8;border-radius:6px;padding:2px 8px;font-size:0.7rem;font-weight:600;cursor:pointer;"><i class="fas fa-truck-medical"></i> +EMS Backup</button>
+ <button type="button" onclick="requestBackup(<?= $r['id'] ?>, 'WASAR Rescue Boat')" style="background:#fffbeb;border:1px solid #fde68a;color:#b45309;border-radius:6px;padding:2px 8px;font-size:0.7rem;font-weight:600;cursor:pointer;"><i class="fas fa-life-ring"></i> +WASAR Boat</button>
+ </div>
+ </div>
+ </div>
+ <div class="inc-actions">
+ <?php if(empty($r['accepted_at'])): ?>
+ <button class="btn-dispatch" onclick="acceptAssignment(<?= $r['id'] ?>,this)"><i class="fas fa-hand-pointer"></i> Accept Assignment</button>
+ <?php endif; ?>
+ <?php if(!empty($r['latitude']) && !empty($r['longitude'])): ?>
+ <button class="btn-dispatch" onclick="openNavigation(<?= (float)$r['latitude'] ?>, <?= (float)$r['longitude'] ?>, <?= $r['id'] ?>)"><i class="fas fa-route"></i> Navigate</button>
+ <?php endif; ?>
+ <?php if(empty($r['responded_at'])): ?>
+ <button class="btn-resolve-sm" onclick="markResponded(<?= $r['id'] ?>,this)"><i class="fas fa-bell"></i> Responded to LGU</button>
+ <?php endif; ?>
+ <button class="btn-resolve-sm" onclick="resolve(<?= $r['id'] ?>,this)"><i class="fas fa-circle-check"></i> Resolve</button>
+ </div>
+ </div>
+ <?php endforeach; endif; ?>
+ </div>
 
-  <?php elseif($view === 'resolved'): ?>
-    <div class="card">
-      <div class="card-header"><h3><i class="fas fa-circle-check" style="color:#16a34a;margin-right:6px;"></i>Resolved by Me</h3><span class="card-meta"><?= count($resolved) ?> reports</span></div>
-      <?php if(empty($resolved)): ?>
-        <div class="empty"><i class="fas fa-circle-check" style="color:#16a34a;"></i><p>No resolved reports yet.</p></div>
-      <?php else: ?>
-      <div class="table-wrap">
-        <table>
-          <thead><tr><th>#</th><th>Title</th><th>Category</th><th>Location</th><th>Reported</th><th>Resolved</th></tr></thead>
-          <tbody>
-          <?php foreach($resolved as $r): ?>
-            <tr>
-              <td style="color:var(--muted);font-size:0.74rem;">#<?= $r['id'] ?></td>
-              <td style="font-weight:600;max-width:200px;"><?= htmlspecialchars(mb_strimwidth($r['title'],0,50,'…')) ?></td>
-              <td><span class="cat-chip"><i class="fas <?= $cat_icons[$r['category']] ?? 'fa-circle-exclamation' ?>"></i> <?= ucfirst($r['category']) ?></span></td>
-              <td style="font-size:0.78rem;"><?= htmlspecialchars($r['barangay'] ?? $r['city'] ?? '') ?></td>
-              <td style="font-size:0.74rem;color:var(--muted);"><?= date('M j, Y', strtotime($r['created_at'])) ?></td>
-              <td style="font-size:0.74rem;color:#16a34a;font-weight:600;"><?= $r['resolved_at'] ? date('M j, Y', strtotime($r['resolved_at'])) : '—' ?></td>
-            </tr>
-          <?php endforeach; ?>
-          </tbody>
-        </table>
-      </div>
-      <?php endif; ?>
-    </div>
+ <?php elseif($view === 'resolved'): ?>
+ <div class="card">
+ <div class="card-header"><h3><i class="fas fa-circle-check" style="color:#16a34a;margin-right:6px;"></i>Resolved by Me</h3><span class="card-meta"><?= count($resolved) ?> reports</span></div>
+ <?php if(empty($resolved)): ?>
+ <div class="empty"><i class="fas fa-circle-check" style="color:#16a34a;"></i><p>No resolved reports yet.</p></div>
+ <?php else: ?>
+ <div class="table-wrap">
+ <table>
+ <thead><tr><th>#</th><th>Title</th><th>Category</th><th>Location</th><th>Reported</th><th>Resolved</th></tr></thead>
+ <tbody>
+ <?php foreach($resolved as $r): ?>
+ <tr>
+ <td style="color:var(--muted);font-size:0.74rem;">#<?= $r['id'] ?></td>
+ <td style="font-weight:600;max-width:200px;"><?= htmlspecialchars(mb_strimwidth($r['title'],0,50,'…')) ?></td>
+ <td><span class="cat-chip"><i class="fas <?= $cat_icons[$r['category']] ?? 'fa-circle-exclamation' ?>"></i> <?= ucfirst($r['category']) ?></span></td>
+ <td style="font-size:0.78rem;"><?= htmlspecialchars($r['barangay'] ?? $r['city'] ?? '') ?></td>
+ <td style="font-size:0.74rem;color:var(--muted);"><?= date('M j, Y', strtotime($r['created_at'])) ?></td>
+ <td style="font-size:0.74rem;color:#16a34a;font-weight:600;"><?= $r['resolved_at'] ? date('M j, Y', strtotime($r['resolved_at'])) : ' - ' ?></td>
+ </tr>
+ <?php endforeach; ?>
+ </tbody>
+ </table>
+ </div>
+ <?php endif; ?>
+ </div>
 
-  <?php elseif($view === 'contacts'): ?>
-    <?php
-    $ctype_colors = ['lgu'=>['#f0f7ff','#0a3d62'],'hospital'=>['#ecfdf5','#059669'],'traffic'=>['#fffbeb','#d97706'],'barangay'=>['#f0fdf4','#166534'],'police'=>['#eff6ff','#2563eb'],'fire'=>['#fef2f2','#dc2626'],'other'=>['#f5f3ff','#7c3aed']];
-    $ctype_icons = ['lgu'=>'fa-landmark','hospital'=>'fa-hospital','traffic'=>'fa-traffic-light','barangay'=>'fa-house-flag','police'=>'fa-shield','fire'=>'fa-fire-extinguisher','other'=>'fa-phone'];
-    ?>
-    <div class="card">
-      <div class="card-header"><h3><i class="fas fa-address-book" style="color:var(--red-light);margin-right:6px;"></i>Emergency Contacts</h3><span class="card-meta"><?= count($contacts) ?> contacts</span></div>
-      <?php if(empty($contacts)): ?><div class="empty"><i class="fas fa-address-book"></i><p>No emergency contacts on file.</p></div>
-      <?php else: foreach($contacts as $c): $tc=$ctype_colors[$c['type']]??['#f5f3ff','#7c3aed']; $ti=$ctype_icons[$c['type']]??'fa-phone'; ?>
-        <div class="contact-row">
-          <div class="contact-icon" style="background:<?= $tc[0] ?>;color:<?= $tc[1] ?>;"><i class="fas <?= $ti ?>"></i></div>
-          <div style="flex:1;min-width:0;">
-            <div class="contact-type-badge" style="background:<?= $tc[0] ?>;color:<?= $tc[1] ?>;"><?= strtoupper($c['type']) ?></div>
-            <div class="contact-name"><?= htmlspecialchars($c['name']) ?></div>
-            <div class="contact-meta">
-              <?php if($c['contact_number']): ?><span><i class="fas fa-phone" style="color:var(--red-light);margin-right:4px;"></i><?= htmlspecialchars($c['contact_number']) ?></span>&ensp;<?php endif; ?>
-              <?php if($c['contact_email']): ?><span><i class="fas fa-envelope" style="margin-right:4px;color:var(--muted);"></i><?= htmlspecialchars($c['contact_email']) ?></span>&ensp;<?php endif; ?>
-              <?php if($c['city']): ?><span><i class="fas fa-location-dot" style="margin-right:4px;color:var(--muted);"></i><?= htmlspecialchars($c['barangay'] ? $c['barangay'].', '.$c['city'] : $c['city']) ?></span><?php endif; ?>
-            </div>
-          </div>
-        </div>
-      <?php endforeach; endif; ?>
-    </div>
+ <?php elseif($view === 'contacts'): ?>
+ <?php
+ $ctype_colors = ['lgu'=>['#f0f7ff','#0a3d62'],'hospital'=>['#ecfdf5','#059669'],'traffic'=>['#fffbeb','#d97706'],'barangay'=>['#f0fdf4','#166534'],'police'=>['#eff6ff','#2563eb'],'fire'=>['#fef2f2','#dc2626'],'other'=>['#f5f3ff','#7c3aed']];
+ $ctype_icons = ['lgu'=>'fa-landmark','hospital'=>'fa-hospital','traffic'=>'fa-traffic-light','barangay'=>'fa-house-flag','police'=>'fa-shield','fire'=>'fa-fire-extinguisher','other'=>'fa-phone'];
+ ?>
+ <div class="card">
+ <div class="card-header"><h3><i class="fas fa-address-book" style="color:var(--red-light);margin-right:6px;"></i>Emergency Contacts</h3><span class="card-meta"><?= count($contacts) ?> contacts</span></div>
+ <?php if(empty($contacts)): ?><div class="empty"><i class="fas fa-address-book"></i><p>No emergency contacts on file.</p></div>
+ <?php else: foreach($contacts as $c): $tc=$ctype_colors[$c['type']]??['#f5f3ff','#7c3aed']; $ti=$ctype_icons[$c['type']]??'fa-phone'; ?>
+ <div class="contact-row">
+ <div class="contact-icon" style="background:<?= $tc[0] ?>;color:<?= $tc[1] ?>;"><i class="fas <?= $ti ?>"></i></div>
+ <div style="flex:1;min-width:0;">
+ <div class="contact-type-badge" style="background:<?= $tc[0] ?>;color:<?= $tc[1] ?>;"><?= strtoupper($c['type']) ?></div>
+ <div class="contact-name"><?= htmlspecialchars($c['name']) ?></div>
+ <div class="contact-meta">
+ <?php if($c['contact_number']): ?><span><i class="fas fa-phone" style="color:var(--red-light);margin-right:4px;"></i><?= htmlspecialchars($c['contact_number']) ?></span>&ensp;<?php endif; ?>
+ <?php if($c['contact_email']): ?><span><i class="fas fa-envelope" style="margin-right:4px;color:var(--muted);"></i><?= htmlspecialchars($c['contact_email']) ?></span>&ensp;<?php endif; ?>
+ <?php if($c['city']): ?><span><i class="fas fa-location-dot" style="margin-right:4px;color:var(--muted);"></i><?= htmlspecialchars($c['barangay'] ? $c['barangay'].', '.$c['city'] : $c['city']) ?></span><?php endif; ?>
+ </div>
+ </div>
+ </div>
+ <?php endforeach; endif; ?>
+ </div>
 
-  <?php elseif($view === 'profile'): ?>
-    <?php list($msg_type,$msg_text) = $profile_msg ? explode(':',$profile_msg,2) : ['','']; ?>
-    <style>
-    .resp-profile-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
-    .rpf-group label{display:block;font-size:0.78rem;font-weight:700;color:#374151;margin-bottom:5px;text-transform:uppercase;letter-spacing:0.5px;}
-    .rpf-group input{width:100%;padding:10px 13px;border:1.5px solid var(--border);border-radius:9px;font-size:0.9rem;font-family:'Inter',sans-serif;outline:none;background:#fafafa;color:var(--text);transition:all 0.18s;}
-    .rpf-group input:focus{border-color:#fca5a5;background:#fff;box-shadow:0 0 0 3px rgba(220,38,38,0.08);}
-    .rpf-group input[readonly]{background:#f3f4f6;color:var(--muted);cursor:not-allowed;}
-    .rpf-divider{margin:20px 0 16px;padding-bottom:10px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;}
-    .rpf-divider h4{font-size:0.82rem;font-weight:700;color:var(--red-dark);text-transform:uppercase;letter-spacing:1px;}
-    .btn-rpf-save{background:linear-gradient(135deg,#991b1b,#7f1d1d);color:#fff;border:none;padding:11px 26px;border-radius:10px;font-size:0.9rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;display:inline-flex;align-items:center;gap:8px;transition:all 0.2s;}
-    .btn-rpf-save:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(153,27,27,0.35);}
-    .rpf-toast{padding:11px 16px;border-radius:9px;font-size:0.84rem;font-weight:600;margin-bottom:18px;display:flex;align-items:center;gap:9px;}
-    .rpf-toast.success{background:#f0fdf4;color:#166534;border:1px solid #bbf7d0;}
-    .rpf-toast.error{background:#fef2f2;color:#991b1b;border:1px solid #fecaca;}
-    </style>
-    <div style="display:grid;grid-template-columns:300px 1fr;gap:18px;align-items:start;">
-      <!-- Identity card -->
-      <div class="card" style="padding:22px;text-align:center;">
-        <div style="width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,#991b1b,#450a0a);display:flex;align-items:center;justify-content:center;font-size:1.5rem;font-weight:800;color:#fca5a5;margin:0 auto 12px;border:3px solid rgba(239,68,68,0.35);"><?= strtoupper(substr($fname,0,1)) ?></div>
-        <div style="font-size:1.05rem;font-weight:800;"><?= htmlspecialchars($fname) ?></div>
-        <div style="font-size:0.8rem;color:var(--muted);margin-top:3px;"><?= htmlspecialchars($pos?:'First Responder') ?></div>
-        <div style="margin-top:10px;padding:7px 12px;border-radius:8px;font-size:0.78rem;font-weight:800;letter-spacing:1px;color:#fff;background:<?= $unit_color ?>;"><?= htmlspecialchars($rtype) ?></div>
-        <div style="margin-top:8px;font-size:0.8rem;color:var(--muted);font-weight:600;"><?= htmlspecialchars($unit?:'Unit not set') ?></div>
-        <?php if($area): ?><div style="margin-top:6px;font-size:0.78rem;color:var(--muted);"><i class="fas fa-location-dot" style="margin-right:3px;"></i><?= htmlspecialchars($area) ?></div><?php endif; ?>
-        <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border);display:grid;grid-template-columns:1fr 1fr;gap:8px;text-align:center;">
-          <div style="background:#fef2f2;border-radius:8px;padding:10px;"><div style="font-size:1.2rem;font-weight:800;color:#dc2626;"><?= $danger_count ?></div><div style="font-size:0.68rem;color:var(--muted);font-weight:600;">Dangerous</div></div>
-          <div style="background:#fffbeb;border-radius:8px;padding:10px;"><div style="font-size:1.2rem;font-weight:800;color:#d97706;"><?= $my_count ?></div><div style="font-size:0.68rem;color:var(--muted);font-weight:600;">My Active</div></div>
-        </div>
-      </div>
-      <!-- Edit form -->
-      <div class="card" style="padding:22px;">
-        <?php if($msg_text): ?><div class="rpf-toast <?= $msg_type ?>"><i class="fas fa-<?= $msg_type==='success'?'circle-check':'circle-xmark' ?>"></i><?= htmlspecialchars($msg_text) ?></div><?php endif; ?>
-        <form method="POST" action="responder.php?view=profile">
-          <input type="hidden" name="save_profile" value="1">
-          <div class="rpf-divider"><h4><i class="fas fa-user" style="margin-right:6px;"></i>Personal Info</h4></div>
-          <div class="resp-profile-grid" style="margin-bottom:14px;">
-            <div class="rpf-group"><label>First Name</label><input type="text" name="first_name" value="<?= htmlspecialchars($fname) ?>" required></div>
-            <div class="rpf-group"><label>Last Name</label><input type="text" name="last_name" value="<?= htmlspecialchars($prof['last_name']??'') ?>" required></div>
-          </div>
-          <div class="rpf-group" style="margin-bottom:14px;"><label>Phone Number</label><input type="tel" name="phone" value="<?= htmlspecialchars($p_phone_val) ?>" placeholder="+63 9XX XXX XXXX" style="max-width:280px;"></div>
-          <div class="rpf-divider"><h4><i class="fas fa-truck-medical" style="margin-right:6px;"></i>Unit Info</h4></div>
-          <div class="resp-profile-grid" style="margin-bottom:14px;">
-            <div class="rpf-group"><label>Unit / Agency Name</label><input type="text" name="org_name" value="<?= htmlspecialchars($unit) ?>" placeholder="e.g. BFP Imus Station 1"></div>
-            <div class="rpf-group"><label>Position / Rank</label><input type="text" name="position" value="<?= htmlspecialchars($pos) ?>" placeholder="e.g. Fire Officer I"></div>
-          </div>
-          <div class="rpf-group" style="margin-bottom:14px;"><label>Coverage Area</label><input type="text" name="municipality" value="<?= htmlspecialchars($area) ?>" placeholder="City/Municipality" style="max-width:280px;"></div>
-          <div class="rpf-divider"><h4><i class="fas fa-lock" style="margin-right:6px;"></i>Change Password <span style="font-weight:400;color:var(--muted);text-transform:none;letter-spacing:0;">(leave blank to keep current)</span></h4></div>
-          <div class="resp-profile-grid" style="margin-bottom:20px;">
-            <div class="rpf-group"><label>New Password</label><input type="password" name="new_password" placeholder="Min. 8 characters" autocomplete="new-password"></div>
-            <div class="rpf-group"><label>Confirm Password</label><input type="password" name="confirm_password" placeholder="Re-enter password" autocomplete="new-password"></div>
-          </div>
-          <button type="submit" class="btn-rpf-save"><i class="fas fa-floppy-disk"></i> Save Changes</button>
-        </form>
-      </div>
-    </div>
+ <?php elseif($view === 'profile'): ?>
+ <?php list($msg_type,$msg_text) = $profile_msg ? explode(':',$profile_msg,2) : ['','']; ?>
+ <style>
+ .resp-profile-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+ .rpf-group label{display:block;font-size:0.78rem;font-weight:700;color:#374151;margin-bottom:5px;text-transform:uppercase;letter-spacing:0.5px;}
+ .rpf-group input{width:100%;padding:10px 13px;border:1.5px solid var(--border);border-radius:9px;font-size:0.9rem;font-family:'Inter',sans-serif;outline:none;background:#fafafa;color:var(--text);transition:all 0.18s;}
+ .rpf-group input:focus{border-color:#fca5a5;background:#fff;box-shadow:0 0 0 3px rgba(220,38,38,0.08);}
+ .rpf-group input[readonly]{background:#f3f4f6;color:var(--muted);cursor:not-allowed;}
+ .rpf-divider{margin:20px 0 16px;padding-bottom:10px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;}
+ .rpf-divider h4{font-size:0.82rem;font-weight:700;color:var(--red-dark);text-transform:uppercase;letter-spacing:1px;}
+ .btn-rpf-save{background:linear-gradient(135deg,#991b1b,#7f1d1d);color:#fff;border:none;padding:11px 26px;border-radius:10px;font-size:0.9rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;display:inline-flex;align-items:center;gap:8px;transition:all 0.2s;}
+ .btn-rpf-save:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(153,27,27,0.35);}
+ .rpf-toast{padding:11px 16px;border-radius:9px;font-size:0.84rem;font-weight:600;margin-bottom:18px;display:flex;align-items:center;gap:9px;}
+ .rpf-toast.success{background:#f0fdf4;color:#166534;border:1px solid #bbf7d0;}
+ .rpf-toast.error{background:#fef2f2;color:#991b1b;border:1px solid #fecaca;}
+ </style>
+ <div style="display:grid;grid-template-columns:300px 1fr;gap:18px;align-items:start;">
+ <!-- Identity card -->
+ <div class="card" style="padding:22px;text-align:center;">
+ <div style="width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,#991b1b,#450a0a);display:flex;align-items:center;justify-content:center;font-size:1.5rem;font-weight:800;color:#fca5a5;margin:0 auto 12px;border:3px solid rgba(239,68,68,0.35);"><?= strtoupper(substr($fname,0,1)) ?></div>
+ <div style="font-size:1.05rem;font-weight:800;"><?= htmlspecialchars($fname) ?></div>
+ <div style="font-size:0.8rem;color:var(--muted);margin-top:3px;"><?= htmlspecialchars($pos?:'First Responder') ?></div>
+ <div style="margin-top:10px;padding:7px 12px;border-radius:8px;font-size:0.78rem;font-weight:800;letter-spacing:1px;color:#fff;background:<?= $unit_color ?>;"><?= htmlspecialchars($rtype) ?></div>
+ <div style="margin-top:8px;font-size:0.8rem;color:var(--muted);font-weight:600;"><?= htmlspecialchars($unit?:'Unit not set') ?></div>
+ <?php if($area): ?><div style="margin-top:6px;font-size:0.78rem;color:var(--muted);"><i class="fas fa-location-dot" style="margin-right:3px;"></i><?= htmlspecialchars($area) ?></div><?php endif; ?>
+ <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border);display:grid;grid-template-columns:1fr 1fr;gap:8px;text-align:center;">
+ <div style="background:#fef2f2;border-radius:8px;padding:10px;"><div style="font-size:1.2rem;font-weight:800;color:#dc2626;"><?= $danger_count ?></div><div style="font-size:0.68rem;color:var(--muted);font-weight:600;">Dangerous</div></div>
+ <div style="background:#fffbeb;border-radius:8px;padding:10px;"><div style="font-size:1.2rem;font-weight:800;color:#d97706;"><?= $my_count ?></div><div style="font-size:0.68rem;color:var(--muted);font-weight:600;">My Active</div></div>
+ </div>
+ </div>
+ <!-- Edit form -->
+ <div class="card" style="padding:22px;">
+ <?php if($msg_text): ?><div class="rpf-toast <?= $msg_type ?>"><i class="fas fa-<?= $msg_type==='success'?'circle-check':'circle-xmark' ?>"></i><?= htmlspecialchars($msg_text) ?></div><?php endif; ?>
+ <form method="POST" action="responder.php?view=profile">
+ <input type="hidden" name="save_profile" value="1">
+ <div class="rpf-divider"><h4><i class="fas fa-user" style="margin-right:6px;"></i>Personal Info</h4></div>
+ <div class="resp-profile-grid" style="margin-bottom:14px;">
+ <div class="rpf-group"><label>First Name</label><input type="text" name="first_name" value="<?= htmlspecialchars($fname) ?>" required></div>
+ <div class="rpf-group"><label>Last Name</label><input type="text" name="last_name" value="<?= htmlspecialchars($prof['last_name']??'') ?>" required></div>
+ </div>
+ <div class="rpf-group" style="margin-bottom:14px;"><label>Phone Number</label><input type="tel" name="phone" value="<?= htmlspecialchars($p_phone_val) ?>" placeholder="+63 9XX XXX XXXX" style="max-width:280px;"></div>
+ <div class="rpf-divider"><h4><i class="fas fa-truck-medical" style="margin-right:6px;"></i>Unit Info</h4></div>
+ <div class="resp-profile-grid" style="margin-bottom:14px;">
+ <div class="rpf-group"><label>Unit / Agency Name</label><input type="text" name="org_name" value="<?= htmlspecialchars($unit) ?>" placeholder="e.g. BFP Imus Station 1"></div>
+ <div class="rpf-group"><label>Position / Rank</label><input type="text" name="position" value="<?= htmlspecialchars($pos) ?>" placeholder="e.g. Fire Officer I"></div>
+ </div>
+ <div class="rpf-group" style="margin-bottom:14px;"><label>Coverage Area</label><input type="text" name="municipality" value="<?= htmlspecialchars($area) ?>" placeholder="City/Municipality" style="max-width:280px;"></div>
+ <div class="rpf-divider"><h4><i class="fas fa-lock" style="margin-right:6px;"></i>Change Password <span style="font-weight:400;color:var(--muted);text-transform:none;letter-spacing:0;">(leave blank to keep current)</span></h4></div>
+ <div class="resp-profile-grid" style="margin-bottom:20px;">
+ <div class="rpf-group"><label>New Password</label><input type="password" name="new_password" placeholder="Min. 8 characters" autocomplete="new-password"></div>
+ <div class="rpf-group"><label>Confirm Password</label><input type="password" name="confirm_password" placeholder="Re-enter password" autocomplete="new-password"></div>
+ </div>
+ <button type="submit" class="btn-rpf-save"><i class="fas fa-floppy-disk"></i> Save Changes</button>
+ </form>
+ </div>
+ </div>
 
-  <?php elseif($view === 'map'): ?>
-    <style>
-    .resp-map-wrap{position:relative;border-radius:14px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,0.1);border:1px solid var(--border);}
-    #respMap{height:510px;width:100%;background:#f5e8e8;}
-    .resp-map-controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:12px 16px;background:#fff;border-bottom:1px solid var(--border);border-radius:14px 14px 0 0;}
-    .resp-map-controls h3{font-size:0.88rem;font-weight:700;margin-right:4px;}
-    .resp-filter-btn{padding:5px 13px;border-radius:20px;border:1.5px solid var(--border);background:#fff;font-size:0.76rem;font-weight:700;cursor:pointer;transition:all 0.18s;font-family:'Inter',sans-serif;}
-    .resp-filter-btn.active-all{background:#991b1b;color:#fff;border-color:#991b1b;}
-    .resp-filter-btn.active-dangerous{background:#dc2626;color:#fff;border-color:#dc2626;}
-    .resp-filter-btn.active-caution{background:#d97706;color:#fff;border-color:#d97706;}
-    .resp-map-legend{position:absolute;bottom:16px;right:12px;background:rgba(255,255,255,0.95);border-radius:10px;padding:11px 14px;font-size:0.76rem;box-shadow:0 2px 12px rgba(0,0,0,0.15);z-index:400;border:1px solid var(--border);}
-    .resp-legend-row{display:flex;align-items:center;gap:7px;margin-bottom:5px;font-weight:600;}
-    .resp-legend-row:last-child{margin-bottom:0;}
-    .resp-legend-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0;}
-    .resp-map-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px;}
-    </style>
-    <?php
-    $rm_danger  = count(array_filter($map_reports, function($r){ return $r['status']==='dangerous'; }));
-    $rm_caution = count(array_filter($map_reports, function($r){ return $r['status']==='caution'; }));
-    ?>
-    <div class="resp-map-stats">
-      <div class="stat-card"><div class="stat-icon" style="background:#fef2f2;color:#dc2626;"><i class="fas fa-map-pin"></i></div><div><div class="stat-num"><?= count($map_reports) ?></div><div class="stat-lbl">Mapped Active</div></div></div>
-      <div class="stat-card"><div class="stat-icon" style="background:#fef2f2;color:#dc2626;"><i class="fas fa-triangle-exclamation"></i></div><div><div class="stat-num"><?= $rm_danger ?></div><div class="stat-lbl">Dangerous</div></div></div>
-      <div class="stat-card"><div class="stat-icon" style="background:#fffbeb;color:#d97706;"><i class="fas fa-circle-exclamation"></i></div><div><div class="stat-num"><?= $rm_caution ?></div><div class="stat-lbl">Caution</div></div></div>
-    </div>
-    <div class="resp-map-wrap">
-      <div class="resp-map-controls">
-        <h3><i class="fas fa-map-location-dot" style="color:var(--red-light);margin-right:6px;"></i>Active Incident Map</h3>
-        <button class="resp-filter-btn active-all" onclick="filterRespMap('all',this)">All Active</button>
-        <button class="resp-filter-btn" onclick="filterRespMap('dangerous',this)"><i class="fas fa-circle" style="color:#dc2626;font-size:0.6rem;"></i> Dangerous</button>
-        <button class="resp-filter-btn" onclick="filterRespMap('caution',this)"><i class="fas fa-circle" style="color:#d97706;font-size:0.6rem;"></i> Caution</button>
-        <div style="margin-left:auto;font-size:0.74rem;color:var(--muted);">© OpenStreetMap</div>
-      </div>
-      <div style="position:relative;">
-        <div id="respMap"></div>
-        <div class="resp-map-legend">
-          <div class="resp-legend-row"><div class="resp-legend-dot" style="background:#dc2626;"></div>Dangerous</div>
-          <div class="resp-legend-row"><div class="resp-legend-dot" style="background:#d97706;"></div>Caution</div>
-        </div>
-      </div>
-    </div>
-    <script>
-    var respMapReports = <?= json_encode(array_map(function($r){
-      return ['id'=>(int)$r['id'],'title'=>$r['title'],'category'=>$r['category'],
-              'status'=>$r['status'],'location'=>($r['barangay']??$r['city']??''),
-              'lat'=>(float)$r['latitude'],'lng'=>(float)$r['longitude'],
-              'reporter'=>trim($r['first_name'].' '.$r['last_name']),
-              'date'=>date('M j, g:ia',strtotime($r['created_at'])),
-              'desc'=>$r['description']??''];
-    }, $map_reports)) ?>;
-    var rmc = {dangerous:'#dc2626',caution:'#d97706'};
-    var catL = {crime:'Crime',accident:'Accident',flooding:'Flooding',fire:'Fire',health:'Health',infrastructure:'Infrastructure',other:'Other'};
-    function makeRespIcon(color){
-      return L.divIcon({className:'',html:'<div style="width:15px;height:15px;border-radius:50%;background:'+color+';border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.4);"></div>',iconSize:[15,15],iconAnchor:[7,7]});
-    }
-    var rmap = L.map('respMap');
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(rmap);
-    var rMarkers=[];
-    respMapReports.forEach(function(r){
-      var c=rmc[r.status]||'#888';
-      var m=L.marker([r.lat,r.lng],{icon:makeRespIcon(c)});
-      m.rd=r;
-      m.bindPopup(
-        '<div style="min-width:200px;font-family:Inter,sans-serif;">'+
-        '<div style="font-weight:800;font-size:0.9rem;margin-bottom:6px;">'+r.title+'</div>'+
-        '<div style="margin-bottom:7px;"><span style="background:'+(r.status==='dangerous'?'#fef2f2':'#fffbeb')+';color:'+(r.status==='dangerous'?'#991b1b':'#92400e')+';padding:2px 9px;border-radius:20px;font-size:0.72rem;font-weight:700;">'+(r.status.charAt(0).toUpperCase()+r.status.slice(1))+'</span></div>'+
-        (r.location?'<div style="font-size:0.78rem;color:#6b7280;margin-bottom:3px;"><b>Location:</b> '+r.location+'</div>':'')+
-        '<div style="font-size:0.78rem;color:#6b7280;margin-bottom:3px;"><b>Category:</b> '+(catL[r.category]||r.category)+'</div>'+
-        '<div style="font-size:0.78rem;color:#6b7280;margin-bottom:6px;"><b>Reported:</b> '+r.date+'</div>'+
-        (r.desc?'<div style="font-size:0.78rem;color:#374151;margin-bottom:8px;">'+r.desc.substring(0,100)+(r.desc.length>100?'…':'')+'</div>':'')+
-        '<a href="javascript:void(0)" onclick="closeNavModal();openNavigation('+r.lat+','+r.lng+',\''+r.id+'\')" style="font-size:0.8rem;color:#2563eb;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:4px;"><i class="fas fa-directions"></i> Get Directions</a>'+
-        '</div>',{maxWidth:240}
-      );
-      m.addTo(rmap); rMarkers.push(m);
-    });
-    if(rMarkers.length>0){var rg=L.featureGroup(rMarkers);rmap.fitBounds(rg.getBounds().pad(0.2));}
-    else{rmap.setView([14.5995,120.9842],12);}
-    function filterRespMap(s,btn){
-      document.querySelectorAll('.resp-filter-btn').forEach(function(b){b.className='resp-filter-btn';});
-      btn.classList.add('active-'+s);
-      rMarkers.forEach(function(m){
-        var show=(s==='all'||m.rd.status===s);
-        if(show){if(!rmap.hasLayer(m))m.addTo(rmap);}else{if(rmap.hasLayer(m))rmap.removeLayer(m);}
-      });
-    }
-    // Auto-refresh map every 2 minutes
-    setTimeout(function(){location.reload();},120000);
-    </script>
+ <?php elseif($view === 'map'): ?>
+ <style>
+ .resp-map-wrap{position:relative;border-radius:14px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,0.1);border:1px solid var(--border);}
+ #respMap{height:510px;width:100%;background:#f5e8e8;}
+ .resp-map-controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:12px 16px;background:#fff;border-bottom:1px solid var(--border);border-radius:14px 14px 0 0;}
+ .resp-map-controls h3{font-size:0.88rem;font-weight:700;margin-right:4px;}
+ .resp-filter-btn{padding:5px 13px;border-radius:20px;border:1.5px solid var(--border);background:#fff;font-size:0.76rem;font-weight:700;cursor:pointer;transition:all 0.18s;font-family:'Inter',sans-serif;}
+ .resp-filter-btn.active-all{background:#991b1b;color:#fff;border-color:#991b1b;}
+ .resp-filter-btn.active-dangerous{background:#dc2626;color:#fff;border-color:#dc2626;}
+ .resp-filter-btn.active-caution{background:#d97706;color:#fff;border-color:#d97706;}
+ .resp-map-legend{position:absolute;bottom:16px;right:12px;background:rgba(255,255,255,0.95);border-radius:10px;padding:11px 14px;font-size:0.76rem;box-shadow:0 2px 12px rgba(0,0,0,0.15);z-index:400;border:1px solid var(--border);}
+ .resp-legend-row{display:flex;align-items:center;gap:7px;margin-bottom:5px;font-weight:600;}
+ .resp-legend-row:last-child{margin-bottom:0;}
+ .resp-legend-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0;}
+ .resp-map-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px;}
+ </style>
+ <?php
+ $rm_danger = count(array_filter($map_reports, function($r){ return $r['status']==='dangerous'; }));
+ $rm_caution = count(array_filter($map_reports, function($r){ return $r['status']==='caution'; }));
+ ?>
+ <div class="resp-map-stats">
+ <div class="stat-card"><div class="stat-icon" style="background:#fef2f2;color:#dc2626;"><i class="fas fa-map-pin"></i></div><div><div class="stat-num"><?= count($map_reports) ?></div><div class="stat-lbl">Mapped Active</div></div></div>
+ <div class="stat-card"><div class="stat-icon" style="background:#fef2f2;color:#dc2626;"><i class="fas fa-triangle-exclamation"></i></div><div><div class="stat-num"><?= $rm_danger ?></div><div class="stat-lbl">Dangerous</div></div></div>
+ <div class="stat-card"><div class="stat-icon" style="background:#fffbeb;color:#d97706;"><i class="fas fa-circle-exclamation"></i></div><div><div class="stat-num"><?= $rm_caution ?></div><div class="stat-lbl">Caution</div></div></div>
+ </div>
+ <div class="resp-map-wrap">
+ <div class="resp-map-controls">
+ <h3><i class="fas fa-map-location-dot" style="color:var(--red-light);margin-right:6px;"></i>Active Incident Map</h3>
+ <button class="resp-filter-btn active-all" onclick="filterRespMap('all',this)">All Active</button>
+ <button class="resp-filter-btn" onclick="filterRespMap('dangerous',this)"><i class="fas fa-circle" style="color:#dc2626;font-size:0.6rem;"></i> Dangerous</button>
+ <button class="resp-filter-btn" onclick="filterRespMap('caution',this)"><i class="fas fa-circle" style="color:#d97706;font-size:0.6rem;"></i> Caution</button>
+ <div style="margin-left:auto;font-size:0.74rem;color:var(--muted);">© OpenStreetMap</div>
+ </div>
+ <div style="position:relative;">
+ <div id="respMap"></div>
+ <div class="resp-map-legend">
+ <div class="resp-legend-row"><div class="resp-legend-dot" style="background:#dc2626;"></div>Dangerous</div>
+ <div class="resp-legend-row"><div class="resp-legend-dot" style="background:#d97706;"></div>Caution</div>
+ </div>
+ </div>
+ </div>
+ <script>
+ var respMapReports = <?= json_encode(array_map(function($r){
+ return ['id'=>(int)$r['id'],'title'=>$r['title'],'category'=>$r['category'],
+ 'status'=>$r['status'],'location'=>($r['barangay']??$r['city']??''),
+ 'lat'=>(float)$r['latitude'],'lng'=>(float)$r['longitude'],
+ 'reporter'=>trim($r['first_name'].' '.$r['last_name']),
+ 'date'=>date('M j, g:ia',strtotime($r['created_at'])),
+ 'desc'=>$r['description']??''];
+ }, $map_reports)) ?>;
+ var rmc = {dangerous:'#dc2626',caution:'#d97706'};
+ var catL = {crime:'Crime',accident:'Accident',flooding:'Flooding',fire:'Fire',health:'Health',infrastructure:'Infrastructure',other:'Other'};
+ function makeRespIcon(color){
+ return L.divIcon({className:'',html:'<div style="width:15px;height:15px;border-radius:50%;background:'+color+';border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.4);"></div>',iconSize:[15,15],iconAnchor:[7,7]});
+ }
+ var rmap = L.map('respMap');
+ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(rmap);
+ var rMarkers=[];
+ respMapReports.forEach(function(r){
+ var c=rmc[r.status]||'#888';
+ var m=L.marker([r.lat,r.lng],{icon:makeRespIcon(c)});
+ m.rd=r;
+ m.bindPopup(
+ '<div style="min-width:200px;font-family:Inter,sans-serif;">'+
+ '<div style="font-weight:800;font-size:0.9rem;margin-bottom:6px;">'+r.title+'</div>'+
+ '<div style="margin-bottom:7px;"><span style="background:'+(r.status==='dangerous'?'#fef2f2':'#fffbeb')+';color:'+(r.status==='dangerous'?'#991b1b':'#92400e')+';padding:2px 9px;border-radius:20px;font-size:0.72rem;font-weight:700;">'+(r.status.charAt(0).toUpperCase()+r.status.slice(1))+'</span></div>'+
+ (r.location?'<div style="font-size:0.78rem;color:#6b7280;margin-bottom:3px;"><b>Location:</b> '+r.location+'</div>':'')+
+ '<div style="font-size:0.78rem;color:#6b7280;margin-bottom:3px;"><b>Category:</b> '+(catL[r.category]||r.category)+'</div>'+
+ '<div style="font-size:0.78rem;color:#6b7280;margin-bottom:6px;"><b>Reported:</b> '+r.date+'</div>'+
+ (r.desc?'<div style="font-size:0.78rem;color:#374151;margin-bottom:8px;">'+r.desc.substring(0,100)+(r.desc.length>100?'…':'')+'</div>':'')+
+ '<a href="javascript:void(0)" onclick="closeNavModal();openNavigation('+r.lat+','+r.lng+',\''+r.id+'\')" style="font-size:0.8rem;color:#2563eb;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:4px;"><i class="fas fa-directions"></i> Get Directions</a>'+
+ '</div>',{maxWidth:240}
+ );
+ m.addTo(rmap); rMarkers.push(m);
+ });
+ if(rMarkers.length>0){var rg=L.featureGroup(rMarkers);rmap.fitBounds(rg.getBounds().pad(0.2));}
+ else{rmap.setView([14.5995,120.9842],12);}
+ function filterRespMap(s,btn){
+ document.querySelectorAll('.resp-filter-btn').forEach(function(b){b.className='resp-filter-btn';});
+ btn.classList.add('active-'+s);
+ rMarkers.forEach(function(m){
+ var show=(s==='all'||m.rd.status===s);
+ if(show){if(!rmap.hasLayer(m))m.addTo(rmap);}else{if(rmap.hasLayer(m))rmap.removeLayer(m);}
+ });
+ }
+ // Auto-refresh map every 2 minutes
+ setTimeout(function(){location.reload();},120000);
+ </script>
 
-  <?php else: ?>
-    <div class="card"><div class="coming-soon"><i class="fas <?= $nav_items[$view]['icon'] ?? 'fa-gear' ?>"></i><h3><?= htmlspecialchars($page_titles[$view] ?? ucfirst($view)) ?></h3><p>This section is under development.</p></div></div>
-  <?php endif; ?>
+ <?php else: ?>
+ <div class="card"><div class="coming-soon"><i class="fas <?= $nav_items[$view]['icon'] ?? 'fa-gear' ?>"></i><h3><?= htmlspecialchars($page_titles[$view] ?? ucfirst($view)) ?></h3><p>This section is under development.</p></div></div>
+ <?php endif; ?>
 
-  </div>
+ </div>
 </div>
 
 <script>
@@ -845,230 +845,230 @@ function closeSidebar(){document.getElementById('sidebar').classList.remove('ope
 var responderGps = { lat: <?= $saved_gps_lat !== null ? json_encode((float)$saved_gps_lat) : 'null' ?>, lng: <?= $saved_gps_lng !== null ? json_encode((float)$saved_gps_lng) : 'null' ?> };
 
 function setGpsText(lat, lng, saved){
-  var coords = document.getElementById('gpsCoords');
-  var status = document.getElementById('gpsStatus');
-  if(coords){ coords.textContent = Number(lat).toFixed(6) + ', ' + Number(lng).toFixed(6); }
-  if(status){ status.textContent = saved ? 'Saved on profile' : 'Current location'; }
+ var coords = document.getElementById('gpsCoords');
+ var status = document.getElementById('gpsStatus');
+ if(coords){ coords.textContent = Number(lat).toFixed(6) + ', ' + Number(lng).toFixed(6); }
+ if(status){ status.textContent = saved ? 'Saved on profile' : 'Current location'; }
 }
 
 async function captureMyGps(btn){
-  if(!navigator.geolocation){ alert('Geolocation is not supported on this device.'); return; }
-  var prev = btn.innerHTML; btn.disabled = true; btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Locating';
-  navigator.geolocation.getCurrentPosition(async function(pos){
-    var lat = pos.coords.latitude;
-    var lng = pos.coords.longitude;
-    responderGps.lat = lat; responderGps.lng = lng;
-    setGpsText(lat, lng, false);
-    try{
-      var fd = new FormData(); fd.append('action','save_gps'); fd.append('latitude', lat); fd.append('longitude', lng);
-      var res = await fetch('../api/reports.php', {method:'POST', body:fd});
-      var data = await res.json();
-      if(data.status==='success'){
-        responderGps.lat = data.lat; responderGps.lng = data.lng;
-        setGpsText(data.lat, data.lng, true);
-        alert('GPS location saved.');
-      } else {
-        alert(data.message || 'Could not save GPS location.');
-      }
-    } catch(e){
-      alert('Could not save GPS location.');
-    }
-    btn.disabled = false; btn.innerHTML = prev;
-  }, function(){
-    btn.disabled = false; btn.innerHTML = prev;
-    alert('Location access was denied.');
-  }, {enableHighAccuracy:true, timeout:12000, maximumAge:0});
+ if(!navigator.geolocation){ alert('Geolocation is not supported on this device.'); return; }
+ var prev = btn.innerHTML; btn.disabled = true; btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Locating';
+ navigator.geolocation.getCurrentPosition(async function(pos){
+ var lat = pos.coords.latitude;
+ var lng = pos.coords.longitude;
+ responderGps.lat = lat; responderGps.lng = lng;
+ setGpsText(lat, lng, false);
+ try{
+ var fd = new FormData(); fd.append('action','save_gps'); fd.append('latitude', lat); fd.append('longitude', lng);
+ var res = await fetch('../api/reports.php', {method:'POST', body:fd});
+ var data = await res.json();
+ if(data.status==='success'){
+ responderGps.lat = data.lat; responderGps.lng = data.lng;
+ setGpsText(data.lat, data.lng, true);
+ alert('GPS location saved.');
+ } else {
+ alert(data.message || 'Could not save GPS location.');
+ }
+ } catch(e){
+ alert('Could not save GPS location.');
+ }
+ btn.disabled = false; btn.innerHTML = prev;
+ }, function(){
+ btn.disabled = false; btn.innerHTML = prev;
+ alert('Location access was denied.');
+ }, {enableHighAccuracy:true, timeout:12000, maximumAge:0});
 }
 
 var navMap=null, navLayer=null, navWatchId=null, navHeading=0, navOrigMarker=null, navArrived=false, navDest=null, navReportId=null;
 var ARRIVAL_RADIUS_M = 40;
 function ensureNavMap(){
-  if(!navMap){
-    navMap = L.map('navMapInner',{zoomControl:false,attributionControl:true});
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'\u00a9 OpenStreetMap'}).addTo(navMap);
-  }
-  if(navLayer){ navMap.removeLayer(navLayer); navLayer=null; }
-  document.getElementById('navMapInner').style.transform='translate(-50%,-50%) rotate(0deg)';
+ if(!navMap){
+ navMap = L.map('navMapInner',{zoomControl:false,attributionControl:true});
+ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'\u00a9 OpenStreetMap'}).addTo(navMap);
+ }
+ if(navLayer){ navMap.removeLayer(navLayer); navLayer=null; }
+ document.getElementById('navMapInner').style.transform='translate(-50%,-50%) rotate(0deg)';
 }
 function haversine(lat1,lon1,lat2,lon2){
-  var R=6371000, toRad=function(d){return d*Math.PI/180;};
-  var dLat=toRad(lat2-lat1), dLon=toRad(lon2-lon1);
-  var a=Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLon/2)*Math.sin(dLon/2);
-  return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+ var R=6371000, toRad=function(d){return d*Math.PI/180;};
+ var dLat=toRad(lat2-lat1), dLon=toRad(lon2-lon1);
+ var a=Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLon/2)*Math.sin(dLon/2);
+ return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
 }
 function stopNavTracking(){
-  if(navWatchId!==null){ navigator.geolocation.clearWatch(navWatchId); navWatchId=null; }
-  window.removeEventListener('deviceorientationabsolute',onNavOrientation);
-  window.removeEventListener('deviceorientation',onNavOrientation);
-  if(navOrigMarker && navMap){ navMap.removeLayer(navOrigMarker); }
-  navDest=null; navReportId=null; navArrived=false; navOrigMarker=null;
+ if(navWatchId!==null){ navigator.geolocation.clearWatch(navWatchId); navWatchId=null; }
+ window.removeEventListener('deviceorientationabsolute',onNavOrientation);
+ window.removeEventListener('deviceorientation',onNavOrientation);
+ if(navOrigMarker && navMap){ navMap.removeLayer(navOrigMarker); }
+ navDest=null; navReportId=null; navArrived=false; navOrigMarker=null;
 }
 function closeNavModal(){
-  document.getElementById('navModalOverlay').classList.remove('show');
-  stopNavTracking();
+ document.getElementById('navModalOverlay').classList.remove('show');
+ stopNavTracking();
 }
 function onNavOrientation(e){
-  var heading = (typeof e.webkitCompassHeading !== 'undefined') ? e.webkitCompassHeading : (e.alpha!==null ? (360-e.alpha) : null);
-  if(heading===null) return;
-  navHeading = heading;
-  applyNavRotation();
+ var heading = (typeof e.webkitCompassHeading !== 'undefined') ? e.webkitCompassHeading : (e.alpha!==null ? (360-e.alpha) : null);
+ if(heading===null) return;
+ navHeading = heading;
+ applyNavRotation();
 }
 function applyNavRotation(){
-  document.getElementById('navMapInner').style.transform='translate(-50%,-50%) rotate('+(-navHeading)+'deg)';
-  if(navOrigMarker){
-    var el=navOrigMarker.getElement();
-    if(el){ var arrow=el.querySelector('.nav-arrow-icon'); if(arrow) arrow.style.transform='rotate('+navHeading+'deg)'; }
-  }
+ document.getElementById('navMapInner').style.transform='translate(-50%,-50%) rotate('+(-navHeading)+'deg)';
+ if(navOrigMarker){
+ var el=navOrigMarker.getElement();
+ if(el){ var arrow=el.querySelector('.nav-arrow-icon'); if(arrow) arrow.style.transform='rotate('+navHeading+'deg)'; }
+ }
 }
 function viewOnMap(lat, lng, title){
-  if(lat===null||lng===null||typeof lat==='undefined'||typeof lng==='undefined'||lat===''||lng===''){
-    alert('This report has no GPS coordinates.'); return;
-  }
-  document.getElementById('navModalTitle').textContent = title || 'Incident Location';
-  document.getElementById('navModalInfo').innerHTML = '';
-  document.getElementById('navModalOverlay').classList.add('show');
-  setTimeout(function(){
-    ensureNavMap();
-    navMap.setView([lat,lng],16);
-    navLayer = L.marker([lat,lng]).addTo(navMap);
-    navMap.invalidateSize();
-  },50);
+ if(lat===null||lng===null||typeof lat==='undefined'||typeof lng==='undefined'||lat===''||lng===''){
+ alert('This report has no GPS coordinates.'); return;
+ }
+ document.getElementById('navModalTitle').textContent = title || 'Incident Location';
+ document.getElementById('navModalInfo').innerHTML = '';
+ document.getElementById('navModalOverlay').classList.add('show');
+ setTimeout(function(){
+ ensureNavMap();
+ navMap.setView([lat,lng],16);
+ navLayer = L.marker([lat,lng]).addTo(navMap);
+ navMap.invalidateSize();
+ },50);
 }
 async function markArrivedSilently(reportId){
-  try{
-    var fd=new FormData(); fd.append('action','resolve_report'); fd.append('report_id',reportId);
-    await fetch('../api/reports.php',{method:'POST',body:fd});
-  }catch(e){}
+ try{
+ var fd=new FormData(); fd.append('action','resolve_report'); fd.append('report_id',reportId);
+ await fetch('../api/reports.php',{method:'POST',body:fd});
+ }catch(e){}
 }
 function drawNavRoute(group){
-  var url = 'https://router.project-osrm.org/route/v1/driving/'+responderGps.lng+','+responderGps.lat+';'+navDest.lng+','+navDest.lat+'?overview=full&geometries=geojson';
-  fetch(url).then(function(r){return r.json();}).then(function(data){
-    if(navLayer) navMap.removeLayer(navLayer);
-    if(data.routes && data.routes[0]){
-      var route = data.routes[0];
-      var coords = route.geometry.coordinates.map(function(c){return [c[1],c[0]];});
-      var line = L.polyline(coords,{color:'#2563eb',weight:5,opacity:0.8}).addTo(navMap);
-      navLayer = L.featureGroup(group.concat([line]));
-      var km = (route.distance/1000).toFixed(1);
-      var mins = Math.round(route.duration/60);
-      document.getElementById('navModalInfo').innerHTML = '<span><b>Distance:</b> '+km+' km</span><span><b>ETA:</b> '+mins+' min</span>';
-    } else {
-      navLayer = L.featureGroup(group);
-      document.getElementById('navModalInfo').innerHTML = '<span>Route unavailable.</span>';
-    }
-  }).catch(function(){
-    navLayer = L.featureGroup(group);
-    document.getElementById('navModalInfo').innerHTML = '<span>Route unavailable.</span>';
-  });
+ var url = 'https://router.project-osrm.org/route/v1/driving/'+responderGps.lng+','+responderGps.lat+';'+navDest.lng+','+navDest.lat+'?overview=full&geometries=geojson';
+ fetch(url).then(function(r){return r.json();}).then(function(data){
+ if(navLayer) navMap.removeLayer(navLayer);
+ if(data.routes && data.routes[0]){
+ var route = data.routes[0];
+ var coords = route.geometry.coordinates.map(function(c){return [c[1],c[0]];});
+ var line = L.polyline(coords,{color:'#2563eb',weight:5,opacity:0.8}).addTo(navMap);
+ navLayer = L.featureGroup(group.concat([line]));
+ var km = (route.distance/1000).toFixed(1);
+ var mins = Math.round(route.duration/60);
+ document.getElementById('navModalInfo').innerHTML = '<span><b>Distance:</b> '+km+' km</span><span><b>ETA:</b> '+mins+' min</span>';
+ } else {
+ navLayer = L.featureGroup(group);
+ document.getElementById('navModalInfo').innerHTML = '<span>Route unavailable.</span>';
+ }
+ }).catch(function(){
+ navLayer = L.featureGroup(group);
+ document.getElementById('navModalInfo').innerHTML = '<span>Route unavailable.</span>';
+ });
 }
 function onNavPosition(pos){
-  var lat=pos.coords.latitude, lng=pos.coords.longitude;
-  responderGps.lat=lat; responderGps.lng=lng;
-  if(pos.coords.heading!==null && !isNaN(pos.coords.heading)){
-    navHeading = pos.coords.heading;
-    applyNavRotation();
-  }
-  var arrowIcon = L.divIcon({className:'',html:'<div class="nav-arrow-icon" style="transform:rotate('+navHeading+'deg);"></div>',iconSize:[18,22],iconAnchor:[9,16]});
-  if(!navOrigMarker){
-    navOrigMarker = L.marker([lat,lng],{icon:arrowIcon}).addTo(navMap).bindPopup('Your Location');
-  } else {
-    navOrigMarker.setLatLng([lat,lng]);
-    navOrigMarker.setIcon(arrowIcon);
-  }
-  navMap.setView([lat,lng], navMap.getZoom() < 15 ? 16 : navMap.getZoom());
-  if(navDest){
-    var destMarker = navOrigMarker._destRef;
-    var group=[navOrigMarker]; if(destMarker) group.push(destMarker);
-    drawNavRoute(group);
-    var dist = haversine(lat,lng,navDest.lat,navDest.lng);
-    if(dist <= ARRIVAL_RADIUS_M && !navArrived){
-      navArrived = true;
-      document.getElementById('navModalInfo').innerHTML = '<span class="nav-arrived"><i class="fas fa-flag-checkered"></i> You have arrived! Marking as responded\u2026</span>';
-      var rid = navReportId;
-      stopNavTracking();
-      markArrivedSilently(rid).then(function(){
-        setTimeout(function(){ closeNavModal(); location.reload(); }, 1200);
-      });
-    }
-  }
+ var lat=pos.coords.latitude, lng=pos.coords.longitude;
+ responderGps.lat=lat; responderGps.lng=lng;
+ if(pos.coords.heading!==null && !isNaN(pos.coords.heading)){
+ navHeading = pos.coords.heading;
+ applyNavRotation();
+ }
+ var arrowIcon = L.divIcon({className:'',html:'<div class="nav-arrow-icon" style="transform:rotate('+navHeading+'deg);"></div>',iconSize:[18,22],iconAnchor:[9,16]});
+ if(!navOrigMarker){
+ navOrigMarker = L.marker([lat,lng],{icon:arrowIcon}).addTo(navMap).bindPopup('Your Location');
+ } else {
+ navOrigMarker.setLatLng([lat,lng]);
+ navOrigMarker.setIcon(arrowIcon);
+ }
+ navMap.setView([lat,lng], navMap.getZoom() < 15 ? 16 : navMap.getZoom());
+ if(navDest){
+ var destMarker = navOrigMarker._destRef;
+ var group=[navOrigMarker]; if(destMarker) group.push(destMarker);
+ drawNavRoute(group);
+ var dist = haversine(lat,lng,navDest.lat,navDest.lng);
+ if(dist <= ARRIVAL_RADIUS_M && !navArrived){
+ navArrived = true;
+ document.getElementById('navModalInfo').innerHTML = '<span class="nav-arrived"><i class="fas fa-flag-checkered"></i> You have arrived! Marking as responded\u2026</span>';
+ var rid = navReportId;
+ stopNavTracking();
+ markArrivedSilently(rid).then(function(){
+ setTimeout(function(){ closeNavModal(); location.reload(); }, 1200);
+ });
+ }
+ }
 }
 function openNavigation(lat, lng, reportId){
-  if(lat === null || lng === null || typeof lat === 'undefined' || typeof lng === 'undefined' || lat === '' || lng === ''){
-    alert('This report has no GPS coordinates.');
-    return;
-  }
-  document.getElementById('navModalTitle').textContent = 'Navigate to Incident';
-  document.getElementById('navModalInfo').innerHTML = '<span>Loading route\u2026</span>';
-  document.getElementById('navModalOverlay').classList.add('show');
-  navDest = {lat:lat,lng:lng}; navReportId = reportId; navArrived=false;
-  setTimeout(function(){
-    ensureNavMap();
-    navMap.setView([lat,lng],15);
-    var destIcon = L.divIcon({className:'',html:'<div style="width:16px;height:16px;border-radius:50%;background:#dc2626;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.4);"></div>',iconSize:[16,16],iconAnchor:[8,8]});
-    var destMarker = L.marker([lat,lng],{icon:destIcon}).addTo(navMap).bindPopup('Incident Location');
-    var group = [destMarker];
-    navLayer = L.featureGroup(group);
-    navMap.fitBounds(navLayer.getBounds().pad(0.25));
-    navMap.invalidateSize();
+ if(lat === null || lng === null || typeof lat === 'undefined' || typeof lng === 'undefined' || lat === '' || lng === ''){
+ alert('This report has no GPS coordinates.');
+ return;
+ }
+ document.getElementById('navModalTitle').textContent = 'Navigate to Incident';
+ document.getElementById('navModalInfo').innerHTML = '<span>Loading route\u2026</span>';
+ document.getElementById('navModalOverlay').classList.add('show');
+ navDest = {lat:lat,lng:lng}; navReportId = reportId; navArrived=false;
+ setTimeout(function(){
+ ensureNavMap();
+ navMap.setView([lat,lng],15);
+ var destIcon = L.divIcon({className:'',html:'<div style="width:16px;height:16px;border-radius:50%;background:#dc2626;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.4);"></div>',iconSize:[16,16],iconAnchor:[8,8]});
+ var destMarker = L.marker([lat,lng],{icon:destIcon}).addTo(navMap).bindPopup('Incident Location');
+ var group = [destMarker];
+ navLayer = L.featureGroup(group);
+ navMap.fitBounds(navLayer.getBounds().pad(0.25));
+ navMap.invalidateSize();
 
-    if(!navigator.geolocation){
-      document.getElementById('navModalInfo').innerHTML = '<span>Geolocation not supported on this device.</span>';
-      return;
-    }
-    if(window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission === 'function'){
-      DeviceOrientationEvent.requestPermission().then(function(state){
-        if(state==='granted') window.addEventListener('deviceorientation', onNavOrientation, true);
-      }).catch(function(){});
-    } else {
-      window.addEventListener('deviceorientationabsolute', onNavOrientation, true);
-      window.addEventListener('deviceorientation', onNavOrientation, true);
-    }
-    navWatchId = navigator.geolocation.watchPosition(function(pos){
-      onNavPosition(pos);
-      if(navOrigMarker) navOrigMarker._destRef = destMarker;
-    }, function(){
-      document.getElementById('navModalInfo').innerHTML = '<span>Location access denied \u2014 showing static route.</span>';
-      if(responderGps.lat!==null && responderGps.lng!==null){
-        var origIcon = L.divIcon({className:'',html:'<div style="width:16px;height:16px;border-radius:50%;background:#2563eb;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.4);"></div>',iconSize:[16,16],iconAnchor:[8,8]});
-        var origMarker = L.marker([responderGps.lat,responderGps.lng],{icon:origIcon}).addTo(navMap).bindPopup('Your Location');
-        drawNavRoute([destMarker, origMarker]);
-      }
-    }, {enableHighAccuracy:true, timeout:15000, maximumAge:5000});
-  },50);
+ if(!navigator.geolocation){
+ document.getElementById('navModalInfo').innerHTML = '<span>Geolocation not supported on this device.</span>';
+ return;
+ }
+ if(window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission === 'function'){
+ DeviceOrientationEvent.requestPermission().then(function(state){
+ if(state==='granted') window.addEventListener('deviceorientation', onNavOrientation, true);
+ }).catch(function(){});
+ } else {
+ window.addEventListener('deviceorientationabsolute', onNavOrientation, true);
+ window.addEventListener('deviceorientation', onNavOrientation, true);
+ }
+ navWatchId = navigator.geolocation.watchPosition(function(pos){
+ onNavPosition(pos);
+ if(navOrigMarker) navOrigMarker._destRef = destMarker;
+ }, function(){
+ document.getElementById('navModalInfo').innerHTML = '<span>Location access denied \u2014 showing static route.</span>';
+ if(responderGps.lat!==null && responderGps.lng!==null){
+ var origIcon = L.divIcon({className:'',html:'<div style="width:16px;height:16px;border-radius:50%;background:#2563eb;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.4);"></div>',iconSize:[16,16],iconAnchor:[8,8]});
+ var origMarker = L.marker([responderGps.lat,responderGps.lng],{icon:origIcon}).addTo(navMap).bindPopup('Your Location');
+ drawNavRoute([destMarker, origMarker]);
+ }
+ }, {enableHighAccuracy:true, timeout:15000, maximumAge:5000});
+ },50);
 }
 
 async function acceptAssignment(id,btn){
-  btn.disabled=true; btn.innerHTML='<i class="fas fa-spinner fa-spin"></i>';
-  try{
-    var fd=new FormData(); fd.append('action','accept_assignment'); fd.append('report_id',id);
-    var res=await fetch('../api/reports.php',{method:'POST',body:fd});
-    var data=await res.json();
-    if(data.status==='success') location.reload();
-    else{ alert(data.message||'Error.'); btn.disabled=false; btn.innerHTML='<i class="fas fa-hand-pointer"></i> Accept Assignment'; }
-  }catch(e){ btn.disabled=false; btn.innerHTML='<i class="fas fa-hand-pointer"></i> Accept Assignment'; }
+ btn.disabled=true; btn.innerHTML='<i class="fas fa-spinner fa-spin"></i>';
+ try{
+ var fd=new FormData(); fd.append('action','accept_assignment'); fd.append('report_id',id);
+ var res=await fetch('../api/reports.php',{method:'POST',body:fd});
+ var data=await res.json();
+ if(data.status==='success') location.reload();
+ else{ alert(data.message||'Error.'); btn.disabled=false; btn.innerHTML='<i class="fas fa-hand-pointer"></i> Accept Assignment'; }
+ }catch(e){ btn.disabled=false; btn.innerHTML='<i class="fas fa-hand-pointer"></i> Accept Assignment'; }
 }
 
 async function markResponded(id,btn){
-  btn.disabled=true; btn.innerHTML='<i class="fas fa-spinner fa-spin"></i>';
-  try{
-    var fd=new FormData(); fd.append('action','report_responded'); fd.append('report_id',id);
-    var res=await fetch('../api/reports.php',{method:'POST',body:fd});
-    var data=await res.json();
-    if(data.status==='success') location.reload();
-    else{ alert(data.message||'Error.'); btn.disabled=false; btn.innerHTML='<i class="fas fa-bell"></i> Responded to LGU'; }
-  }catch(e){ btn.disabled=false; btn.innerHTML='<i class="fas fa-bell"></i> Responded to LGU'; }
+ btn.disabled=true; btn.innerHTML='<i class="fas fa-spinner fa-spin"></i>';
+ try{
+ var fd=new FormData(); fd.append('action','report_responded'); fd.append('report_id',id);
+ var res=await fetch('../api/reports.php',{method:'POST',body:fd});
+ var data=await res.json();
+ if(data.status==='success') location.reload();
+ else{ alert(data.message||'Error.'); btn.disabled=false; btn.innerHTML='<i class="fas fa-bell"></i> Responded to LGU'; }
+ }catch(e){ btn.disabled=false; btn.innerHTML='<i class="fas fa-bell"></i> Responded to LGU'; }
 }
 
 async function resolve(id,btn){
-  if(!confirm('Mark this incident as resolved?')) return;
-  btn.disabled=true; btn.innerHTML='<i class="fas fa-spinner fa-spin"></i>';
-  try{
-    var fd=new FormData(); fd.append('action','resolve_report'); fd.append('report_id',id);
-    var res=await fetch('../api/reports.php',{method:'POST',body:fd});
-    var data=await res.json();
-    if(data.status==='success') location.reload();
-    else{ alert(data.message||'Error resolving report.'); btn.disabled=false; btn.innerHTML='<i class="fas fa-circle-check"></i> Resolve'; }
-  }catch(e){ btn.disabled=false; btn.innerHTML='<i class="fas fa-circle-check"></i> Resolve'; }
+ if(!confirm('Mark this incident as resolved?')) return;
+ btn.disabled=true; btn.innerHTML='<i class="fas fa-spinner fa-spin"></i>';
+ try{
+ var fd=new FormData(); fd.append('action','resolve_report'); fd.append('report_id',id);
+ var res=await fetch('../api/reports.php',{method:'POST',body:fd});
+ var data=await res.json();
+ if(data.status==='success') location.reload();
+ else{ alert(data.message||'Error resolving report.'); btn.disabled=false; btn.innerHTML='<i class="fas fa-circle-check"></i> Resolve'; }
+ }catch(e){ btn.disabled=false; btn.innerHTML='<i class="fas fa-circle-check"></i> Resolve'; }
 }
 
 
@@ -1077,179 +1077,179 @@ var currentRespFilter = 'all';
 var currentRespQuery = '';
 
 function applyRespFilters(){
-  var rows = document.querySelectorAll('.incident-row');
-  rows.forEach(function(row){
-    var st = row.getAttribute('data-status') || '';
-    var text = row.textContent.toLowerCase();
-    var matchStatus = (currentRespFilter === 'all' || st === currentRespFilter);
-    var matchQuery = (!currentRespQuery || text.indexOf(currentRespQuery) !== -1);
-    row.style.display = (matchStatus && matchQuery) ? '' : 'none';
-  });
+ var rows = document.querySelectorAll('.incident-row');
+ rows.forEach(function(row){
+ var st = row.getAttribute('data-status') || '';
+ var text = row.textContent.toLowerCase();
+ var matchStatus = (currentRespFilter === 'all' || st === currentRespFilter);
+ var matchQuery = (!currentRespQuery || text.indexOf(currentRespQuery) !== -1);
+ row.style.display = (matchStatus && matchQuery) ? '' : 'none';
+ });
 }
 
 function filterRespIncidents(status, btn){
-  currentRespFilter = status;
-  btn.parentElement.querySelectorAll('.filter-btn').forEach(function(b){ b.className = 'filter-btn'; });
-  btn.classList.add('active-' + status);
-  applyRespFilters();
+ currentRespFilter = status;
+ btn.parentElement.querySelectorAll('.filter-btn').forEach(function(b){ b.className = 'filter-btn'; });
+ btn.classList.add('active-' + status);
+ applyRespFilters();
 }
 
 function searchRespIncidents(query){
-  currentRespQuery = query.toLowerCase().trim();
-  applyRespFilters();
+ currentRespQuery = query.toLowerCase().trim();
+ applyRespFilters();
 }
 
 function changeDutyStatus(val){
-  localStorage.setItem('sentri_resp_duty_status', val);
-  updateDutyStatusUI(val);
+ localStorage.setItem('sentri_resp_duty_status', val);
+ updateDutyStatusUI(val);
 }
 
 function updateDutyStatusUI(val){
-  var dot = document.getElementById('dutyStatusDot');
-  var sel = document.getElementById('dutyStatusSel');
-  if(!dot || !sel) return;
-  sel.value = val;
-  if(val === 'available'){
-    dot.style.background = '#10b981';
-    dot.style.boxShadow = '0 0 6px #10b981';
-  } else if(val === 'en_route'){
-    dot.style.background = '#f59e0b';
-    dot.style.boxShadow = '0 0 6px #f59e0b';
-  } else if(val === 'on_scene'){
-    dot.style.background = '#ef4444';
-    dot.style.boxShadow = '0 0 6px #ef4444';
-  } else {
-    dot.style.background = '#94a3b8';
-    dot.style.boxShadow = 'none';
-  }
+ var dot = document.getElementById('dutyStatusDot');
+ var sel = document.getElementById('dutyStatusSel');
+ if(!dot || !sel) return;
+ sel.value = val;
+ if(val === 'available'){
+ dot.style.background = '#10b981';
+ dot.style.boxShadow = '0 0 6px #10b981';
+ } else if(val === 'en_route'){
+ dot.style.background = '#f59e0b';
+ dot.style.boxShadow = '0 0 6px #f59e0b';
+ } else if(val === 'on_scene'){
+ dot.style.background = '#ef4444';
+ dot.style.boxShadow = '0 0 6px #ef4444';
+ } else {
+ dot.style.background = '#94a3b8';
+ dot.style.boxShadow = 'none';
+ }
 }
 
 document.addEventListener('DOMContentLoaded', function(){
-  var saved = localStorage.getItem('sentri_resp_duty_status') || 'available';
-  updateDutyStatusUI(saved);
+ var saved = localStorage.getItem('sentri_resp_duty_status') || 'available';
+ updateDutyStatusUI(saved);
 });
 
 function playDispatchTone(){
-  try {
-    var AudioCtx = window.AudioContext || window.webkitAudioContext;
-    if(!AudioCtx) return;
-    var ctx = new AudioCtx();
-    var osc = ctx.createOscillator();
-    var gain = ctx.createGain();
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    
-    var now = ctx.currentTime;
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(750, now);
-    osc.frequency.setValueAtTime(950, now + 0.15);
-    osc.frequency.setValueAtTime(750, now + 0.3);
-    osc.frequency.setValueAtTime(950, now + 0.45);
-    
-    gain.gain.setValueAtTime(0.25, now);
-    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.65);
-    
-    osc.start(now);
-    osc.stop(now + 0.65);
-    
-    var btn = document.getElementById('btnTestTone');
-    if(btn){
-      var orig = btn.innerHTML;
-      btn.innerHTML = '<i class="fas fa-wave-square"></i> Playing...';
-      setTimeout(function(){ btn.innerHTML = orig; }, 700);
-    }
-  } catch(e) {
-    console.warn('AudioContext alert tone notice:', e);
-  }
+ try {
+ var AudioCtx = window.AudioContext || window.webkitAudioContext;
+ if(!AudioCtx) return;
+ var ctx = new AudioCtx();
+ var osc = ctx.createOscillator();
+ var gain = ctx.createGain();
+ osc.connect(gain);
+ gain.connect(ctx.destination);
+ 
+ var now = ctx.currentTime;
+ osc.type = 'sine';
+ osc.frequency.setValueAtTime(750, now);
+ osc.frequency.setValueAtTime(950, now + 0.15);
+ osc.frequency.setValueAtTime(750, now + 0.3);
+ osc.frequency.setValueAtTime(950, now + 0.45);
+ 
+ gain.gain.setValueAtTime(0.25, now);
+ gain.gain.exponentialRampToValueAtTime(0.01, now + 0.65);
+ 
+ osc.start(now);
+ osc.stop(now + 0.65);
+ 
+ var btn = document.getElementById('btnTestTone');
+ if(btn){
+ var orig = btn.innerHTML;
+ btn.innerHTML = '<i class="fas fa-wave-square"></i> Playing...';
+ setTimeout(function(){ btn.innerHTML = orig; }, 700);
+ }
+ } catch(e) {
+ console.warn('AudioContext alert tone notice:', e);
+ }
 }
 
 function logSitrep(id, status, btn){
-  var badge = document.getElementById('sitrep_badge_' + id);
-  if(badge){
-    badge.innerHTML = '<i class="fas fa-check-circle"></i> ' + status + ' (' + new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) + ')';
-    badge.style.display = 'inline-flex';
-  }
-  btn.style.background = '#dcfce7';
-  btn.style.borderColor = '#86efac';
-  btn.style.color = '#166534';
-  showRespToast('SITREP updated: ' + status, 'success');
+ var badge = document.getElementById('sitrep_badge_' + id);
+ if(badge){
+ badge.innerHTML = '<i class="fas fa-check-circle"></i> ' + status + ' (' + new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) + ')';
+ badge.style.display = 'inline-flex';
+ }
+ btn.style.background = '#dcfce7';
+ btn.style.borderColor = '#86efac';
+ btn.style.color = '#166534';
+ showRespToast('SITREP updated: ' + status, 'success');
 }
 
 var triageCounts = {};
 function adjustTriage(id, cat, delta){
-  var key = id + '_' + cat;
-  triageCounts[key] = Math.max(0, (triageCounts[key] || 0) + delta);
-  var el = document.getElementById('triage_' + cat + '_' + id);
-  if(el) el.textContent = triageCounts[key];
-  var catName = cat === 'g' ? 'Minor (Green)' : 'Critical (Red)';
-  showRespToast('START Triage updated: ' + catName + ' = ' + triageCounts[key], 'success');
+ var key = id + '_' + cat;
+ triageCounts[key] = Math.max(0, (triageCounts[key] || 0) + delta);
+ var el = document.getElementById('triage_' + cat + '_' + id);
+ if(el) el.textContent = triageCounts[key];
+ var catName = cat === 'g' ? 'Minor (Green)' : 'Critical (Red)';
+ showRespToast('START Triage updated: ' + catName + ' = ' + triageCounts[key], 'success');
 }
 
 function requestBackup(id, unitName){
-  showRespToast('Emergency request dispatched for: ' + unitName + ' to Scene #' + id, 'success');
+ showRespToast('Emergency request dispatched for: ' + unitName + ' to Scene #' + id, 'success');
 }
 
 function showRespToast(msg, type){
-  var tc = document.getElementById('toastContainer');
-  if(!tc) return;
-  var t = document.createElement('div');
-  t.className = 'toast toast-' + (type || 'info');
-  var icon = type === 'success' ? 'fa-circle-check' : (type === 'error' ? 'fa-triangle-exclamation' : 'fa-circle-info');
-  t.innerHTML = '<i class="fas ' + icon + '"></i><span>' + msg + '</span>';
-  tc.appendChild(t);
-  setTimeout(function(){
-    t.style.opacity = '0';
-    t.style.transition = 'opacity 0.3s';
-    setTimeout(function(){ t.remove(); }, 300);
-  }, 3500);
+ var tc = document.getElementById('toastContainer');
+ if(!tc) return;
+ var t = document.createElement('div');
+ t.className = 'toast toast-' + (type || 'info');
+ var icon = type === 'success' ? 'fa-circle-check' : (type === 'error' ? 'fa-triangle-exclamation' : 'fa-circle-info');
+ t.innerHTML = '<i class="fas ' + icon + '"></i><span>' + msg + '</span>';
+ tc.appendChild(t);
+ setTimeout(function(){
+ t.style.opacity = '0';
+ t.style.transition = 'opacity 0.3s';
+ setTimeout(function(){ t.remove(); }, 300);
+ }, 3500);
 }
 
 function openSafetyCheckinModal(){
-  document.getElementById('safetyCheckinModal').classList.add('show');
+ document.getElementById('safetyCheckinModal').classList.add('show');
 }
 function closeSafetyCheckinModal(){
-  document.getElementById('safetyCheckinModal').classList.remove('show');
+ document.getElementById('safetyCheckinModal').classList.remove('show');
 }
 function submitSafetyCheckin(){
-  closeSafetyCheckinModal();
-  showRespToast('Field personnel safety telemetry logged: SCBA OK, Gas normal, Vitals stable.', 'success');
+ closeSafetyCheckinModal();
+ showRespToast('Field personnel safety telemetry logged: SCBA OK, Gas normal, Vitals stable.', 'success');
 }
 
 function openHazmatModal(){
-  document.getElementById('hazmatModal').classList.add('show');
+ document.getElementById('hazmatModal').classList.add('show');
 }
 function closeHazmatModal(){
-  document.getElementById('hazmatModal').classList.remove('show');
+ document.getElementById('hazmatModal').classList.remove('show');
 }
 
 function filterHazmatList(q){
-  q = (q || '').toLowerCase();
-  document.querySelectorAll('.hazmat-item-card').forEach(card=>{
-    const txt = card.textContent.toLowerCase();
-    if(!q || txt.includes(q)){
-      card.style.display = 'block';
-    } else {
-      card.style.display = 'none';
-    }
-  });
+ q = (q || '').toLowerCase();
+ document.querySelectorAll('.hazmat-item-card').forEach(card=>{
+ const txt = card.textContent.toLowerCase();
+ if(!q || txt.includes(q)){
+ card.style.display = 'block';
+ } else {
+ card.style.display = 'none';
+ }
+ });
 }
 
 function copyHazmatGuide(code, btn){
-  if(navigator.clipboard && navigator.clipboard.writeText){
-    navigator.clipboard.writeText(code).then(()=>{
-      const orig = btn.innerHTML;
-      btn.innerHTML = '<i class="fas fa-check"></i> Copied';
-      btn.style.background = '#059669';
-      btn.style.color = '#fff';
-      setTimeout(()=>{
-        btn.innerHTML = orig;
-        btn.style.background = '';
-        btn.style.color = '';
-      }, 1500);
-    });
-  } else {
-    prompt('ERG Guide Protocol:', code);
-  }
+ if(navigator.clipboard && navigator.clipboard.writeText){
+ navigator.clipboard.writeText(code).then(()=>{
+ const orig = btn.innerHTML;
+ btn.innerHTML = '<i class="fas fa-check"></i> Copied';
+ btn.style.background = '#059669';
+ btn.style.color = '#fff';
+ setTimeout(()=>{
+ btn.innerHTML = orig;
+ btn.style.background = '';
+ btn.style.color = '';
+ }, 1500);
+ });
+ } else {
+ prompt('ERG Guide Protocol:', code);
+ }
 }
 
 // Auto-refresh queue every 90 seconds
@@ -1260,142 +1260,142 @@ setTimeout(function(){location.reload();}, 90000);
 
 <!-- ── TACTICAL HAZMAT & CHEMICAL EMERGENCY RESPONSE GUIDE (ERG) MODAL ── -->
 <div class="nav-modal-overlay" id="hazmatModal" onclick="if(event.target===this)closeHazmatModal()">
-  <div class="nav-modal" style="max-width:680px;max-height:86vh;display:flex;flex-direction:column;overflow:hidden;">
-    <div class="nav-modal-head" style="flex-shrink:0;">
-      <h3 style="color:#b45309;"><i class="fas fa-biohazard" style="margin-right:6px;color:#d97706;"></i>HAZMAT & Tactical Chemical Emergency Guide (ERG 2024)</h3>
-      <button class="safety-modal-close" style="background:none;border:none;font-size:1.1rem;cursor:pointer;color:var(--muted);" onclick="closeHazmatModal()"><i class="fas fa-times"></i></button>
-    </div>
-    <div style="padding:16px 20px;flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:12px;">
-      <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:10px 14px;font-size:0.78rem;color:#92400e;flex-shrink:0;">
-        <strong>Tactical Standard Operating Directive:</strong> Scene perimeter isolation distances, primary extinguishing agents, and respiratory protection per PH-BFP & DOT Emergency Response Guidebook.
-      </div>
+ <div class="nav-modal" style="max-width:680px;max-height:86vh;display:flex;flex-direction:column;overflow:hidden;">
+ <div class="nav-modal-head" style="flex-shrink:0;">
+ <h3 style="color:#b45309;"><i class="fas fa-biohazard" style="margin-right:6px;color:#d97706;"></i>HAZMAT & Tactical Chemical Emergency Guide (ERG 2024)</h3>
+ <button class="safety-modal-close" style="background:none;border:none;font-size:1.1rem;cursor:pointer;color:var(--muted);" onclick="closeHazmatModal()"><i class="fas fa-times"></i></button>
+ </div>
+ <div style="padding:16px 20px;flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:12px;">
+ <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:10px 14px;font-size:0.78rem;color:#92400e;flex-shrink:0;">
+ <strong>Tactical Standard Operating Directive:</strong> Scene perimeter isolation distances, primary extinguishing agents, and respiratory protection per PH-BFP & DOT Emergency Response Guidebook.
+ </div>
 
-      <!-- Search Input -->
-      <div style="flex-shrink:0;">
-        <input type="text" oninput="filterHazmatList(this.value)" placeholder="Search substance name, UN number, or guide code (e.g. LPG, battery, acid)..." style="width:100%;padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:0.8rem;outline:none;box-sizing:border-box;">
-      </div>
+ <!-- Search Input -->
+ <div style="flex-shrink:0;">
+ <input type="text" oninput="filterHazmatList(this.value)" placeholder="Search substance name, UN number, or guide code (e.g. LPG, battery, acid)..." style="width:100%;padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:0.8rem;outline:none;box-sizing:border-box;">
+ </div>
 
-      <!-- HAZMAT Substance Cards Grid -->
-      <div id="hazmatListContainer" style="display:flex;flex-direction:column;gap:10px;">
-        
-        <!-- LPG -->
-        <div class="hazmat-item-card" style="background:#fff;border:1px solid var(--border);border-left:4px solid #ef4444;border-radius:8px;padding:12px 14px;">
-          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px;">
-            <div>
-              <strong style="font-size:0.88rem;color:var(--text);">Liquefied Petroleum Gas (LPG / Propane / Butane)</strong>
-              <div style="font-size:0.72rem;color:var(--muted);">UN 1075 &middot; ERG Guide 115 (Flammable Gases)</div>
-            </div>
-            <span style="background:#fee2e2;color:#991b1b;padding:2px 8px;border-radius:20px;font-size:0.7rem;font-weight:800;white-space:nowrap;">Flash Hazard</span>
-          </div>
-          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:6px;font-size:0.74rem;margin-top:6px;">
-            <div style="background:#f8fafc;padding:6px;border-radius:6px;"><strong>Perimeter Isolation:</strong> 100m (800m if tank is involved in fire)</div>
-            <div style="background:#f8fafc;padding:6px;border-radius:6px;"><strong>Suppression:</strong> Dry Chem / CO2 / Water fog to cool tank</div>
-            <div style="background:#f8fafc;padding:6px;border-radius:6px;"><strong>PPE Required:</strong> SCBA + Thermal Bunker Gear</div>
-          </div>
-        </div>
+ <!-- HAZMAT Substance Cards Grid -->
+ <div id="hazmatListContainer" style="display:flex;flex-direction:column;gap:10px;">
+ 
+ <!-- LPG -->
+ <div class="hazmat-item-card" style="background:#fff;border:1px solid var(--border);border-left:4px solid #ef4444;border-radius:8px;padding:12px 14px;">
+ <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px;">
+ <div>
+ <strong style="font-size:0.88rem;color:var(--text);">Liquefied Petroleum Gas (LPG / Propane / Butane)</strong>
+ <div style="font-size:0.72rem;color:var(--muted);">UN 1075 &middot; ERG Guide 115 (Flammable Gases)</div>
+ </div>
+ <span style="background:#fee2e2;color:#991b1b;padding:2px 8px;border-radius:20px;font-size:0.7rem;font-weight:800;white-space:nowrap;">Flash Hazard</span>
+ </div>
+ <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:6px;font-size:0.74rem;margin-top:6px;">
+ <div style="background:#f8fafc;padding:6px;border-radius:6px;"><strong>Perimeter Isolation:</strong> 100m (800m if tank is involved in fire)</div>
+ <div style="background:#f8fafc;padding:6px;border-radius:6px;"><strong>Suppression:</strong> Dry Chem / CO2 / Water fog to cool tank</div>
+ <div style="background:#f8fafc;padding:6px;border-radius:6px;"><strong>PPE Required:</strong> SCBA + Thermal Bunker Gear</div>
+ </div>
+ </div>
 
-        <!-- Lithium Battery -->
-        <div class="hazmat-item-card" style="background:#fff;border:1px solid var(--border);border-left:4px solid #f59e0b;border-radius:8px;padding:12px 14px;">
-          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px;">
-            <div>
-              <strong style="font-size:0.88rem;color:var(--text);">Lithium-Ion Battery Thermal Runaway (EV / ESS BESS)</strong>
-              <div style="font-size:0.72rem;color:var(--muted);">UN 3480 &middot; ERG Guide 147 (Lithium Batteries / Toxic HF Gas)</div>
-            </div>
-            <span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:20px;font-size:0.7rem;font-weight:800;white-space:nowrap;">Toxic Gas / Reigniting</span>
-          </div>
-          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:6px;font-size:0.74rem;margin-top:6px;">
-            <div style="background:#f8fafc;padding:6px;border-radius:6px;"><strong>Perimeter Isolation:</strong> 50m initial scene isolation</div>
-            <div style="background:#f8fafc;padding:6px;border-radius:6px;"><strong>Suppression:</strong> Copious water deluge (>2,000 gal) for cell cooling</div>
-            <div style="background:#f8fafc;padding:6px;border-radius:6px;"><strong>PPE Required:</strong> Positive-Pressure SCBA (HF Gas Protection)</div>
-          </div>
-        </div>
+ <!-- Lithium Battery -->
+ <div class="hazmat-item-card" style="background:#fff;border:1px solid var(--border);border-left:4px solid #f59e0b;border-radius:8px;padding:12px 14px;">
+ <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px;">
+ <div>
+ <strong style="font-size:0.88rem;color:var(--text);">Lithium-Ion Battery Thermal Runaway (EV / ESS BESS)</strong>
+ <div style="font-size:0.72rem;color:var(--muted);">UN 3480 &middot; ERG Guide 147 (Lithium Batteries / Toxic HF Gas)</div>
+ </div>
+ <span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:20px;font-size:0.7rem;font-weight:800;white-space:nowrap;">Toxic Gas / Reigniting</span>
+ </div>
+ <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:6px;font-size:0.74rem;margin-top:6px;">
+ <div style="background:#f8fafc;padding:6px;border-radius:6px;"><strong>Perimeter Isolation:</strong> 50m initial scene isolation</div>
+ <div style="background:#f8fafc;padding:6px;border-radius:6px;"><strong>Suppression:</strong> Copious water deluge (>2,000 gal) for cell cooling</div>
+ <div style="background:#f8fafc;padding:6px;border-radius:6px;"><strong>PPE Required:</strong> Positive-Pressure SCBA (HF Gas Protection)</div>
+ </div>
+ </div>
 
-        <!-- Hydrochloric Acid -->
-        <div class="hazmat-item-card" style="background:#fff;border:1px solid var(--border);border-left:4px solid #8b5cf6;border-radius:8px;padding:12px 14px;">
-          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px;">
-            <div>
-              <strong style="font-size:0.88rem;color:var(--text);">Industrial Hydrochloric / Muriatic Acid Spill</strong>
-              <div style="font-size:0.72rem;color:var(--muted);">UN 1789 &middot; ERG Guide 157 (Corrosives / Toxic Vapor)</div>
-            </div>
-            <span style="background:#f3e8ff;color:#6b21a8;padding:2px 8px;border-radius:20px;font-size:0.7rem;font-weight:800;white-space:nowrap;">Corrosive Acid</span>
-          </div>
-          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:6px;font-size:0.74rem;margin-top:6px;">
-            <div style="background:#f8fafc;padding:6px;border-radius:6px;"><strong>Perimeter Isolation:</strong> 60m upwind / 300m downwind vapor</div>
-            <div style="background:#f8fafc;padding:6px;border-radius:6px;"><strong>Neutralizer:</strong> Soda Ash / Slaked Lime &middot; Do NOT spray direct water</div>
-            <div style="background:#f8fafc;padding:6px;border-radius:6px;"><strong>PPE Required:</strong> Chemical Splash Suit Level A/B</div>
-          </div>
-        </div>
+ <!-- Hydrochloric Acid -->
+ <div class="hazmat-item-card" style="background:#fff;border:1px solid var(--border);border-left:4px solid #8b5cf6;border-radius:8px;padding:12px 14px;">
+ <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px;">
+ <div>
+ <strong style="font-size:0.88rem;color:var(--text);">Industrial Hydrochloric / Muriatic Acid Spill</strong>
+ <div style="font-size:0.72rem;color:var(--muted);">UN 1789 &middot; ERG Guide 157 (Corrosives / Toxic Vapor)</div>
+ </div>
+ <span style="background:#f3e8ff;color:#6b21a8;padding:2px 8px;border-radius:20px;font-size:0.7rem;font-weight:800;white-space:nowrap;">Corrosive Acid</span>
+ </div>
+ <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:6px;font-size:0.74rem;margin-top:6px;">
+ <div style="background:#f8fafc;padding:6px;border-radius:6px;"><strong>Perimeter Isolation:</strong> 60m upwind / 300m downwind vapor</div>
+ <div style="background:#f8fafc;padding:6px;border-radius:6px;"><strong>Neutralizer:</strong> Soda Ash / Slaked Lime &middot; Do NOT spray direct water</div>
+ <div style="background:#f8fafc;padding:6px;border-radius:6px;"><strong>PPE Required:</strong> Chemical Splash Suit Level A/B</div>
+ </div>
+ </div>
 
-        <!-- Transformer Dielectric Oil -->
-        <div class="hazmat-item-card" style="background:#fff;border:1px solid var(--border);border-left:4px solid #0284c7;border-radius:8px;padding:12px 14px;">
-          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px;">
-            <div>
-              <strong style="font-size:0.88rem;color:var(--text);">High-Voltage Transformer Dielectric Oil Fire</strong>
-              <div style="font-size:0.72rem;color:var(--muted);">Class C Electrical / Class B Oil &middot; ERG Guide 128</div>
-            </div>
-            <span style="background:#e0f2fe;color:#0369a1;padding:2px 8px;border-radius:20px;font-size:0.7rem;font-weight:800;white-space:nowrap;">Electrocution Hazard</span>
-          </div>
-          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:6px;font-size:0.74rem;margin-top:6px;">
-            <div style="background:#f8fafc;padding:6px;border-radius:6px;"><strong>Perimeter Isolation:</strong> 15m minimum stand-off until Meralco lockout</div>
-            <div style="background:#f8fafc;padding:6px;border-radius:6px;"><strong>Suppression:</strong> Dry Chem / CO2 / Non-conductive fog</div>
-            <div style="background:#f8fafc;padding:6px;border-radius:6px;"><strong>Safety Note:</strong> NEVER apply solid water stream on live lines</div>
-          </div>
-        </div>
+ <!-- Transformer Dielectric Oil -->
+ <div class="hazmat-item-card" style="background:#fff;border:1px solid var(--border);border-left:4px solid #0284c7;border-radius:8px;padding:12px 14px;">
+ <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px;">
+ <div>
+ <strong style="font-size:0.88rem;color:var(--text);">High-Voltage Transformer Dielectric Oil Fire</strong>
+ <div style="font-size:0.72rem;color:var(--muted);">Class C Electrical / Class B Oil &middot; ERG Guide 128</div>
+ </div>
+ <span style="background:#e0f2fe;color:#0369a1;padding:2px 8px;border-radius:20px;font-size:0.7rem;font-weight:800;white-space:nowrap;">Electrocution Hazard</span>
+ </div>
+ <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:6px;font-size:0.74rem;margin-top:6px;">
+ <div style="background:#f8fafc;padding:6px;border-radius:6px;"><strong>Perimeter Isolation:</strong> 15m minimum stand-off until Meralco lockout</div>
+ <div style="background:#f8fafc;padding:6px;border-radius:6px;"><strong>Suppression:</strong> Dry Chem / CO2 / Non-conductive fog</div>
+ <div style="background:#f8fafc;padding:6px;border-radius:6px;"><strong>Safety Note:</strong> NEVER apply solid water stream on live lines</div>
+ </div>
+ </div>
 
-      </div>
+ </div>
 
-      <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:6px;padding-top:10px;border-top:1px solid var(--border);flex-shrink:0;">
-        <button type="button" onclick="closeHazmatModal()" style="padding:8px 16px;background:#b45309;color:#fff;border:none;border-radius:8px;font-size:0.8rem;font-weight:700;cursor:pointer;">Dismiss Guide</button>
-      </div>
-    </div>
-  </div>
+ <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:6px;padding-top:10px;border-top:1px solid var(--border);flex-shrink:0;">
+ <button type="button" onclick="closeHazmatModal()" style="padding:8px 16px;background:#b45309;color:#fff;border:none;border-radius:8px;font-size:0.8rem;font-weight:700;cursor:pointer;">Dismiss Guide</button>
+ </div>
+ </div>
+ </div>
 </div>
 
 <!-- ── RESPONDER SAFETY & HAZARD EXPOSURE CHECK-IN MODAL ── -->
 <div class="nav-modal-overlay" id="safetyCheckinModal" onclick="if(event.target===this)closeSafetyCheckinModal()">
-  <div class="nav-modal" style="max-width:540px;">
-    <div class="nav-modal-head">
-      <h3 style="color:#1d4ed8;"><i class="fas fa-shield-heart" style="margin-right:6px;color:#2563eb;"></i>Responder Safety & Hazard Exposure Check-In</h3>
-      <button class="safety-modal-close" style="background:none;border:none;font-size:1.1rem;cursor:pointer;color:var(--muted);" onclick="closeSafetyCheckinModal()"><i class="fas fa-times"></i></button>
-    </div>
-    <div style="padding:16px 20px;">
-      <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:0.78rem;color:#1e40af;">
-        <strong>Safety Verification Protocol:</strong> Confirm PPE integrity, breathing air capacity, and environmental toxic gas exposure status before scene entry.
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
-        <div style="background:#f8fafc;border:1px solid var(--border);border-radius:8px;padding:10px;">
-          <div style="font-size:0.7rem;font-weight:700;color:var(--muted);text-transform:uppercase;">SCBA Air Tank</div>
-          <div style="font-size:1.1rem;font-weight:800;color:#059669;">240 bar</div>
-          <div style="font-size:0.68rem;color:#059669;"><i class="fas fa-check-circle"></i> Optimal (>200 bar)</div>
-        </div>
-        <div style="background:#f8fafc;border:1px solid var(--border);border-radius:8px;padding:10px;">
-          <div style="font-size:0.7rem;font-weight:700;color:var(--muted);text-transform:uppercase;">Gas Sensor (CO/H2S)</div>
-          <div style="font-size:1.1rem;font-weight:800;color:#059669;">0.0 PPM</div>
-          <div style="font-size:0.68rem;color:#059669;"><i class="fas fa-shield"></i> Safe Environment</div>
-        </div>
-      </div>
-      <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;font-size:0.8rem;font-weight:600;">
-        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;"><input type="checkbox" checked> Full Turnout Gear / High-Vis PPE Secured</label>
-        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;"><input type="checkbox" checked> Tactical Radio & Channel Sync Verified</label>
-        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;"><input type="checkbox" checked> Trauma Bag & First-Aid Kit Restocked</label>
-      </div>
-      <div style="display:flex;justify-content:flex-end;gap:8px;">
-        <button type="button" onclick="closeSafetyCheckinModal()" style="padding:8px 14px;background:#f1f5f9;border:1px solid var(--border);border-radius:8px;font-size:0.8rem;font-weight:700;cursor:pointer;">Close</button>
-        <button type="button" onclick="submitSafetyCheckin()" style="padding:8px 18px;background:#1d4ed8;color:#fff;border:none;border-radius:8px;font-size:0.8rem;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px;"><i class="fas fa-check"></i> Submit Safety Check-In</button>
-      </div>
-    </div>
-  </div>
+ <div class="nav-modal" style="max-width:540px;">
+ <div class="nav-modal-head">
+ <h3 style="color:#1d4ed8;"><i class="fas fa-shield-heart" style="margin-right:6px;color:#2563eb;"></i>Responder Safety & Hazard Exposure Check-In</h3>
+ <button class="safety-modal-close" style="background:none;border:none;font-size:1.1rem;cursor:pointer;color:var(--muted);" onclick="closeSafetyCheckinModal()"><i class="fas fa-times"></i></button>
+ </div>
+ <div style="padding:16px 20px;">
+ <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:0.78rem;color:#1e40af;">
+ <strong>Safety Verification Protocol:</strong> Confirm PPE integrity, breathing air capacity, and environmental toxic gas exposure status before scene entry.
+ </div>
+ <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
+ <div style="background:#f8fafc;border:1px solid var(--border);border-radius:8px;padding:10px;">
+ <div style="font-size:0.7rem;font-weight:700;color:var(--muted);text-transform:uppercase;">SCBA Air Tank</div>
+ <div style="font-size:1.1rem;font-weight:800;color:#059669;">240 bar</div>
+ <div style="font-size:0.68rem;color:#059669;"><i class="fas fa-check-circle"></i> Optimal (>200 bar)</div>
+ </div>
+ <div style="background:#f8fafc;border:1px solid var(--border);border-radius:8px;padding:10px;">
+ <div style="font-size:0.7rem;font-weight:700;color:var(--muted);text-transform:uppercase;">Gas Sensor (CO/H2S)</div>
+ <div style="font-size:1.1rem;font-weight:800;color:#059669;">0.0 PPM</div>
+ <div style="font-size:0.68rem;color:#059669;"><i class="fas fa-shield"></i> Safe Environment</div>
+ </div>
+ </div>
+ <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;font-size:0.8rem;font-weight:600;">
+ <label style="display:flex;align-items:center;gap:8px;cursor:pointer;"><input type="checkbox" checked> Full Turnout Gear / High-Vis PPE Secured</label>
+ <label style="display:flex;align-items:center;gap:8px;cursor:pointer;"><input type="checkbox" checked> Tactical Radio & Channel Sync Verified</label>
+ <label style="display:flex;align-items:center;gap:8px;cursor:pointer;"><input type="checkbox" checked> Trauma Bag & First-Aid Kit Restocked</label>
+ </div>
+ <div style="display:flex;justify-content:flex-end;gap:8px;">
+ <button type="button" onclick="closeSafetyCheckinModal()" style="padding:8px 14px;background:#f1f5f9;border:1px solid var(--border);border-radius:8px;font-size:0.8rem;font-weight:700;cursor:pointer;">Close</button>
+ <button type="button" onclick="submitSafetyCheckin()" style="padding:8px 18px;background:#1d4ed8;color:#fff;border:none;border-radius:8px;font-size:0.8rem;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px;"><i class="fas fa-check"></i> Submit Safety Check-In</button>
+ </div>
+ </div>
+ </div>
 </div>
 
 <div class="nav-modal-overlay" id="navModalOverlay">
-  <div class="nav-modal">
-    <div class="nav-modal-head">
-      <h3 id="navModalTitle"><i class="fas fa-route" style="margin-right:6px;color:var(--red-light);"></i>Navigation</h3>
-      <button class="nav-modal-close" onclick="closeNavModal()"><i class="fas fa-times"></i></button>
-    </div>
-    <div id="navModalMap"><div id="navMapInner"></div></div>
-    <div class="nav-modal-info" id="navModalInfo"></div>
-  </div>
+ <div class="nav-modal">
+ <div class="nav-modal-head">
+ <h3 id="navModalTitle"><i class="fas fa-route" style="margin-right:6px;color:var(--red-light);"></i>Navigation</h3>
+ <button class="nav-modal-close" onclick="closeNavModal()"><i class="fas fa-times"></i></button>
+ </div>
+ <div id="navModalMap"><div id="navMapInner"></div></div>
+ <div class="nav-modal-info" id="navModalInfo"></div>
+ </div>
 </div>
 <?= csrf_script() ?>
 </body>

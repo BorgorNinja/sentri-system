@@ -1,8 +1,8 @@
 <?php
 session_start(['cookie_httponly'=>true,'cookie_samesite'=>'Lax','cookie_secure'=>!empty($_SERVER['HTTPS'])]);
 if (isset($_SESSION['user_id'])) {
-    require_once __DIR__ . '/config/auth.php';
-    redirect_to_portal();
+ require_once __DIR__ . '/config/auth.php';
+ redirect_to_portal();
 }
 ?>
 <!DOCTYPE html>
@@ -10,7 +10,7 @@ if (isset($_SESSION['user_id'])) {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>SenTri — Community Safety Incident Reporting System</title>
+<title>SenTri - Community Safety Incident Reporting System</title>
 <link rel="stylesheet" href="assets/vendor/fonts/fonts.css">
 <link rel="stylesheet" href="assets/vendor/fontawesome/css/all.min.css">
 <style>
@@ -103,153 +103,153 @@ footer{background:var(--navy-dark);color:rgba(255,255,255,0.45);padding:28px 40p
 .mobile-nav a.solid{background:var(--navy);color:#fff;border-color:var(--navy);}
 
 @media(max-width:960px){
-  nav{padding:0 20px;}.ham-nav{display:block;}.nav-links{display:none;}
-  .hero{padding:60px 24px;min-height:auto;}.hero h1{font-size:2.2rem;}
-  .portals-grid{grid-template-columns:repeat(3,1fr);}
-  .features-grid{grid-template-columns:1fr 1fr;}
-  .portals-section,.features,.cta-band{padding:56px 24px;}
+ nav{padding:0 20px;}.ham-nav{display:block;}.nav-links{display:none;}
+ .hero{padding:60px 24px;min-height:auto;}.hero h1{font-size:2.2rem;}
+ .portals-grid{grid-template-columns:repeat(3,1fr);}
+ .features-grid{grid-template-columns:1fr 1fr;}
+ .portals-section,.features,.cta-band{padding:56px 24px;}
 }
 @media(max-width:600px){
-  .hero h1{font-size:1.8rem;}.hero-stats{gap:22px;}
-  .portals-grid{grid-template-columns:repeat(2,1fr);}
-  .features-grid{grid-template-columns:1fr;}
-  footer{padding:20px;}
+ .hero h1{font-size:1.8rem;}.hero-stats{gap:22px;}
+ .portals-grid{grid-template-columns:repeat(2,1fr);}
+ .features-grid{grid-template-columns:1fr;}
+ footer{padding:20px;}
 }
 </style>
 </head>
 <body>
 
 <nav id="mainNav" style="position:relative;">
-  <a href="#" class="nav-brand">
-    <div class="nav-seal"><i class="fas fa-shield-halved"></i></div>
-    <div class="nav-brand-text"><h1>SenTri</h1><p>Community Safety Incident Reporting System</p></div>
-  </a>
-  <div class="nav-links">
-    <a href="login.php" class="btn-outline">Sign In</a>
-    <a href="signup.php" class="btn-solid">Register</a>
-  </div>
-  <button class="ham-nav" onclick="toggleNav()"><i class="fas fa-bars" id="hamIcon"></i></button>
-  <div class="mobile-nav" id="mobileNav">
-    <a href="login.php">Sign In</a>
-    <a href="signup.php" class="solid">Register</a>
-  </div>
+ <a href="#" class="nav-brand">
+ <div class="nav-seal"><i class="fas fa-shield-halved"></i></div>
+ <div class="nav-brand-text"><h1>SenTri</h1><p>Community Safety Incident Reporting System</p></div>
+ </a>
+ <div class="nav-links">
+ <a href="login.php" class="btn-outline">Sign In</a>
+ <a href="signup.php" class="btn-solid">Register</a>
+ </div>
+ <button class="ham-nav" onclick="toggleNav()"><i class="fas fa-bars" id="hamIcon"></i></button>
+ <div class="mobile-nav" id="mobileNav">
+ <a href="login.php">Sign In</a>
+ <a href="signup.php" class="solid">Register</a>
+ </div>
 </nav>
 
 <section class="hero">
-  <div class="hero-inner">
-    <div class="hero-eyebrow"><span class="dot"></span> Official Government Safety Platform</div>
-    <h1>Protecting Communities<br>Across the <span>Philippines</span></h1>
-    <p>SenTri connects citizens, barangay officials, LGU offices, and first responders in a unified incident reporting and response system.</p>
-    <div class="hero-ctas">
-      <a href="signup.php" class="cta-primary"><i class="fas fa-user-plus"></i> Register Now</a>
-      <a href="login.php" class="cta-secondary"><i class="fas fa-right-to-bracket"></i> Sign In</a>
-    </div>
-    <div class="hero-stats">
-      <div><div class="stat-num">5</div><div class="stat-lbl">Portal Types</div></div>
-      <div><div class="stat-num">24/7</div><div class="stat-lbl">Monitoring</div></div>
-      <div><div class="stat-num">PH</div><div class="stat-lbl">Nationwide</div></div>
-    </div>
-  </div>
+ <div class="hero-inner">
+ <div class="hero-eyebrow"><span class="dot"></span> Official Government Safety Platform</div>
+ <h1>Protecting Communities<br>Across the <span>Philippines</span></h1>
+ <p>SenTri connects citizens, barangay officials, LGU offices, and first responders in a unified incident reporting and response system.</p>
+ <div class="hero-ctas">
+ <a href="signup.php" class="cta-primary"><i class="fas fa-user-plus"></i> Register Now</a>
+ <a href="login.php" class="cta-secondary"><i class="fas fa-right-to-bracket"></i> Sign In</a>
+ </div>
+ <div class="hero-stats">
+ <div><div class="stat-num">5</div><div class="stat-lbl">Portal Types</div></div>
+ <div><div class="stat-num">24/7</div><div class="stat-lbl">Monitoring</div></div>
+ <div><div class="stat-num">PH</div><div class="stat-lbl">Nationwide</div></div>
+ </div>
+ </div>
 </section>
 
 <section class="portals-section">
-  <div class="section-header">
-    <p class="section-eyebrow">Who Is It For</p>
-    <h2>Five Dedicated Portals</h2>
-    <p>Each role has its own tailored interface designed for their specific responsibilities.</p>
-  </div>
-  <div class="portals-grid">
-    <div class="portal-card p-community">
-      <div class="portal-icon"><i class="fas fa-users"></i></div>
-      <div class="portal-name">Community</div>
-      <div class="portal-desc">Citizens report incidents and monitor safety in their area</div>
-    </div>
-    <div class="portal-card p-barangay">
-      <div class="portal-icon"><i class="fas fa-house-flag"></i></div>
-      <div class="portal-name">Barangay</div>
-      <div class="portal-desc">Barangay officials manage and escalate local incidents</div>
-    </div>
-    <div class="portal-card p-lgu">
-      <div class="portal-icon"><i class="fas fa-landmark"></i></div>
-      <div class="portal-name">LGU</div>
-      <div class="portal-desc">City and municipal government incident oversight and analytics</div>
-    </div>
-    <div class="portal-card p-responder">
-      <div class="portal-icon"><i class="fas fa-truck-medical"></i></div>
-      <div class="portal-name">First Responder</div>
-      <div class="portal-desc">BFP, PNP, EMS dispatch queue and assignment tracking</div>
-    </div>
-    <div class="portal-card p-admin">
-      <div class="portal-icon"><i class="fas fa-gear"></i></div>
-      <div class="portal-name">Admin</div>
-      <div class="portal-desc">System administration and official account approvals</div>
-    </div>
-  </div>
+ <div class="section-header">
+ <p class="section-eyebrow">Who Is It For</p>
+ <h2>Five Dedicated Portals</h2>
+ <p>Each role has its own tailored interface designed for their specific responsibilities.</p>
+ </div>
+ <div class="portals-grid">
+ <div class="portal-card p-community">
+ <div class="portal-icon"><i class="fas fa-users"></i></div>
+ <div class="portal-name">Community</div>
+ <div class="portal-desc">Citizens report incidents and monitor safety in their area</div>
+ </div>
+ <div class="portal-card p-barangay">
+ <div class="portal-icon"><i class="fas fa-house-flag"></i></div>
+ <div class="portal-name">Barangay</div>
+ <div class="portal-desc">Barangay officials manage and escalate local incidents</div>
+ </div>
+ <div class="portal-card p-lgu">
+ <div class="portal-icon"><i class="fas fa-landmark"></i></div>
+ <div class="portal-name">LGU</div>
+ <div class="portal-desc">City and municipal government incident oversight and analytics</div>
+ </div>
+ <div class="portal-card p-responder">
+ <div class="portal-icon"><i class="fas fa-truck-medical"></i></div>
+ <div class="portal-name">First Responder</div>
+ <div class="portal-desc">BFP, PNP, EMS dispatch queue and assignment tracking</div>
+ </div>
+ <div class="portal-card p-admin">
+ <div class="portal-icon"><i class="fas fa-gear"></i></div>
+ <div class="portal-name">Admin</div>
+ <div class="portal-desc">System administration and official account approvals</div>
+ </div>
+ </div>
 </section>
 
 <section class="features">
-  <div class="section-header">
-    <p class="section-eyebrow">Key Features</p>
-    <h2>Built for Local Government</h2>
-    <p>Purpose-built tools for the Philippine barangay and LGU system.</p>
-  </div>
-  <div class="features-grid">
-    <div class="feat-card">
-      <div class="feat-icon" style="background:#fef2f2;color:#dc2626;"><i class="fas fa-triangle-exclamation"></i></div>
-      <h3>Real-Time Incident Reporting</h3>
-      <p>Citizens submit geotagged incident reports with photos. Officials see them instantly on their portal.</p>
-    </div>
-    <div class="feat-card">
-      <div class="feat-icon" style="background:#f0f7ff;color:#0a3d62;"><i class="fas fa-map-location-dot"></i></div>
-      <h3>Barangay-Level Routing</h3>
-      <p>Reports are automatically routed to the correct barangay and LGU based on location data.</p>
-    </div>
-    <div class="feat-card">
-      <div class="feat-icon" style="background:#f0fdf4;color:#166534;"><i class="fas fa-truck-medical"></i></div>
-      <h3>Responder Dispatch Queue</h3>
-      <p>First responders see a prioritized dispatch queue and can self-assign to active incidents.</p>
-    </div>
-    <div class="feat-card">
-      <div class="feat-icon" style="background:#fffbeb;color:#d97706;"><i class="fas fa-address-book"></i></div>
-      <h3>Emergency Contact Directory</h3>
-      <p>Centralized directory of LGU offices, hospitals, BFP stations, and PNP units with auto-notify.</p>
-    </div>
-    <div class="feat-card">
-      <div class="feat-icon" style="background:#f5f3ff;color:#7c3aed;"><i class="fas fa-shield-halved"></i></div>
-      <h3>Role-Based Access Control</h3>
-      <p>Every portal is locked to its designated role. Official accounts require administrator approval.</p>
-    </div>
-    <div class="feat-card">
-      <div class="feat-icon" style="background:#f0fdf4;color:#0a3d62;"><i class="fas fa-chart-bar"></i></div>
-      <h3>LGU Analytics Dashboard</h3>
-      <p>Barangay-level incident breakdown, dangerous zone mapping, and historical trend data.</p>
-    </div>
-  </div>
+ <div class="section-header">
+ <p class="section-eyebrow">Key Features</p>
+ <h2>Built for Local Government</h2>
+ <p>Purpose-built tools for the Philippine barangay and LGU system.</p>
+ </div>
+ <div class="features-grid">
+ <div class="feat-card">
+ <div class="feat-icon" style="background:#fef2f2;color:#dc2626;"><i class="fas fa-triangle-exclamation"></i></div>
+ <h3>Real-Time Incident Reporting</h3>
+ <p>Citizens submit geotagged incident reports with photos. Officials see them instantly on their portal.</p>
+ </div>
+ <div class="feat-card">
+ <div class="feat-icon" style="background:#f0f7ff;color:#0a3d62;"><i class="fas fa-map-location-dot"></i></div>
+ <h3>Barangay-Level Routing</h3>
+ <p>Reports are automatically routed to the correct barangay and LGU based on location data.</p>
+ </div>
+ <div class="feat-card">
+ <div class="feat-icon" style="background:#f0fdf4;color:#166534;"><i class="fas fa-truck-medical"></i></div>
+ <h3>Responder Dispatch Queue</h3>
+ <p>First responders see a prioritized dispatch queue and can self-assign to active incidents.</p>
+ </div>
+ <div class="feat-card">
+ <div class="feat-icon" style="background:#fffbeb;color:#d97706;"><i class="fas fa-address-book"></i></div>
+ <h3>Emergency Contact Directory</h3>
+ <p>Centralized directory of LGU offices, hospitals, BFP stations, and PNP units with auto-notify.</p>
+ </div>
+ <div class="feat-card">
+ <div class="feat-icon" style="background:#f5f3ff;color:#7c3aed;"><i class="fas fa-shield-halved"></i></div>
+ <h3>Role-Based Access Control</h3>
+ <p>Every portal is locked to its designated role. Official accounts require administrator approval.</p>
+ </div>
+ <div class="feat-card">
+ <div class="feat-icon" style="background:#f0fdf4;color:#0a3d62;"><i class="fas fa-chart-bar"></i></div>
+ <h3>LGU Analytics Dashboard</h3>
+ <p>Barangay-level incident breakdown, dangerous zone mapping, and historical trend data.</p>
+ </div>
+ </div>
 </section>
 
 <section class="cta-band">
-  <h2>Ready to Get Started?</h2>
-  <p>Join your community or sign in to your official government portal today.</p>
-  <a href="signup.php"><i class="fas fa-shield-halved"></i> Create Your Account</a>
+ <h2>Ready to Get Started?</h2>
+ <p>Join your community or sign in to your official government portal today.</p>
+ <a href="signup.php"><i class="fas fa-shield-halved"></i> Create Your Account</a>
 </section>
 
 <footer>
-  <div class="footer-brand">
-    <div class="footer-seal"><i class="fas fa-shield-halved"></i></div>
-    <span>SenTri</span>
-  </div>
-  <p>Community Safety Incident Reporting System &copy; <?= date('Y') ?> &mdash; For official and community use only.</p>
+ <div class="footer-brand">
+ <div class="footer-seal"><i class="fas fa-shield-halved"></i></div>
+ <span>SenTri</span>
+ </div>
+ <p>Community Safety Incident Reporting System &copy; <?= date('Y') ?> - For official and community use only.</p>
 </footer>
 
 <script>
 function toggleNav(){
-  const nav=document.getElementById('mobileNav');
-  const icon=document.getElementById('hamIcon');
-  const open=nav.classList.toggle('open');
-  icon.className=open?'fas fa-xmark':'fas fa-bars';
+ const nav=document.getElementById('mobileNav');
+ const icon=document.getElementById('hamIcon');
+ const open=nav.classList.toggle('open');
+ icon.className=open?'fas fa-xmark':'fas fa-bars';
 }
 document.addEventListener('click',function(e){
-  if(!e.target.closest('#mainNav')) document.getElementById('mobileNav').classList.remove('open');
+ if(!e.target.closest('#mainNav')) document.getElementById('mobileNav').classList.remove('open');
 });
 </script>
 </body>

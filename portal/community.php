@@ -5,10 +5,10 @@ require_role(['community','user']);
 require_approved();
 require_once __DIR__ . '/../config/db.php';
 
-$uid   = (int)$_SESSION['user_id'];
+$uid = (int)$_SESSION['user_id'];
 $fname = $_SESSION['first_name'];
 $lname = $_SESSION['last_name'];
-$view  = $_GET['view'] ?? 'overview';
+$view = $_GET['view'] ?? 'overview';
 
 /* ── Profile ─────────────────────────────────────────────────── */
 $avatar_color = '#1c57b2';
@@ -27,8 +27,8 @@ if($gpsRes&&$gpsRes->num_rows>0){$gs=$conn->prepare("SELECT gps_lat,gps_lng FROM
 function cq($conn,$sql,$t='',$p=[]){$s=$conn->prepare($sql);if($t&&$p){$refs=[];foreach($p as &$v)$refs[]=&$v;array_unshift($refs,$t);call_user_func_array([$s,'bind_param'],$refs);}$s->execute();$s->bind_result($n);$s->fetch();$s->close();return(int)$n;}
 $total_reports=cq($conn,"SELECT COUNT(*) FROM reports WHERE is_archived=0");
 $danger_count =cq($conn,"SELECT COUNT(*) FROM reports WHERE status='dangerous' AND is_archived=0");
-$safe_count   =cq($conn,"SELECT COUNT(*) FROM reports WHERE status='safe' AND is_archived=0");
-$my_count     =cq($conn,"SELECT COUNT(*) FROM reports WHERE user_id=? AND is_archived=0",'i',[$uid]);
+$safe_count =cq($conn,"SELECT COUNT(*) FROM reports WHERE status='safe' AND is_archived=0");
+$my_count =cq($conn,"SELECT COUNT(*) FROM reports WHERE user_id=? AND is_archived=0",'i',[$uid]);
 
 /* ── Per-view data ────────────────────────────────────────────── */
 $contacts = [];
@@ -37,19 +37,19 @@ if($view==='contacts'){$cs=$conn->query("SELECT * FROM emergency_contacts WHERE 
 /* ── Profile POST ─────────────────────────────────────────────── */
 $profile_msg = '';
 if($view==='profile'&&$_SERVER['REQUEST_METHOD']==='POST'&&isset($_POST['save_profile'])){
-    $pf=trim($_POST['first_name']??'');$pl=trim($_POST['last_name']??'');
-    $pp=trim($_POST['phone']??'');$pm=trim($_POST['municipality']??'');$pb=trim($_POST['barangay_name']??'');
-    $pw=$_POST['new_password']??'';$pw2=$_POST['confirm_password']??'';
-    if($pw&&$pw!==$pw2)        {$profile_msg='error:Passwords do not match.';}
-    elseif(!$pf||!$pl)          {$profile_msg='error:Name fields are required.';}
-    else{
-        if($pw){$h=password_hash($pw,PASSWORD_BCRYPT,['cost'=>12]);$su=$conn->prepare("UPDATE users SET first_name=?,last_name=?,phone_number=?,municipality=?,barangay_name=?,password=? WHERE id=?");$su->bind_param("ssssssi",$pf,$pl,$pp,$pm,$pb,$h,$uid);}
-        else{$su=$conn->prepare("UPDATE users SET first_name=?,last_name=?,phone_number=?,municipality=?,barangay_name=? WHERE id=?");$su->bind_param("sssssi",$pf,$pl,$pp,$pm,$pb,$uid);}
-        $su->execute();$su->close();
-        $_SESSION['first_name']=htmlspecialchars($pf,ENT_QUOTES,'UTF-8');$_SESSION['last_name']=htmlspecialchars($pl,ENT_QUOTES,'UTF-8');
-        $fname=$_SESSION['first_name'];$lname=$_SESSION['last_name'];
-        $user_phone=$pp;$user_muni=$pm;$user_brgy=$pb;$profile_msg='success:Profile updated.';
-    }
+ $pf=trim($_POST['first_name']??'');$pl=trim($_POST['last_name']??'');
+ $pp=trim($_POST['phone']??'');$pm=trim($_POST['municipality']??'');$pb=trim($_POST['barangay_name']??'');
+ $pw=$_POST['new_password']??'';$pw2=$_POST['confirm_password']??'';
+ if($pw&&$pw!==$pw2) {$profile_msg='error:Passwords do not match.';}
+ elseif(!$pf||!$pl) {$profile_msg='error:Name fields are required.';}
+ else{
+ if($pw){$h=password_hash($pw,PASSWORD_BCRYPT,['cost'=>12]);$su=$conn->prepare("UPDATE users SET first_name=?,last_name=?,phone_number=?,municipality=?,barangay_name=?,password=? WHERE id=?");$su->bind_param("ssssssi",$pf,$pl,$pp,$pm,$pb,$h,$uid);}
+ else{$su=$conn->prepare("UPDATE users SET first_name=?,last_name=?,phone_number=?,municipality=?,barangay_name=? WHERE id=?");$su->bind_param("sssssi",$pf,$pl,$pp,$pm,$pb,$uid);}
+ $su->execute();$su->close();
+ $_SESSION['first_name']=htmlspecialchars($pf,ENT_QUOTES,'UTF-8');$_SESSION['last_name']=htmlspecialchars($pl,ENT_QUOTES,'UTF-8');
+ $fname=$_SESSION['first_name'];$lname=$_SESSION['last_name'];
+ $user_phone=$pp;$user_muni=$pm;$user_brgy=$pb;$profile_msg='success:Profile updated.';
+ }
 }
 
 /* ── Lookup maps ──────────────────────────────────────────────── */
@@ -64,7 +64,7 @@ $page_titles=['overview'=>'Community Feed','my_reports'=>'My Reports','map'=>'In
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title><?= htmlspecialchars($page_titles[$view]??'Community Portal') ?> — SenTri</title>
+<title><?= htmlspecialchars($page_titles[$view]??'Community Portal') ?> | SenTri</title>
 <?= csrf_meta_tag() ?>
 <link rel="stylesheet" href="../assets/vendor/fonts/fonts.css">
 <link rel="stylesheet" href="../assets/vendor/fontawesome/css/all.min.css">
@@ -174,8 +174,8 @@ body.dark .filters button{background:#21262d;color:var(--muted);}
 .report-card.safe{border-left-color:var(--green);}.report-card.safe .card-header{background:linear-gradient(90deg,#f0fff4,transparent);}
 body.dark .report-card{background:var(--card);}
 body.dark .report-card.dangerous .card-header{background:linear-gradient(90deg,rgba(229,62,62,.08),transparent);}
-body.dark .report-card.caution  .card-header{background:linear-gradient(90deg,rgba(221,107,32,.08),transparent);}
-body.dark .report-card.safe     .card-header{background:linear-gradient(90deg,rgba(56,161,105,.08),transparent);}
+body.dark .report-card.caution .card-header{background:linear-gradient(90deg,rgba(221,107,32,.08),transparent);}
+body.dark .report-card.safe .card-header{background:linear-gradient(90deg,rgba(56,161,105,.08),transparent);}
 .card-header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:10px;padding:4px 0;}
 .card-header h3{font-size:1rem;font-weight:700;color:var(--text);line-height:1.4;}
 .badge{padding:4px 12px;border-radius:50px;font-size:.73rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;flex-shrink:0;}
@@ -404,14 +404,14 @@ body.dark .detail-map-btn{background:#1f3a5f;color:var(--blue-accent);border-col
 
 /* ── Responsive ── */
 @media(max-width:900px){
-  .sidebar{transform:translateX(calc(-1*var(--sidebar-w)));}.sidebar.mobile-open{transform:translateX(0);}
-  .main{margin-left:0;}.ham-btn{display:flex;}.toggle-btn{display:inline-flex;align-items:center;justify-content:center;}.stats-row{grid-template-columns:1fr 1fr;}.content{padding:16px;}
-  .user-name{display:none;}.detail-meta-grid{grid-template-columns:1fr;}.profile-grid{grid-template-columns:1fr;}
-  #incidentMap{height:420px;}
+ .sidebar{transform:translateX(calc(-1*var(--sidebar-w)));}.sidebar.mobile-open{transform:translateX(0);}
+ .main{margin-left:0;}.ham-btn{display:flex;}.toggle-btn{display:inline-flex;align-items:center;justify-content:center;}.stats-row{grid-template-columns:1fr 1fr;}.content{padding:16px;}
+ .user-name{display:none;}.detail-meta-grid{grid-template-columns:1fr;}.profile-grid{grid-template-columns:1fr;}
+ #incidentMap{height:420px;}
 }
 @media(max-width:600px){
-  .stats-row{grid-template-columns:1fr 1fr;}.post-btn span{display:none;}.post-btn{padding:10px 13px;}
-  .modal-row,.form-row{grid-template-columns:1fr;}.contacts-grid{grid-template-columns:1fr;}.profile-grid{grid-template-columns:1fr;}
+ .stats-row{grid-template-columns:1fr 1fr;}.post-btn span{display:none;}.post-btn{padding:10px 13px;}
+ .modal-row,.form-row{grid-template-columns:1fr;}.contacts-grid{grid-template-columns:1fr;}.profile-grid{grid-template-columns:1fr;}
 }
 
 /* ── Quick Report Form ── */
@@ -462,371 +462,371 @@ body.dark .locate-btn-big{background:#1f3a5f;color:var(--blue-accent);}
 
 <!-- ═══ SIDEBAR ═══ -->
 <aside class="sidebar" id="sidebar">
-  <div class="sidebar-header">
-    <div class="brand-logo">
-      <div class="brand-icon-s" style="background:rgba(243,156,18,.2);border-color:rgba(243,156,18,.4);"><i class="fas fa-shield-halved" style="color:#f39c12;"></i></div>
-      <div><div class="brand-name-s">SenTri</div><div class="brand-sub">Community Portal</div></div>
-    </div>
-    <button class="toggle-btn" onclick="closeSidebar()"><i class="fas fa-xmark"></i></button>
-  </div>
-  <nav class="menu">
-    <?php foreach($nav as $key=>$item): ?>
-    <a href="community.php?view=<?= $key ?>" <?= $view===$key?'class="active"':'' ?>>
-      <i class="fas <?= $item['icon'] ?>"></i> <?= $item['label'] ?>
-      <?php if($key==='my_reports'&&$my_count>0): ?><span class="menu-badge"><?= $my_count ?></span><?php endif; ?>
-    </a>
-    <?php endforeach; ?>
-  </nav>
-  <div class="sidebar-stats">
-    <div class="stat-label-s">Community Overview</div>
-    <div class="stat-box"><div class="num"><?= $total_reports ?></div><div class="lbl">Active Reports</div></div>
-    <div class="stat-box danger-box"><div class="num"><?= $danger_count ?></div><div class="lbl">Dangerous Areas</div></div>
-    <div class="stat-box safe-box"><div class="num"><?= $safe_count ?></div><div class="lbl">Safe Areas</div></div>
-  </div>
-  <div class="sidebar-footer">
-    <div class="dm-row" onclick="toggleDark()">
-      <span class="dm-row-label"><i class="fas fa-moon"></i> Dark Mode</span>
-      <label class="dm-switch" onclick="event.stopPropagation()"><input type="checkbox" id="dmCheck" onchange="toggleDark()"><span class="dm-slider"></span></label>
-    </div>
-    <a href="../logout.php"><i class="fas fa-right-from-bracket"></i> Log Out</a>
-  </div>
+ <div class="sidebar-header">
+ <div class="brand-logo">
+ <div class="brand-icon-s" style="background:rgba(243,156,18,.2);border-color:rgba(243,156,18,.4);"><i class="fas fa-shield-halved" style="color:#f39c12;"></i></div>
+ <div><div class="brand-name-s">SenTri</div><div class="brand-sub">Community Portal</div></div>
+ </div>
+ <button class="toggle-btn" onclick="closeSidebar()"><i class="fas fa-xmark"></i></button>
+ </div>
+ <nav class="menu">
+ <?php foreach($nav as $key=>$item): ?>
+ <a href="community.php?view=<?= $key ?>" <?= $view===$key?'class="active"':'' ?>>
+ <i class="fas <?= $item['icon'] ?>"></i> <?= $item['label'] ?>
+ <?php if($key==='my_reports'&&$my_count>0): ?><span class="menu-badge"><?= $my_count ?></span><?php endif; ?>
+ </a>
+ <?php endforeach; ?>
+ </nav>
+ <div class="sidebar-stats">
+ <div class="stat-label-s">Community Overview</div>
+ <div class="stat-box"><div class="num"><?= $total_reports ?></div><div class="lbl">Active Reports</div></div>
+ <div class="stat-box danger-box"><div class="num"><?= $danger_count ?></div><div class="lbl">Dangerous Areas</div></div>
+ <div class="stat-box safe-box"><div class="num"><?= $safe_count ?></div><div class="lbl">Safe Areas</div></div>
+ </div>
+ <div class="sidebar-footer">
+ <div class="dm-row" onclick="toggleDark()">
+ <span class="dm-row-label"><i class="fas fa-moon"></i> Dark Mode</span>
+ <label class="dm-switch" onclick="event.stopPropagation()"><input type="checkbox" id="dmCheck" onchange="toggleDark()"><span class="dm-slider"></span></label>
+ </div>
+ <a href="../logout.php"><i class="fas fa-right-from-bracket"></i> Log Out</a>
+ </div>
 </aside>
 
 <!-- ═══ MAIN ═══ -->
 <div class="main" id="main">
-  <div class="topbar">
-    <div class="topbar-left">
-      <button class="ham-btn" onclick="openSidebar()"><i class="fas fa-bars"></i></button>
-      <h1><i class="fas <?= $nav[$view]['icon']??'fa-house' ?>" style="color:var(--blue-accent);margin-right:8px;"></i><?= htmlspecialchars($page_titles[$view]??'Community Portal') ?></h1>
-    </div>
-    <div class="right-top">
-      <?php if(in_array($view,['overview','my_reports','map'])): ?>
-      <div class="gps-chip" id="gpsChip"><span class="gps-dot" id="gpsDot"></span><span id="gpsLabel">GPS Off</span></div>
-      <button class="post-btn" onclick="openModal()"><i class="fas fa-plus"></i> <span>Post Report</span></button>
-      <?php endif; ?>
-      <div class="user-info" onclick="window.location='community.php?view=profile'" title="My Profile">
-        <div class="avatar" id="topAvatar" style="background:<?= htmlspecialchars($avatar_color) ?>"><?= strtoupper(substr($fname,0,1).substr($lname,0,1)) ?></div>
-        <span class="user-name"><?= htmlspecialchars($fname) ?></span>
-      </div>
-    </div>
-  </div>
+ <div class="topbar">
+ <div class="topbar-left">
+ <button class="ham-btn" onclick="openSidebar()"><i class="fas fa-bars"></i></button>
+ <h1><i class="fas <?= $nav[$view]['icon']??'fa-house' ?>" style="color:var(--blue-accent);margin-right:8px;"></i><?= htmlspecialchars($page_titles[$view]??'Community Portal') ?></h1>
+ </div>
+ <div class="right-top">
+ <?php if(in_array($view,['overview','my_reports','map'])): ?>
+ <div class="gps-chip" id="gpsChip"><span class="gps-dot" id="gpsDot"></span><span id="gpsLabel">GPS Off</span></div>
+ <button class="post-btn" onclick="openModal()"><i class="fas fa-plus"></i> <span>Post Report</span></button>
+ <?php endif; ?>
+ <div class="user-info" onclick="window.location='community.php?view=profile'" title="My Profile">
+ <div class="avatar" id="topAvatar" style="background:<?= htmlspecialchars($avatar_color) ?>"><?= strtoupper(substr($fname,0,1).substr($lname,0,1)) ?></div>
+ <span class="user-name"><?= htmlspecialchars($fname) ?></span>
+ </div>
+ </div>
+ </div>
 
-  <div class="content">
+ <div class="content">
 
-  <?php if($view==='overview'): ?>
-    <div class="stats-row">
-      <div class="stat-card" style="cursor:pointer;" onclick="resetFilters()" title="Click to view all reports"><div class="stat-icon blue"><i class="fas fa-clipboard-list"></i></div><div><strong><?= $total_reports ?></strong><span>Total Reports</span></div></div>
-      <div class="stat-card" style="cursor:pointer;" onclick="quickFilterStatus('dangerous')" title="Click to filter dangerous areas"><div class="stat-icon red"><i class="fas fa-circle-exclamation"></i></div><div><strong><?= $danger_count ?></strong><span>Dangerous Areas</span></div></div>
-      <div class="stat-card" style="cursor:pointer;" onclick="quickFilterStatus('safe')" title="Click to filter safe areas"><div class="stat-icon green"><i class="fas fa-circle-check"></i></div><div><strong><?= $safe_count ?></strong><span>Safe Areas</span></div></div>
-      <div class="stat-card" style="cursor:pointer;" onclick="location.href='community.php?view=my_reports'" title="Click to view your submitted reports"><div class="stat-icon orange"><i class="fas fa-pen-to-square"></i></div><div><strong><?= $my_count ?></strong><span>My Reports</span></div></div>
-    </div>
+ <?php if($view==='overview'): ?>
+ <div class="stats-row">
+ <div class="stat-card" style="cursor:pointer;" onclick="resetFilters()" title="Click to view all reports"><div class="stat-icon blue"><i class="fas fa-clipboard-list"></i></div><div><strong><?= $total_reports ?></strong><span>Total Reports</span></div></div>
+ <div class="stat-card" style="cursor:pointer;" onclick="quickFilterStatus('dangerous')" title="Click to filter dangerous areas"><div class="stat-icon red"><i class="fas fa-circle-exclamation"></i></div><div><strong><?= $danger_count ?></strong><span>Dangerous Areas</span></div></div>
+ <div class="stat-card" style="cursor:pointer;" onclick="quickFilterStatus('safe')" title="Click to filter safe areas"><div class="stat-icon green"><i class="fas fa-circle-check"></i></div><div><strong><?= $safe_count ?></strong><span>Safe Areas</span></div></div>
+ <div class="stat-card" style="cursor:pointer;" onclick="location.href='community.php?view=my_reports'" title="Click to view your submitted reports"><div class="stat-icon orange"><i class="fas fa-pen-to-square"></i></div><div><strong><?= $my_count ?></strong><span>My Reports</span></div></div>
+ </div>
 
-    <!-- ── Dynamic Weather Watch & Flash Advisory Banner ── -->
-    <div class="weather-flash-banner" style="background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);border-left:4px solid #38bdf8;border-radius:14px;padding:12px 18px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;box-shadow:0 4px 16px rgba(0,0,0,0.18);">
-      <div style="display:flex;align-items:center;gap:10px;min-width:0;">
-        <span style="background:#0284c7;color:#fff;font-size:0.68rem;font-weight:800;text-transform:uppercase;letter-spacing:0.5px;padding:3px 8px;border-radius:6px;flex-shrink:0;"><i class="fas fa-cloud-bolt"></i> Weather Watch</span>
-        <span style="font-size:0.83rem;color:#f1f5f9;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"><strong style="color:#38bdf8;">NCR Advisory:</strong> Heavy rainfall & thunderstorm advisory in effect. Flood risk alert for low-lying areas.</span>
-      </div>
-      <button onclick="openWeatherModal()" style="background:rgba(56,189,248,0.15);border:1px solid rgba(56,189,248,0.35);color:#38bdf8;padding:6px 12px;border-radius:8px;font-size:0.76rem;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:all 0.15s;font-family:'Poppins',sans-serif;" onmouseover="this.style.background='rgba(56,189,248,0.25)'" onmouseout="this.style.background='rgba(56,189,248,0.15)'"><i class="fas fa-circle-info"></i> Advisory Details</button>
-    </div>
+ <!-- ── Dynamic Weather Watch & Flash Advisory Banner ── -->
+ <div class="weather-flash-banner" style="background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);border-left:4px solid #38bdf8;border-radius:14px;padding:12px 18px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;box-shadow:0 4px 16px rgba(0,0,0,0.18);">
+ <div style="display:flex;align-items:center;gap:10px;min-width:0;">
+ <span style="background:#0284c7;color:#fff;font-size:0.68rem;font-weight:800;text-transform:uppercase;letter-spacing:0.5px;padding:3px 8px;border-radius:6px;flex-shrink:0;"><i class="fas fa-cloud-bolt"></i> Weather Watch</span>
+ <span style="font-size:0.83rem;color:#f1f5f9;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"><strong style="color:#38bdf8;">NCR Advisory:</strong> Heavy rainfall & thunderstorm advisory in effect. Flood risk alert for low-lying areas.</span>
+ </div>
+ <button onclick="openWeatherModal()" style="background:rgba(56,189,248,0.15);border:1px solid rgba(56,189,248,0.35);color:#38bdf8;padding:6px 12px;border-radius:8px;font-size:0.76rem;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:all 0.15s;font-family:'Poppins',sans-serif;" onmouseover="this.style.background='rgba(56,189,248,0.25)'" onmouseout="this.style.background='rgba(56,189,248,0.15)'"><i class="fas fa-circle-info"></i> Advisory Details</button>
+ </div>
 
-    <!-- ── Emergency Response Action Bar ── -->
-    <div class="emergency-quick-bar" style="background:linear-gradient(135deg,#0a3d62 0%,#1e3a8a 100%);color:#fff;border-radius:14px;padding:14px 18px;margin-bottom:18px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;box-shadow:0 4px 16px rgba(10,61,98,0.18);">
-      <div style="display:flex;align-items:center;gap:12px;">
-        <div style="width:38px;height:38px;border-radius:10px;background:rgba(239,68,68,0.25);border:1.5px solid #ef4444;display:flex;align-items:center;justify-content:center;color:#fca5a5;font-size:1.05rem;flex-shrink:0;">
-          <i class="fas fa-phone-volume"></i>
-        </div>
-        <div>
-          <div style="font-size:0.92rem;font-weight:800;letter-spacing:-0.2px;">Emergency Response Hotlines</div>
-          <div style="font-size:0.75rem;color:rgba(255,255,255,0.75);">Instant 1-tap direct emergency dispatch connections</div>
-        </div>
-      </div>
-      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-        <a href="tel:911" style="display:inline-flex;align-items:center;gap:6px;padding:7px 12px;background:#ef4444;color:#fff;border-radius:8px;font-size:0.78rem;font-weight:700;text-decoration:none;transition:transform 0.15s;" onmouseover="this.style.transform='scale(1.04)'" onmouseout="this.style.transform='scale(1)'"><i class="fas fa-phone"></i> 911 National</a>
-        <a href="tel:160" style="display:inline-flex;align-items:center;gap:6px;padding:7px 12px;background:rgba(255,255,255,0.15);color:#fff;border-radius:8px;font-size:0.78rem;font-weight:700;text-decoration:none;border:1px solid rgba(255,255,255,0.25);transition:background 0.15s;" onmouseover="this.style.background='rgba(255,255,255,0.25)'" onmouseout="this.style.background='rgba(255,255,255,0.15)'"><i class="fas fa-fire-extinguisher"></i> BFP Fire (160)</a>
-        <a href="tel:117" style="display:inline-flex;align-items:center;gap:6px;padding:7px 12px;background:rgba(255,255,255,0.15);color:#fff;border-radius:8px;font-size:0.78rem;font-weight:700;text-decoration:none;border:1px solid rgba(255,255,255,0.25);transition:background 0.15s;" onmouseover="this.style.background='rgba(255,255,255,0.25)'" onmouseout="this.style.background='rgba(255,255,255,0.15)'"><i class="fas fa-shield-halved"></i> PNP Police (117)</a>
-        <button onclick="copyEmergencyCoordinates(this)" style="display:inline-flex;align-items:center;gap:6px;padding:7px 12px;background:#f59e0b;color:#111827;border:none;border-radius:8px;font-size:0.78rem;font-weight:700;cursor:pointer;transition:transform 0.15s;" onmouseover="this.style.transform='scale(1.04)'" onmouseout="this.style.transform='scale(1)'"><i class="fas fa-location-crosshairs"></i> Copy My GPS</button>
-        <button onclick="openFirstAidModal()" style="display:inline-flex;align-items:center;gap:6px;padding:7px 12px;background:rgba(255,255,255,0.15);color:#fff;border-radius:8px;font-size:0.78rem;font-weight:700;border:1px solid rgba(255,255,255,0.25);cursor:pointer;transition:background 0.15s;" onmouseover="this.style.background='rgba(255,255,255,0.25)'" onmouseout="this.style.background='rgba(255,255,255,0.15)'"><i class="fas fa-heart-pulse"></i> First-Aid Cards</button>
-        <button onclick="openGoBagModal()" style="display:inline-flex;align-items:center;gap:6px;padding:7px 12px;background:rgba(255,255,255,0.15);color:#fff;border-radius:8px;font-size:0.78rem;font-weight:700;border:1px solid rgba(255,255,255,0.25);cursor:pointer;transition:background 0.15s;" onmouseover="this.style.background='rgba(255,255,255,0.25)'" onmouseout="this.style.background='rgba(255,255,255,0.15)'"><i class="fas fa-bag-shopping"></i> 72-Hr Go Bag</button>
-        <button onclick="openSafetyModal()" style="display:inline-flex;align-items:center;gap:6px;padding:7px 12px;background:rgba(255,255,255,0.15);color:#fff;border-radius:8px;font-size:0.78rem;font-weight:700;border:1px solid rgba(255,255,255,0.25);cursor:pointer;transition:background 0.15s;" onmouseover="this.style.background='rgba(255,255,255,0.25)'" onmouseout="this.style.background='rgba(255,255,255,0.15)'"><i class="fas fa-kit-medical"></i> Safety Guide</button>
-        <button onclick="openHotlinesModal()" style="display:inline-flex;align-items:center;gap:6px;padding:7px 12px;background:rgba(255,255,255,0.15);color:#fff;border-radius:8px;font-size:0.78rem;font-weight:700;border:1px solid rgba(255,255,255,0.25);cursor:pointer;transition:background 0.15s;" onmouseover="this.style.background='rgba(255,255,255,0.25)'" onmouseout="this.style.background='rgba(255,255,255,0.15)'"><i class="fas fa-address-book"></i> Hotlines Directory</button>
-      </div>
-    </div>
-    <div class="filters">
-      <input type="text" id="searchInput" placeholder="Search location, keyword...">
-      <select id="statusFilter"><option value="">All Statuses</option><option value="dangerous">🔴 Dangerous</option><option value="caution">🟠 Caution</option><option value="safe">🟢 Safe</option></select>
-      <select id="categoryFilter"><option value="">All Categories</option><option value="crime">Crime</option><option value="accident">Accident</option><option value="flooding">Flooding</option><option value="fire">Fire</option><option value="health">Health</option><option value="infrastructure">Infrastructure</option><option value="other">Other</option></select>
-      <button onclick="resetFilters()"><i class="fas fa-rotate"></i> Reset</button>
-      <div class="view-toggle">
-        <button class="view-btn active" id="btnFeed" onclick="switchView('feed')"><i class="fas fa-list"></i> Feed</button>
-        <button class="view-btn" id="btnMap" onclick="switchView('map')"><i class="fas fa-map"></i> Map</button>
-      </div>
-    </div>
-    <div id="inlineMapWrap" style="display:none;border-radius:16px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.1);margin-bottom:22px;isolation:isolate;">
-      <div id="inlineMap" style="height:480px;background:#dde8f0;"></div>
-      <div class="map-legend">
-        <div class="legend-item"><div class="legend-dot dangerous"></div>Dangerous</div>
-        <div class="legend-item"><div class="legend-dot caution"></div>Caution</div>
-        <div class="legend-item"><div class="legend-dot safe"></div>Safe</div>
-        <span class="map-count" id="inlineMapCount"></span>
-      </div>
-    </div>
-    <div id="feed"><div class="loading"><i class="fas fa-spinner"></i> Loading community reports…</div></div>
+ <!-- ── Emergency Response Action Bar ── -->
+ <div class="emergency-quick-bar" style="background:linear-gradient(135deg,#0a3d62 0%,#1e3a8a 100%);color:#fff;border-radius:14px;padding:14px 18px;margin-bottom:18px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;box-shadow:0 4px 16px rgba(10,61,98,0.18);">
+ <div style="display:flex;align-items:center;gap:12px;">
+ <div style="width:38px;height:38px;border-radius:10px;background:rgba(239,68,68,0.25);border:1.5px solid #ef4444;display:flex;align-items:center;justify-content:center;color:#fca5a5;font-size:1.05rem;flex-shrink:0;">
+ <i class="fas fa-phone-volume"></i>
+ </div>
+ <div>
+ <div style="font-size:0.92rem;font-weight:800;letter-spacing:-0.2px;">Emergency Response Hotlines</div>
+ <div style="font-size:0.75rem;color:rgba(255,255,255,0.75);">Instant 1-tap direct emergency dispatch connections</div>
+ </div>
+ </div>
+ <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+ <a href="tel:911" style="display:inline-flex;align-items:center;gap:6px;padding:7px 12px;background:#ef4444;color:#fff;border-radius:8px;font-size:0.78rem;font-weight:700;text-decoration:none;transition:transform 0.15s;" onmouseover="this.style.transform='scale(1.04)'" onmouseout="this.style.transform='scale(1)'"><i class="fas fa-phone"></i> 911 National</a>
+ <a href="tel:160" style="display:inline-flex;align-items:center;gap:6px;padding:7px 12px;background:rgba(255,255,255,0.15);color:#fff;border-radius:8px;font-size:0.78rem;font-weight:700;text-decoration:none;border:1px solid rgba(255,255,255,0.25);transition:background 0.15s;" onmouseover="this.style.background='rgba(255,255,255,0.25)'" onmouseout="this.style.background='rgba(255,255,255,0.15)'"><i class="fas fa-fire-extinguisher"></i> BFP Fire (160)</a>
+ <a href="tel:117" style="display:inline-flex;align-items:center;gap:6px;padding:7px 12px;background:rgba(255,255,255,0.15);color:#fff;border-radius:8px;font-size:0.78rem;font-weight:700;text-decoration:none;border:1px solid rgba(255,255,255,0.25);transition:background 0.15s;" onmouseover="this.style.background='rgba(255,255,255,0.25)'" onmouseout="this.style.background='rgba(255,255,255,0.15)'"><i class="fas fa-shield-halved"></i> PNP Police (117)</a>
+ <button onclick="copyEmergencyCoordinates(this)" style="display:inline-flex;align-items:center;gap:6px;padding:7px 12px;background:#f59e0b;color:#111827;border:none;border-radius:8px;font-size:0.78rem;font-weight:700;cursor:pointer;transition:transform 0.15s;" onmouseover="this.style.transform='scale(1.04)'" onmouseout="this.style.transform='scale(1)'"><i class="fas fa-location-crosshairs"></i> Copy My GPS</button>
+ <button onclick="openFirstAidModal()" style="display:inline-flex;align-items:center;gap:6px;padding:7px 12px;background:rgba(255,255,255,0.15);color:#fff;border-radius:8px;font-size:0.78rem;font-weight:700;border:1px solid rgba(255,255,255,0.25);cursor:pointer;transition:background 0.15s;" onmouseover="this.style.background='rgba(255,255,255,0.25)'" onmouseout="this.style.background='rgba(255,255,255,0.15)'"><i class="fas fa-heart-pulse"></i> First-Aid Cards</button>
+ <button onclick="openGoBagModal()" style="display:inline-flex;align-items:center;gap:6px;padding:7px 12px;background:rgba(255,255,255,0.15);color:#fff;border-radius:8px;font-size:0.78rem;font-weight:700;border:1px solid rgba(255,255,255,0.25);cursor:pointer;transition:background 0.15s;" onmouseover="this.style.background='rgba(255,255,255,0.25)'" onmouseout="this.style.background='rgba(255,255,255,0.15)'"><i class="fas fa-bag-shopping"></i> 72-Hr Go Bag</button>
+ <button onclick="openSafetyModal()" style="display:inline-flex;align-items:center;gap:6px;padding:7px 12px;background:rgba(255,255,255,0.15);color:#fff;border-radius:8px;font-size:0.78rem;font-weight:700;border:1px solid rgba(255,255,255,0.25);cursor:pointer;transition:background 0.15s;" onmouseover="this.style.background='rgba(255,255,255,0.25)'" onmouseout="this.style.background='rgba(255,255,255,0.15)'"><i class="fas fa-kit-medical"></i> Safety Guide</button>
+ <button onclick="openHotlinesModal()" style="display:inline-flex;align-items:center;gap:6px;padding:7px 12px;background:rgba(255,255,255,0.15);color:#fff;border-radius:8px;font-size:0.78rem;font-weight:700;border:1px solid rgba(255,255,255,0.25);cursor:pointer;transition:background 0.15s;" onmouseover="this.style.background='rgba(255,255,255,0.25)'" onmouseout="this.style.background='rgba(255,255,255,0.15)'"><i class="fas fa-address-book"></i> Hotlines Directory</button>
+ </div>
+ </div>
+ <div class="filters">
+ <input type="text" id="searchInput" placeholder="Search location, keyword...">
+ <select id="statusFilter"><option value="">All Statuses</option><option value="dangerous">🔴 Dangerous</option><option value="caution">🟠 Caution</option><option value="safe">🟢 Safe</option></select>
+ <select id="categoryFilter"><option value="">All Categories</option><option value="crime">Crime</option><option value="accident">Accident</option><option value="flooding">Flooding</option><option value="fire">Fire</option><option value="health">Health</option><option value="infrastructure">Infrastructure</option><option value="other">Other</option></select>
+ <button onclick="resetFilters()"><i class="fas fa-rotate"></i> Reset</button>
+ <div class="view-toggle">
+ <button class="view-btn active" id="btnFeed" onclick="switchView('feed')"><i class="fas fa-list"></i> Feed</button>
+ <button class="view-btn" id="btnMap" onclick="switchView('map')"><i class="fas fa-map"></i> Map</button>
+ </div>
+ </div>
+ <div id="inlineMapWrap" style="display:none;border-radius:16px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.1);margin-bottom:22px;isolation:isolate;">
+ <div id="inlineMap" style="height:480px;background:#dde8f0;"></div>
+ <div class="map-legend">
+ <div class="legend-item"><div class="legend-dot dangerous"></div>Dangerous</div>
+ <div class="legend-item"><div class="legend-dot caution"></div>Caution</div>
+ <div class="legend-item"><div class="legend-dot safe"></div>Safe</div>
+ <span class="map-count" id="inlineMapCount"></span>
+ </div>
+ </div>
+ <div id="feed"><div class="loading"><i class="fas fa-spinner"></i> Loading community reports…</div></div>
 
-  <?php elseif($view==='my_reports'): ?>
-    <div class="my-reports-hdr">
-      <div class="mh-icon"><i class="fas fa-file-lines"></i></div>
-      <div><h2>My Reports</h2><p>All <?= $my_count ?> report<?= $my_count!==1?'s':'' ?> you've submitted</p></div>
-    </div>
-    <div class="filters">
-      <input type="text" id="searchInput" placeholder="Search my reports...">
-      <select id="statusFilter"><option value="">All Statuses</option><option value="dangerous">🔴 Dangerous</option><option value="caution">🟠 Caution</option><option value="safe">🟢 Safe</option></select>
-      <select id="categoryFilter"><option value="">All Categories</option><option value="crime">Crime</option><option value="accident">Accident</option><option value="flooding">Flooding</option><option value="fire">Fire</option><option value="health">Health</option><option value="infrastructure">Infrastructure</option><option value="other">Other</option></select>
-      <button onclick="resetFilters()"><i class="fas fa-rotate"></i> Reset</button>
-    </div>
-    <div id="feed"><div class="loading"><i class="fas fa-spinner"></i> Loading your reports…</div></div>
+ <?php elseif($view==='my_reports'): ?>
+ <div class="my-reports-hdr">
+ <div class="mh-icon"><i class="fas fa-file-lines"></i></div>
+ <div><h2>My Reports</h2><p>All <?= $my_count ?> report<?= $my_count!==1?'s':'' ?> you've submitted</p></div>
+ </div>
+ <div class="filters">
+ <input type="text" id="searchInput" placeholder="Search my reports...">
+ <select id="statusFilter"><option value="">All Statuses</option><option value="dangerous">🔴 Dangerous</option><option value="caution">🟠 Caution</option><option value="safe">🟢 Safe</option></select>
+ <select id="categoryFilter"><option value="">All Categories</option><option value="crime">Crime</option><option value="accident">Accident</option><option value="flooding">Flooding</option><option value="fire">Fire</option><option value="health">Health</option><option value="infrastructure">Infrastructure</option><option value="other">Other</option></select>
+ <button onclick="resetFilters()"><i class="fas fa-rotate"></i> Reset</button>
+ </div>
+ <div id="feed"><div class="loading"><i class="fas fa-spinner"></i> Loading your reports…</div></div>
 
-  <?php elseif($view==='map'): ?>
-    <div id="mapWrap">
-      <div id="incidentMap"></div>
-      <div class="map-legend">
-        <div class="legend-item"><div class="legend-dot dangerous"></div>Dangerous</div>
-        <div class="legend-item"><div class="legend-dot caution"></div>Caution</div>
-        <div class="legend-item"><div class="legend-dot safe"></div>Safe</div>
-        <span class="map-count" id="mapCount"></span>
-      </div>
-    </div>
+ <?php elseif($view==='map'): ?>
+ <div id="mapWrap">
+ <div id="incidentMap"></div>
+ <div class="map-legend">
+ <div class="legend-item"><div class="legend-dot dangerous"></div>Dangerous</div>
+ <div class="legend-item"><div class="legend-dot caution"></div>Caution</div>
+ <div class="legend-item"><div class="legend-dot safe"></div>Safe</div>
+ <span class="map-count" id="mapCount"></span>
+ </div>
+ </div>
 
-  <?php elseif($view==='contacts'): ?>
-    <div class="contacts-hdr">
-      <div class="ch-icon"><i class="fas fa-phone-volume"></i></div>
-      <div><h2>Emergency Contacts</h2><p>Local emergency services, hospitals, and responder hotlines</p></div>
-    </div>
-    <?php if(empty($contacts)): ?>
-      <div class="empty"><i class="fas fa-address-book"></i><p>No emergency contacts set up yet.<br>Contact your local administrator.</p></div>
-    <?php else:
-      $grouped=[];foreach($contacts as $c)$grouped[$c['type']][]=$c;
-      foreach($type_labels as $type=>$label):if(empty($grouped[$type]))continue;[$bg,$fg]=$type_colors[$type]; ?>
-      <div style="margin-bottom:24px;">
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
-          <div style="width:34px;height:34px;border-radius:9px;background:<?= $bg ?>;display:flex;align-items:center;justify-content:center;color:<?= $fg ?>;font-size:.95rem;flex-shrink:0;"><i class="fas <?= $type_icons[$type] ?>"></i></div>
-          <span style="font-size:.95rem;font-weight:700;color:var(--text);"><?= $label ?></span>
-          <span style="font-size:.78rem;color:var(--muted);">(<?= count($grouped[$type]) ?>)</span>
-        </div>
-        <div class="contacts-grid">
-          <?php foreach($grouped[$type] as $i=>$c): ?>
-          <div class="contact-card" style="border-left-color:<?= $fg ?>;animation-delay:<?= $i*.05 ?>s;">
-            <div class="contact-top">
-              <div class="contact-icon" style="background:<?= $bg ?>;color:<?= $fg ?>;"><i class="fas <?= $type_icons[$c['type']] ?>"></i></div>
-              <div><div class="contact-name"><?= htmlspecialchars($c['name']) ?></div><div class="contact-type-lbl" style="color:<?= $fg ?>;"><?= strtoupper(htmlspecialchars($c['type'])) ?></div></div>
-            </div>
-            <div class="contact-details">
-              <div class="contact-row"><i class="fas fa-city"></i><?= htmlspecialchars($c['city']).(isset($c['province'])&&$c['province']?', '.htmlspecialchars($c['province']):'') ?></div>
-              <?php if(!empty($c['contact_number'])): ?><div class="contact-row"><i class="fas fa-phone"></i><a href="tel:<?= htmlspecialchars($c['contact_number']) ?>"><?= htmlspecialchars($c['contact_number']) ?></a></div><?php endif; ?>
-              <?php if(!empty($c['contact_email'])): ?><div class="contact-row"><i class="fas fa-envelope"></i><a href="mailto:<?= htmlspecialchars($c['contact_email']) ?>"><?= htmlspecialchars($c['contact_email']) ?></a></div><?php endif; ?>
-            </div>
-          </div>
-          <?php endforeach; ?>
-        </div>
-      </div>
-      <?php endforeach; endif; ?>
+ <?php elseif($view==='contacts'): ?>
+ <div class="contacts-hdr">
+ <div class="ch-icon"><i class="fas fa-phone-volume"></i></div>
+ <div><h2>Emergency Contacts</h2><p>Local emergency services, hospitals, and responder hotlines</p></div>
+ </div>
+ <?php if(empty($contacts)): ?>
+ <div class="empty"><i class="fas fa-address-book"></i><p>No emergency contacts set up yet.<br>Contact your local administrator.</p></div>
+ <?php else:
+ $grouped=[];foreach($contacts as $c)$grouped[$c['type']][]=$c;
+ foreach($type_labels as $type=>$label):if(empty($grouped[$type]))continue;[$bg,$fg]=$type_colors[$type]; ?>
+ <div style="margin-bottom:24px;">
+ <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+ <div style="width:34px;height:34px;border-radius:9px;background:<?= $bg ?>;display:flex;align-items:center;justify-content:center;color:<?= $fg ?>;font-size:.95rem;flex-shrink:0;"><i class="fas <?= $type_icons[$type] ?>"></i></div>
+ <span style="font-size:.95rem;font-weight:700;color:var(--text);"><?= $label ?></span>
+ <span style="font-size:.78rem;color:var(--muted);">(<?= count($grouped[$type]) ?>)</span>
+ </div>
+ <div class="contacts-grid">
+ <?php foreach($grouped[$type] as $i=>$c): ?>
+ <div class="contact-card" style="border-left-color:<?= $fg ?>;animation-delay:<?= $i*.05 ?>s;">
+ <div class="contact-top">
+ <div class="contact-icon" style="background:<?= $bg ?>;color:<?= $fg ?>;"><i class="fas <?= $type_icons[$c['type']] ?>"></i></div>
+ <div><div class="contact-name"><?= htmlspecialchars($c['name']) ?></div><div class="contact-type-lbl" style="color:<?= $fg ?>;"><?= strtoupper(htmlspecialchars($c['type'])) ?></div></div>
+ </div>
+ <div class="contact-details">
+ <div class="contact-row"><i class="fas fa-city"></i><?= htmlspecialchars($c['city']).(isset($c['province'])&&$c['province']?', '.htmlspecialchars($c['province']):'') ?></div>
+ <?php if(!empty($c['contact_number'])): ?><div class="contact-row"><i class="fas fa-phone"></i><a href="tel:<?= htmlspecialchars($c['contact_number']) ?>"><?= htmlspecialchars($c['contact_number']) ?></a></div><?php endif; ?>
+ <?php if(!empty($c['contact_email'])): ?><div class="contact-row"><i class="fas fa-envelope"></i><a href="mailto:<?= htmlspecialchars($c['contact_email']) ?>"><?= htmlspecialchars($c['contact_email']) ?></a></div><?php endif; ?>
+ </div>
+ </div>
+ <?php endforeach; ?>
+ </div>
+ </div>
+ <?php endforeach; endif; ?>
 
-  <?php elseif($view==='profile'):
-    [$pm_type,$pm_text]=$profile_msg?explode(':',$profile_msg,2):['','']; ?>
-    <div class="profile-grid">
-      <div class="profile-card">
-        <div class="profile-avatar-section">
-          <div class="profile-avatar-big" id="avatarPreview" style="background:<?= htmlspecialchars($avatar_color) ?>"><?= strtoupper(substr($fname,0,1).substr($lname,0,1)) ?></div>
-          <div style="text-align:center;"><div class="profile-name-big"><?= htmlspecialchars($fname.' '.$lname) ?></div><div style="margin-top:5px;"><span class="role-badge"><i class="fas fa-users" style="margin-right:4px;"></i>Community Member</span></div></div>
-          <div style="width:100%;"><p style="font-size:.75rem;color:var(--muted);text-align:center;margin-bottom:8px;">Choose avatar color</p><div class="color-palette" id="colorPalette"></div></div>
-        </div>
-        <div class="profile-info-rows">
-          <div class="profile-info-row"><i class="fas fa-envelope"></i><span><?= htmlspecialchars($user_email) ?></span></div>
-          <?php if($user_phone): ?><div class="profile-info-row"><i class="fas fa-phone"></i><span><?= htmlspecialchars($user_phone) ?></span></div><?php endif; ?>
-          <?php if($user_brgy): ?><div class="profile-info-row"><i class="fas fa-map-pin"></i><span><?= htmlspecialchars($user_brgy) ?></span></div><?php endif; ?>
-          <?php if($user_muni): ?><div class="profile-info-row"><i class="fas fa-city"></i><span><?= htmlspecialchars($user_muni) ?></span></div><?php endif; ?>
-        </div>
-        <div class="pf-divider"></div>
-        <div class="pf-section-label"><i class="fas fa-satellite-dish" style="margin-right:5px;color:var(--green);"></i>GPS Location</div>
-        <div class="gps-section">
-          <div class="gps-section-hdr"><i class="fas fa-crosshairs"></i>Saved Location</div>
-          <div class="gps-coords <?= !is_null($saved_gps_lat)?'has-gps':'' ?>" id="gpsCoordsDisplay">
-            <?php if(!is_null($saved_gps_lat)): ?><i class="fas fa-circle-check"></i> <?= number_format((float)$saved_gps_lat,6) ?>, <?= number_format((float)$saved_gps_lng,6) ?><?php else: ?><i class="fas fa-circle-info"></i> No GPS saved yet<?php endif; ?>
-          </div>
-          <p class="gps-help">Unlocks the <strong>Incidents Map</strong> and proximity alerts. Not shared publicly.</p>
-          <button class="btn-gps" id="getGpsBtn" onclick="saveGPS()"><i class="fas fa-location-crosshairs"></i> Get GPS Data</button>
-        </div>
-      </div>
-      <div class="profile-card">
-        <?php if($pm_text): ?><div class="pf-msg <?= htmlspecialchars($pm_type) ?>" style="display:block;"><?= htmlspecialchars($pm_text) ?></div><?php endif; ?>
-        <div id="pfMsg" class="pf-msg"></div>
-        <form method="post" action="community.php?view=profile">
-          <input type="hidden" name="save_profile" value="1">
-          <div class="pf-section-label">Personal Information</div>
-          <div class="form-row">
-            <div class="form-group"><label>First Name</label><input name="first_name" value="<?= htmlspecialchars($fname) ?>" maxlength="100" required></div>
-            <div class="form-group"><label>Last Name</label><input name="last_name" value="<?= htmlspecialchars($lname) ?>" maxlength="100" required></div>
-          </div>
-          <div class="form-group"><label>Phone Number</label><input name="phone" value="<?= htmlspecialchars($user_phone) ?>" placeholder="e.g. 09XX-XXX-XXXX" maxlength="30"></div>
-          <div class="form-row">
-            <div class="form-group"><label>Barangay</label><input name="barangay_name" value="<?= htmlspecialchars($user_brgy) ?>" placeholder="Your barangay" maxlength="150"></div>
-            <div class="form-group"><label>City / Municipality</label><input name="municipality" value="<?= htmlspecialchars($user_muni) ?>" placeholder="e.g. Imus, Cavite" maxlength="150"></div>
-          </div>
-          <div class="pf-divider"></div>
-          <div class="pf-section-label">Change Password <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:.72rem;">(leave blank to keep current)</span></div>
-          <div class="form-row">
-            <div class="form-group"><label>New Password</label><input type="password" name="new_password" placeholder="Min. 8 characters"></div>
-            <div class="form-group"><label>Confirm Password</label><input type="password" name="confirm_password" placeholder="Repeat new password"></div>
-          </div>
-          <button type="submit" class="btn-save"><i class="fas fa-floppy-disk"></i> Save Changes</button>
-        </form>
-      </div>
-    </div>
-  <?php endif; ?>
+ <?php elseif($view==='profile'):
+ [$pm_type,$pm_text]=$profile_msg?explode(':',$profile_msg,2):['','']; ?>
+ <div class="profile-grid">
+ <div class="profile-card">
+ <div class="profile-avatar-section">
+ <div class="profile-avatar-big" id="avatarPreview" style="background:<?= htmlspecialchars($avatar_color) ?>"><?= strtoupper(substr($fname,0,1).substr($lname,0,1)) ?></div>
+ <div style="text-align:center;"><div class="profile-name-big"><?= htmlspecialchars($fname.' '.$lname) ?></div><div style="margin-top:5px;"><span class="role-badge"><i class="fas fa-users" style="margin-right:4px;"></i>Community Member</span></div></div>
+ <div style="width:100%;"><p style="font-size:.75rem;color:var(--muted);text-align:center;margin-bottom:8px;">Choose avatar color</p><div class="color-palette" id="colorPalette"></div></div>
+ </div>
+ <div class="profile-info-rows">
+ <div class="profile-info-row"><i class="fas fa-envelope"></i><span><?= htmlspecialchars($user_email) ?></span></div>
+ <?php if($user_phone): ?><div class="profile-info-row"><i class="fas fa-phone"></i><span><?= htmlspecialchars($user_phone) ?></span></div><?php endif; ?>
+ <?php if($user_brgy): ?><div class="profile-info-row"><i class="fas fa-map-pin"></i><span><?= htmlspecialchars($user_brgy) ?></span></div><?php endif; ?>
+ <?php if($user_muni): ?><div class="profile-info-row"><i class="fas fa-city"></i><span><?= htmlspecialchars($user_muni) ?></span></div><?php endif; ?>
+ </div>
+ <div class="pf-divider"></div>
+ <div class="pf-section-label"><i class="fas fa-satellite-dish" style="margin-right:5px;color:var(--green);"></i>GPS Location</div>
+ <div class="gps-section">
+ <div class="gps-section-hdr"><i class="fas fa-crosshairs"></i>Saved Location</div>
+ <div class="gps-coords <?= !is_null($saved_gps_lat)?'has-gps':'' ?>" id="gpsCoordsDisplay">
+ <?php if(!is_null($saved_gps_lat)): ?><i class="fas fa-circle-check"></i> <?= number_format((float)$saved_gps_lat,6) ?>, <?= number_format((float)$saved_gps_lng,6) ?><?php else: ?><i class="fas fa-circle-info"></i> No GPS saved yet<?php endif; ?>
+ </div>
+ <p class="gps-help">Unlocks the <strong>Incidents Map</strong> and proximity alerts. Not shared publicly.</p>
+ <button class="btn-gps" id="getGpsBtn" onclick="saveGPS()"><i class="fas fa-location-crosshairs"></i> Get GPS Data</button>
+ </div>
+ </div>
+ <div class="profile-card">
+ <?php if($pm_text): ?><div class="pf-msg <?= htmlspecialchars($pm_type) ?>" style="display:block;"><?= htmlspecialchars($pm_text) ?></div><?php endif; ?>
+ <div id="pfMsg" class="pf-msg"></div>
+ <form method="post" action="community.php?view=profile">
+ <input type="hidden" name="save_profile" value="1">
+ <div class="pf-section-label">Personal Information</div>
+ <div class="form-row">
+ <div class="form-group"><label>First Name</label><input name="first_name" value="<?= htmlspecialchars($fname) ?>" maxlength="100" required></div>
+ <div class="form-group"><label>Last Name</label><input name="last_name" value="<?= htmlspecialchars($lname) ?>" maxlength="100" required></div>
+ </div>
+ <div class="form-group"><label>Phone Number</label><input name="phone" value="<?= htmlspecialchars($user_phone) ?>" placeholder="e.g. 09XX-XXX-XXXX" maxlength="30"></div>
+ <div class="form-row">
+ <div class="form-group"><label>Barangay</label><input name="barangay_name" value="<?= htmlspecialchars($user_brgy) ?>" placeholder="Your barangay" maxlength="150"></div>
+ <div class="form-group"><label>City / Municipality</label><input name="municipality" value="<?= htmlspecialchars($user_muni) ?>" placeholder="e.g. Imus, Cavite" maxlength="150"></div>
+ </div>
+ <div class="pf-divider"></div>
+ <div class="pf-section-label">Change Password <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:.72rem;">(leave blank to keep current)</span></div>
+ <div class="form-row">
+ <div class="form-group"><label>New Password</label><input type="password" name="new_password" placeholder="Min. 8 characters"></div>
+ <div class="form-group"><label>Confirm Password</label><input type="password" name="confirm_password" placeholder="Repeat new password"></div>
+ </div>
+ <button type="submit" class="btn-save"><i class="fas fa-floppy-disk"></i> Save Changes</button>
+ </form>
+ </div>
+ </div>
+ <?php endif; ?>
 
-  </div>
+ </div>
 </div>
 
 <!-- ═══ POST REPORT MODAL ═══ -->
 <div class="modal-overlay" id="modalOverlay" onclick="outsideClose(event)">
-  <div class="modal">
-    <button class="modal-close" onclick="closeModal()"><i class="fas fa-xmark"></i></button>
-    <h2><i class="fas fa-triangle-exclamation" style="color:var(--red);margin-right:8px;"></i>Report an Incident</h2>
-    <p class="subtitle">Quick — takes under 30 seconds</p>
-    <div id="modalMsg" class="modal-msg"></div>
-    <form id="reportForm" novalidate>
+ <div class="modal">
+ <button class="modal-close" onclick="closeModal()"><i class="fas fa-xmark"></i></button>
+ <h2><i class="fas fa-triangle-exclamation" style="color:var(--red);margin-right:8px;"></i>Report an Incident</h2>
+ <p class="subtitle">Quick - takes under 30 seconds</p>
+ <div id="modalMsg" class="modal-msg"></div>
+ <form id="reportForm" novalidate>
 
-      <!-- 1 · Severity -->
-      <div class="form-section">
-        <div class="qs-label"><span class="qs-num">1</span>How serious is it?</div>
-        <div class="severity-row">
-          <div class="sev-btn dangerous" onclick="selectStatus('dangerous')" id="opt_dangerous"><i class="fas fa-circle-exclamation"></i><span>Dangerous</span></div>
-          <div class="sev-btn caution"   onclick="selectStatus('caution')"   id="opt_caution"><i class="fas fa-triangle-exclamation"></i><span>Caution</span></div>
-          <div class="sev-btn safe"      onclick="selectStatus('safe')"      id="opt_safe"><i class="fas fa-circle-check"></i><span>Safe</span></div>
-        </div>
-        <input type="hidden" id="r_status">
-      </div>
+ <!-- 1 · Severity -->
+ <div class="form-section">
+ <div class="qs-label"><span class="qs-num">1</span>How serious is it?</div>
+ <div class="severity-row">
+ <div class="sev-btn dangerous" onclick="selectStatus('dangerous')" id="opt_dangerous"><i class="fas fa-circle-exclamation"></i><span>Dangerous</span></div>
+ <div class="sev-btn caution" onclick="selectStatus('caution')" id="opt_caution"><i class="fas fa-triangle-exclamation"></i><span>Caution</span></div>
+ <div class="sev-btn safe" onclick="selectStatus('safe')" id="opt_safe"><i class="fas fa-circle-check"></i><span>Safe</span></div>
+ </div>
+ <input type="hidden" id="r_status">
+ </div>
 
-      <!-- 2 · Category -->
-      <div class="form-section">
-        <div class="qs-label"><span class="qs-num">2</span>What type of incident?</div>
-        <div class="cat-grid">
-          <div class="cat-opt" onclick="selectCategory('crime')"          id="cat_crime"><i class="fas fa-user-shield"></i><span>Crime</span></div>
-          <div class="cat-opt" onclick="selectCategory('accident')"       id="cat_accident"><i class="fas fa-car-burst"></i><span>Accident</span></div>
-          <div class="cat-opt" onclick="selectCategory('flooding')"       id="cat_flooding"><i class="fas fa-water"></i><span>Flooding</span></div>
-          <div class="cat-opt" onclick="selectCategory('fire')"           id="cat_fire"><i class="fas fa-fire"></i><span>Fire</span></div>
-          <div class="cat-opt" onclick="selectCategory('health')"         id="cat_health"><i class="fas fa-heart-pulse"></i><span>Health</span></div>
-          <div class="cat-opt" onclick="selectCategory('infrastructure')" id="cat_infrastructure"><i class="fas fa-road"></i><span>Road</span></div>
-          <div class="cat-opt" onclick="selectCategory('other')"          id="cat_other"><i class="fas fa-circle-info"></i><span>Other</span></div>
-        </div>
-        <input type="hidden" id="r_category">
-      </div>
+ <!-- 2 · Category -->
+ <div class="form-section">
+ <div class="qs-label"><span class="qs-num">2</span>What type of incident?</div>
+ <div class="cat-grid">
+ <div class="cat-opt" onclick="selectCategory('crime')" id="cat_crime"><i class="fas fa-user-shield"></i><span>Crime</span></div>
+ <div class="cat-opt" onclick="selectCategory('accident')" id="cat_accident"><i class="fas fa-car-burst"></i><span>Accident</span></div>
+ <div class="cat-opt" onclick="selectCategory('flooding')" id="cat_flooding"><i class="fas fa-water"></i><span>Flooding</span></div>
+ <div class="cat-opt" onclick="selectCategory('fire')" id="cat_fire"><i class="fas fa-fire"></i><span>Fire</span></div>
+ <div class="cat-opt" onclick="selectCategory('health')" id="cat_health"><i class="fas fa-heart-pulse"></i><span>Health</span></div>
+ <div class="cat-opt" onclick="selectCategory('infrastructure')" id="cat_infrastructure"><i class="fas fa-road"></i><span>Road</span></div>
+ <div class="cat-opt" onclick="selectCategory('other')" id="cat_other"><i class="fas fa-circle-info"></i><span>Other</span></div>
+ </div>
+ <input type="hidden" id="r_category">
+ </div>
 
-      <!-- 3 · Description -->
-      <div class="form-section">
-        <div class="qs-label"><span class="qs-num">3</span>What's happening?</div>
-        <textarea id="r_description" placeholder="Briefly describe the situation…" rows="3" maxlength="2000"></textarea>
-      </div>
+ <!-- 3 · Description -->
+ <div class="form-section">
+ <div class="qs-label"><span class="qs-num">3</span>What's happening?</div>
+ <textarea id="r_description" placeholder="Briefly describe the situation…" rows="3" maxlength="2000"></textarea>
+ </div>
 
-      <!-- 4 · Where -->
-      <div class="form-section">
-        <div class="qs-label"><span class="qs-num">4</span>Where?</div>
-        <div class="loc-auto-row">
-          <button type="button" class="locate-btn-big" id="locateBtn" onclick="useMyLocation()"><i class="fas fa-location-crosshairs"></i> Use My Location</button>
-          <span class="pin-status" id="pinStatus"><i class="fas fa-circle-info"></i> No pin set</span>
-        </div>
-        <input type="text" id="r_city" placeholder="City / Municipality *" maxlength="150">
-        <div class="loc-details-toggle" onclick="toggleLocDetails()"><i class="fas fa-chevron-right" id="locChevron"></i> Add specific address</div>
-        <div id="locDetails" class="loc-details-panel" style="display:none;margin-top:10px;">
-          <input type="text" id="r_location" placeholder="Street / Area (e.g. Rizal St. near Market)" maxlength="255">
-          <div class="modal-row">
-            <input type="text" id="r_barangay" placeholder="Barangay" maxlength="150">
-            <input type="text" id="r_province" placeholder="Province" maxlength="150">
-          </div>
-          <button type="button" class="map-pick-btn" id="mapPickBtn" onclick="toggleMapPicker()"><i class="fas fa-map-pin"></i> Drop a Pin on Map</button>
-          <div id="mapPickerSection" style="display:none;" class="picker-section">
-            <div class="picker-header"><i class="fas fa-crosshairs"></i> Click to drop a pin · Drag to move · Scroll to zoom</div>
-            <div id="pickerMap"></div>
-            <div class="picker-toolbar">
-              <button type="button" class="clear-pin-btn" id="clearPinBtn" onclick="clearPin()" style="display:none;"><i class="fas fa-xmark"></i> Clear pin</button>
-              <span class="pin-status" id="pinStatus2" style="margin-left:auto;"></span>
-            </div>
-            <div class="radius-row">
-              <label><i class="fas fa-circle-dot" style="color:var(--blue-accent);margin-right:4px;"></i>Affected radius:</label>
-              <input type="range" id="radiusSlider" min="50" max="3000" step="50" value="200" oninput="onRadiusChange(this.value)">
-              <span class="radius-val" id="radiusVal">200 m</span>
-            </div>
-          </div>
-        </div>
-        <input type="hidden" id="r_latitude"><input type="hidden" id="r_longitude"><input type="hidden" id="r_radius_m" value="200">
-      </div>
+ <!-- 4 · Where -->
+ <div class="form-section">
+ <div class="qs-label"><span class="qs-num">4</span>Where?</div>
+ <div class="loc-auto-row">
+ <button type="button" class="locate-btn-big" id="locateBtn" onclick="useMyLocation()"><i class="fas fa-location-crosshairs"></i> Use My Location</button>
+ <span class="pin-status" id="pinStatus"><i class="fas fa-circle-info"></i> No pin set</span>
+ </div>
+ <input type="text" id="r_city" placeholder="City / Municipality *" maxlength="150">
+ <div class="loc-details-toggle" onclick="toggleLocDetails()"><i class="fas fa-chevron-right" id="locChevron"></i> Add specific address</div>
+ <div id="locDetails" class="loc-details-panel" style="display:none;margin-top:10px;">
+ <input type="text" id="r_location" placeholder="Street / Area (e.g. Rizal St. near Market)" maxlength="255">
+ <div class="modal-row">
+ <input type="text" id="r_barangay" placeholder="Barangay" maxlength="150">
+ <input type="text" id="r_province" placeholder="Province" maxlength="150">
+ </div>
+ <button type="button" class="map-pick-btn" id="mapPickBtn" onclick="toggleMapPicker()"><i class="fas fa-map-pin"></i> Drop a Pin on Map</button>
+ <div id="mapPickerSection" style="display:none;" class="picker-section">
+ <div class="picker-header"><i class="fas fa-crosshairs"></i> Click to drop a pin · Drag to move · Scroll to zoom</div>
+ <div id="pickerMap"></div>
+ <div class="picker-toolbar">
+ <button type="button" class="clear-pin-btn" id="clearPinBtn" onclick="clearPin()" style="display:none;"><i class="fas fa-xmark"></i> Clear pin</button>
+ <span class="pin-status" id="pinStatus2" style="margin-left:auto;"></span>
+ </div>
+ <div class="radius-row">
+ <label><i class="fas fa-circle-dot" style="color:var(--blue-accent);margin-right:4px;"></i>Affected radius:</label>
+ <input type="range" id="radiusSlider" min="50" max="3000" step="50" value="200" oninput="onRadiusChange(this.value)">
+ <span class="radius-val" id="radiusVal">200 m</span>
+ </div>
+ </div>
+ </div>
+ <input type="hidden" id="r_latitude"><input type="hidden" id="r_longitude"><input type="hidden" id="r_radius_m" value="200">
+ </div>
 
-      <!-- Optional: Title & Photos -->
-      <div class="optional-section">
-        <div class="opt-toggle" onclick="toggleOptional()"><i class="fas fa-chevron-right" id="optChevron"></i> Title &amp; Photos (optional)</div>
-        <div id="optionalDetails" class="opt-panel" style="display:none;margin-top:12px;">
-          <input type="text" id="r_title" placeholder="Report title (auto-generated if blank)" maxlength="255" style="width:100%;padding:11px 14px;border:1.5px solid var(--input-border);border-radius:9px;font-size:.9rem;outline:none;font-family:'Poppins',sans-serif;background:var(--input-bg);color:var(--text);transition:.2s;box-sizing:border-box;">
-          <div class="photo-upload-area" onclick="document.getElementById('r_photos').click()"><i class="fas fa-camera" style="font-size:1.3rem;color:var(--blue-accent);display:block;margin-bottom:5px;"></i>Attach Photos &middot; up to 3 &middot; max 5 MB each<br><span style="font-size:.75rem;color:var(--muted);">JPG, PNG, WEBP</span></div>
-          <input type="file" id="r_photos" accept="image/jpeg,image/png,image/webp" multiple style="display:none;" onchange="onPhotosChosen(this)">
-          <div id="photoPreviewRow" style="display:flex;gap:8px;flex-wrap:wrap;"></div>
-        </div>
-      </div>
+ <!-- Optional: Title & Photos -->
+ <div class="optional-section">
+ <div class="opt-toggle" onclick="toggleOptional()"><i class="fas fa-chevron-right" id="optChevron"></i> Title &amp; Photos (optional)</div>
+ <div id="optionalDetails" class="opt-panel" style="display:none;margin-top:12px;">
+ <input type="text" id="r_title" placeholder="Report title (auto-generated if blank)" maxlength="255" style="width:100%;padding:11px 14px;border:1.5px solid var(--input-border);border-radius:9px;font-size:.9rem;outline:none;font-family:'Poppins',sans-serif;background:var(--input-bg);color:var(--text);transition:.2s;box-sizing:border-box;">
+ <div class="photo-upload-area" onclick="document.getElementById('r_photos').click()"><i class="fas fa-camera" style="font-size:1.3rem;color:var(--blue-accent);display:block;margin-bottom:5px;"></i>Attach Photos &middot; up to 3 &middot; max 5 MB each<br><span style="font-size:.75rem;color:var(--muted);">JPG, PNG, WEBP</span></div>
+ <input type="file" id="r_photos" accept="image/jpeg,image/png,image/webp" multiple style="display:none;" onchange="onPhotosChosen(this)">
+ <div id="photoPreviewRow" style="display:flex;gap:8px;flex-wrap:wrap;"></div>
+ </div>
+ </div>
 
-      <div class="modal-actions">
-        <button type="button" class="btn-cancel" onclick="closeModal()">Cancel</button>
-        <button type="submit" class="btn-submit" id="submitBtn"><i class="fas fa-paper-plane"></i> Submit Report</button>
-      </div>
-    </form>
-  </div>
+ <div class="modal-actions">
+ <button type="button" class="btn-cancel" onclick="closeModal()">Cancel</button>
+ <button type="submit" class="btn-submit" id="submitBtn"><i class="fas fa-paper-plane"></i> Submit Report</button>
+ </div>
+ </form>
+ </div>
 </div>
 
 <!-- ═══ REPORT DETAIL ═══ -->
 <div class="detail-overlay" id="detailOverlay" onclick="outsideCloseDetail(event)">
-  <div class="detail-modal" id="detailModal">
-    <button class="detail-close" onclick="closeDetail()"><i class="fas fa-xmark"></i></button>
-    <div class="detail-header">
-      <div class="detail-status-bar"><span class="detail-badge" id="d_badge"></span><span class="detail-cat-tag" id="d_cat_tag"></span></div>
-      <div class="detail-title" id="d_title"></div>
-      <div class="detail-reporter" id="d_reporter"></div>
-    </div>
-    <div class="detail-photos" id="d_photos" style="display:none;"></div>
-    <div class="detail-body">
-      <div class="detail-meta-grid" id="d_meta_grid"></div>
-      <div class="detail-timeline-box" id="d_timeline_box" style="margin-top:14px;background:var(--card-bg, #f8fafc);border:1px solid var(--border,#e2e8f0);border-radius:12px;padding:12px 14px;">
-        <div style="font-size:0.75rem;font-weight:700;color:var(--muted,#64748b);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px;display:flex;align-items:center;gap:6px;">
-          <i class="fas fa-route" style="color:var(--blue-accent,#2563eb);"></i> Incident Response Journey &amp; Status
-        </div>
-        <div id="d_timeline_steps" style="display:flex;flex-direction:column;gap:6px;"></div>
-      </div>
-      <div class="detail-desc-box" id="d_desc_box" style="display:none;"><div class="detail-desc-label"><i class="fas fa-align-left" style="margin-right:5px;"></i>Description</div><div class="detail-desc-text" id="d_desc"></div></div>
-    </div>
-    <div class="detail-footer" id="d_footer"></div>
-  </div>
+ <div class="detail-modal" id="detailModal">
+ <button class="detail-close" onclick="closeDetail()"><i class="fas fa-xmark"></i></button>
+ <div class="detail-header">
+ <div class="detail-status-bar"><span class="detail-badge" id="d_badge"></span><span class="detail-cat-tag" id="d_cat_tag"></span></div>
+ <div class="detail-title" id="d_title"></div>
+ <div class="detail-reporter" id="d_reporter"></div>
+ </div>
+ <div class="detail-photos" id="d_photos" style="display:none;"></div>
+ <div class="detail-body">
+ <div class="detail-meta-grid" id="d_meta_grid"></div>
+ <div class="detail-timeline-box" id="d_timeline_box" style="margin-top:14px;background:var(--card-bg, #f8fafc);border:1px solid var(--border,#e2e8f0);border-radius:12px;padding:12px 14px;">
+ <div style="font-size:0.75rem;font-weight:700;color:var(--muted,#64748b);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px;display:flex;align-items:center;gap:6px;">
+ <i class="fas fa-route" style="color:var(--blue-accent,#2563eb);"></i> Incident Response Journey &amp; Status
+ </div>
+ <div id="d_timeline_steps" style="display:flex;flex-direction:column;gap:6px;"></div>
+ </div>
+ <div class="detail-desc-box" id="d_desc_box" style="display:none;"><div class="detail-desc-label"><i class="fas fa-align-left" style="margin-right:5px;"></i>Description</div><div class="detail-desc-text" id="d_desc"></div></div>
+ </div>
+ <div class="detail-footer" id="d_footer"></div>
+ </div>
 </div>
 
 <!-- ═══ MINI MAP ═══ -->
 <div class="mini-map-modal" id="miniMapModal" onclick="closeMiniMap(event)">
-  <div class="mini-map-box">
-    <div class="mini-map-header"><h4 id="miniMapTitle">Location</h4><button class="mini-map-close" onclick="closeMiniMapDirect()"><i class="fas fa-xmark"></i></button></div>
-    <div id="miniMap"></div>
-    <div class="mini-map-footer" id="miniMapFooter"></div>
-  </div>
+ <div class="mini-map-box">
+ <div class="mini-map-header"><h4 id="miniMapTitle">Location</h4><button class="mini-map-close" onclick="closeMiniMapDirect()"><i class="fas fa-xmark"></i></button></div>
+ <div id="miniMap"></div>
+ <div class="mini-map-footer" id="miniMapFooter"></div>
+ </div>
 </div>
 
 <!-- ═══ LIGHTBOX ═══ -->
 <div class="lightbox" id="lightbox" onclick="closeLightbox()">
-  <button class="lightbox-close" onclick="closeLightbox()"><i class="fas fa-xmark"></i></button>
-  <img id="lightboxImg" src="" alt="Photo">
+ <button class="lightbox-close" onclick="closeLightbox()"><i class="fas fa-xmark"></i></button>
+ <img id="lightboxImg" src="" alt="Photo">
 </div>
 
 <script src="../assets/vendor/leaflet/leaflet.js"></script>
 <script>
-const MY_USER_ID  = <?= $uid ?>;
+const MY_USER_ID = <?= $uid ?>;
 const CURRENT_VIEW= '<?= htmlspecialchars($view) ?>';
-const SAVED_LAT   = <?= is_null($saved_gps_lat)?'null':(float)$saved_gps_lat ?>;
-const SAVED_LNG   = <?= is_null($saved_gps_lng)?'null':(float)$saved_gps_lng ?>;
-const INIT_COLOR  = '<?= htmlspecialchars($avatar_color) ?>';
-const DM_KEY      = `sentri_dm_${MY_USER_ID}`;
+const SAVED_LAT = <?= is_null($saved_gps_lat)?'null':(float)$saved_gps_lat ?>;
+const SAVED_LNG = <?= is_null($saved_gps_lng)?'null':(float)$saved_gps_lng ?>;
+const INIT_COLOR = '<?= htmlspecialchars($avatar_color) ?>';
+const DM_KEY = `sentri_dm_${MY_USER_ID}`;
 
 const SC = {dangerous:'#e53e3e',caution:'#dd6b20',safe:'#38a169'};
 const SF = {dangerous:'rgba(229,62,62,.15)',caution:'rgba(221,107,32,.15)',safe:'rgba(56,161,105,.15)'};
@@ -859,61 +859,61 @@ function dismissToast(t){if(!t||!t.parentElement)return;t.classList.add('fade-ou
 
 /* Fetch reports */
 async function fetchReports(){
-  const isMine=CURRENT_VIEW==='my_reports';
-  try{const res=await fetch('../api/reports.php?action=get_reports');const data=await res.json();
-    if(data.status==='success'){allReports=data.reports;renderFeed(isMine);if(CURRENT_VIEW==='map')renderMainMap();checkProximity();}
-    else{const f=document.getElementById('feed');if(f)f.innerHTML='<div class="empty"><i class="fas fa-triangle-exclamation"></i><p>Failed to load reports.</p></div>';}
-  }catch{const f=document.getElementById('feed');if(f)f.innerHTML='<div class="empty"><i class="fas fa-wifi"></i><p>Network error.</p></div>';}
+ const isMine=CURRENT_VIEW==='my_reports';
+ try{const res=await fetch('../api/reports.php?action=get_reports');const data=await res.json();
+ if(data.status==='success'){allReports=data.reports;renderFeed(isMine);if(CURRENT_VIEW==='map')renderMainMap();checkProximity();}
+ else{const f=document.getElementById('feed');if(f)f.innerHTML='<div class="empty"><i class="fas fa-triangle-exclamation"></i><p>Failed to load reports.</p></div>';}
+ }catch{const f=document.getElementById('feed');if(f)f.innerHTML='<div class="empty"><i class="fas fa-wifi"></i><p>Network error.</p></div>';}
 }
 
 function getFiltered(mineOnly){
-  const s=(document.getElementById('searchInput')?.value||'').trim().toLowerCase();
-  const st=document.getElementById('statusFilter')?.value||'';
-  const ca=document.getElementById('categoryFilter')?.value||'';
-  return allReports.filter(r=>{
-    if(mineOnly&&r.user_id!=MY_USER_ID)return false;
-    if(st&&r.status!==st)return false;if(ca&&r.category!==ca)return false;
-    if(s){const h=(r.title+r.location_name+r.city+(r.barangay||'')+(r.description||'')).toLowerCase();if(!h.includes(s))return false;}
-    return true;
-  });
+ const s=(document.getElementById('searchInput')?.value||'').trim().toLowerCase();
+ const st=document.getElementById('statusFilter')?.value||'';
+ const ca=document.getElementById('categoryFilter')?.value||'';
+ return allReports.filter(r=>{
+ if(mineOnly&&r.user_id!=MY_USER_ID)return false;
+ if(st&&r.status!==st)return false;if(ca&&r.category!==ca)return false;
+ if(s){const h=(r.title+r.location_name+r.city+(r.barangay||'')+(r.description||'')).toLowerCase();if(!h.includes(s))return false;}
+ return true;
+ });
 }
 
 function renderFeed(mineOnly=false){
-  const feed=document.getElementById('feed');if(!feed)return;
-  const list=getFiltered(mineOnly);
-  if(!list.length){
-    feed.innerHTML=`<div class="empty"><i class="fas fa-binoculars"></i><p>${mineOnly?"You haven't posted any reports yet.":'No reports match your filters.'}</p></div>`;
-    return;
-  }
-  feed.innerHTML=list.map((r,i)=>{
-    const date=new Date(r.created_at).toLocaleDateString('en-PH',{year:'numeric',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
-    const isMine=r.user_id==MY_USER_ID,upV=r.user_vote==='up',dnV=r.user_vote==='down',hasPin=r.latitude&&r.longitude,hasPh=r.images&&r.images.length>0;
-    const isVerified=r.upvotes>=2;
-    return `<div class="report-card ${r.status}" style="animation-delay:${i*.04}s;" onclick="openDetail(${r.id})">
-      <div class="card-header">
-        <h3>${esc(r.title)}</h3>
-        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
-          ${isVerified?`<span class="badge" style="background:#ecfdf5;color:#059669;border:1px solid #a7f3d0;display:inline-flex;align-items:center;gap:4px;"><i class="fas fa-circle-check"></i> Verified (${r.upvotes})</span>`:''}
-          <span class="badge ${r.status}">${ucFirst(r.status)}</span>
-        </div>
-      </div>
-      <div class="card-meta">
-        <span><i class="fas fa-map-location-dot"></i>${esc(r.location_name)}</span>
-        <span><i class="fas fa-city"></i>${esc(r.city)}${r.province?', '+esc(r.province):''}</span>
-        <span><i class="fas fa-clock"></i>${date}</span>
-        <span><i class="fas fa-user"></i>${esc(r.poster_name)}</span>
-        ${hasPh?`<span><i class="fas fa-camera" style="color:var(--blue-accent);"></i>${r.images.length} photo${r.images.length>1?'s':''}</span>`:''}
-      </div>
-      <div class="card-body"><p>${esc((r.description||'').substring(0,200))}${(r.description||'').length>200?'…':''}</p></div>
-      <div class="card-footer" onclick="event.stopPropagation()">
-        <button class="vote-btn ${upV?'voted':''}" onclick="vote(${r.id},'up')"><i class="fas fa-thumbs-up"></i><span id="up_${r.id}">${r.upvotes}</span></button>
-        <button class="vote-btn down ${dnV?'voted':''}" onclick="vote(${r.id},'down')"><i class="fas fa-thumbs-down"></i><span id="dn_${r.id}">${r.downvotes}</span></button>
-        <button class="pin-chip" style="background:#eff6ff;color:#2563eb;border-color:#bfdbfe;font-weight:700;" onclick="crowdVerify(${r.id})"><i class="fas fa-shield-check"></i> +1 Verify</button>
-        ${hasPin?`<button class="pin-chip" onclick="openMiniMap(${r.id})"><i class="fas fa-map-pin"></i> Map</button>`:''}
-        ${isMine?`<button class="vote-btn" style="margin-left:auto;border-color:var(--red);color:var(--red);" onclick="deleteReport(${r.id})"><i class="fas fa-trash-can"></i></button>`:`<span class="category-tag" style="margin-left:auto;"><i class="fas ${CI[r.category]||'fa-circle-info'}"></i> ${ucFirst(r.category)}</span>`}
-      </div>
-    </div>`;
-  }).join('');
+ const feed=document.getElementById('feed');if(!feed)return;
+ const list=getFiltered(mineOnly);
+ if(!list.length){
+ feed.innerHTML=`<div class="empty"><i class="fas fa-binoculars"></i><p>${mineOnly?"You haven't posted any reports yet.":'No reports match your filters.'}</p></div>`;
+ return;
+ }
+ feed.innerHTML=list.map((r,i)=>{
+ const date=new Date(r.created_at).toLocaleDateString('en-PH',{year:'numeric',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
+ const isMine=r.user_id==MY_USER_ID,upV=r.user_vote==='up',dnV=r.user_vote==='down',hasPin=r.latitude&&r.longitude,hasPh=r.images&&r.images.length>0;
+ const isVerified=r.upvotes>=2;
+ return `<div class="report-card ${r.status}" style="animation-delay:${i*.04}s;" onclick="openDetail(${r.id})">
+ <div class="card-header">
+ <h3>${esc(r.title)}</h3>
+ <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+ ${isVerified?`<span class="badge" style="background:#ecfdf5;color:#059669;border:1px solid #a7f3d0;display:inline-flex;align-items:center;gap:4px;"><i class="fas fa-circle-check"></i> Verified (${r.upvotes})</span>`:''}
+ <span class="badge ${r.status}">${ucFirst(r.status)}</span>
+ </div>
+ </div>
+ <div class="card-meta">
+ <span><i class="fas fa-map-location-dot"></i>${esc(r.location_name)}</span>
+ <span><i class="fas fa-city"></i>${esc(r.city)}${r.province?', '+esc(r.province):''}</span>
+ <span><i class="fas fa-clock"></i>${date}</span>
+ <span><i class="fas fa-user"></i>${esc(r.poster_name)}</span>
+ ${hasPh?`<span><i class="fas fa-camera" style="color:var(--blue-accent);"></i>${r.images.length} photo${r.images.length>1?'s':''}</span>`:''}
+ </div>
+ <div class="card-body"><p>${esc((r.description||'').substring(0,200))}${(r.description||'').length>200?'…':''}</p></div>
+ <div class="card-footer" onclick="event.stopPropagation()">
+ <button class="vote-btn ${upV?'voted':''}" onclick="vote(${r.id},'up')"><i class="fas fa-thumbs-up"></i><span id="up_${r.id}">${r.upvotes}</span></button>
+ <button class="vote-btn down ${dnV?'voted':''}" onclick="vote(${r.id},'down')"><i class="fas fa-thumbs-down"></i><span id="dn_${r.id}">${r.downvotes}</span></button>
+ <button class="pin-chip" style="background:#eff6ff;color:#2563eb;border-color:#bfdbfe;font-weight:700;" onclick="crowdVerify(${r.id})"><i class="fas fa-shield-check"></i> +1 Verify</button>
+ ${hasPin?`<button class="pin-chip" onclick="openMiniMap(${r.id})"><i class="fas fa-map-pin"></i> Map</button>`:''}
+ ${isMine?`<button class="vote-btn" style="margin-left:auto;border-color:var(--red);color:var(--red);" onclick="deleteReport(${r.id})"><i class="fas fa-trash-can"></i></button>`:`<span class="category-tag" style="margin-left:auto;"><i class="fas ${CI[r.category]||'fa-circle-info'}"></i> ${ucFirst(r.category)}</span>`}
+ </div>
+ </div>`;
+ }).join('');
 }
 
 ['searchInput','statusFilter','categoryFilter'].forEach(id=>{const el=document.getElementById(id);if(el)el.addEventListener(id==='searchInput'?'input':'change',()=>{clearTimeout(window._ft);window._ft=setTimeout(()=>{renderFeed(CURRENT_VIEW==='my_reports');if(curView==='map')renderInlineMap();},200);});});
@@ -921,12 +921,12 @@ function resetFilters(){['searchInput','statusFilter','categoryFilter'].forEach(
 function quickFilterStatus(status){const sf=document.getElementById('statusFilter');if(sf){sf.value=status;renderFeed(CURRENT_VIEW==='my_reports');if(curView==='map')renderInlineMap();}}
 
 async function crowdVerify(id){
-  const r=allReports.find(x=>x.id==id);
-  if(r){
-    r.upvotes=(r.upvotes||0)+1;
-    renderFeed(CURRENT_VIEW==='my_reports');
-    showToast('Incident verified! Community trust score updated.', 'success');
-  }
+ const r=allReports.find(x=>x.id==id);
+ if(r){
+ r.upvotes=(r.upvotes||0)+1;
+ renderFeed(CURRENT_VIEW==='my_reports');
+ showToast('Incident verified! Community trust score updated.', 'success');
+ }
 }
 async function vote(id,vt){const fd=new FormData();fd.append('action','vote');fd.append('report_id',id);fd.append('vote',vt);try{const res=await fetch('../api/reports.php',{method:'POST',body:fd});const d=await res.json();if(d.status==='success'){const r=allReports.find(x=>x.id==id);if(r){r.upvotes=d.upvotes;r.downvotes=d.downvotes;r.user_vote=d.user_vote;}renderFeed(CURRENT_VIEW==='my_reports');}}catch{}}
 async function deleteReport(id){if(!confirm('Delete this report?'))return;const fd=new FormData();fd.append('action','delete_report');fd.append('report_id',id);try{const res=await fetch('../api/reports.php',{method:'POST',body:fd});const d=await res.json();if(d.status==='success'){allReports=allReports.filter(r=>r.id!=id);renderFeed(CURRENT_VIEW==='my_reports');}}catch{}}
@@ -938,20 +938,20 @@ function switchView(v){curView=v;const feedEl=document.getElementById('feed'),ma
 function markerIcon(status){const c=SC[status]||'#888';const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="30" height="38" viewBox="0 0 30 38"><path d="M15 0C6.716 0 0 6.716 0 15c0 10 15 23 15 23S30 25 30 15 23.284 0 15 0z" fill="${c}" stroke="white" stroke-width="2"/><circle cx="15" cy="15" r="6" fill="white" opacity=".9"/></svg>`;return L.divIcon({html:svg,className:'',iconSize:[30,38],iconAnchor:[15,38],popupAnchor:[0,-38]});}
 
 /* Keep a Leaflet map's tile grid in sync with its container's real size.
-   Fixed-delay invalidateSize() calls are a guess; this reacts to the actual
-   size change whenever it happens — slow webfont loads, address-bar
-   show/hide, orientation change, sidebar toggle, etc. */
+ Fixed-delay invalidateSize() calls are a guess; this reacts to the actual
+ size change whenever it happens - slow webfont loads, address-bar
+ show/hide, orientation change, sidebar toggle, etc. */
 function watchMapResize(getMap,el){
-  if(!el)return;
-  if('ResizeObserver' in window){
-    let raf=null;
-    new ResizeObserver(()=>{
-      const m=getMap();if(!m)return;
-      if(raf)cancelAnimationFrame(raf);
-      raf=requestAnimationFrame(()=>m.invalidateSize());
-    }).observe(el);
-  }
-  window.addEventListener('orientationchange',()=>{const m=getMap();if(m)setTimeout(()=>m.invalidateSize(),250);});
+ if(!el)return;
+ if('ResizeObserver' in window){
+ let raf=null;
+ new ResizeObserver(()=>{
+ const m=getMap();if(!m)return;
+ if(raf)cancelAnimationFrame(raf);
+ raf=requestAnimationFrame(()=>m.invalidateSize());
+ }).observe(el);
+ }
+ window.addEventListener('orientationchange',()=>{const m=getMap();if(m)setTimeout(()=>m.invalidateSize(),250);});
 }
 
 /* Inline map (overview toggle) */
@@ -966,103 +966,103 @@ function renderMainMap(){if(!mainMap){mainMap=L.map('incidentMap').setView([14.5
 /* Map picker */
 let pickerMap=null,pickerMarker=null,pickerCircle=null,pickerRadius=200;
 function initPickerMap(){
-  if(pickerMap){setTimeout(()=>pickerMap.invalidateSize(),60);return;}
-  const curLat=parseFloat(document.getElementById('r_latitude').value)||null;
-  const curLng=parseFloat(document.getElementById('r_longitude').value)||null;
-  const lat=curLat!==null?curLat:(SAVED_LAT!==null?SAVED_LAT:14.5995);
-  const lng=curLng!==null?curLng:(SAVED_LNG!==null?SAVED_LNG:120.9842);
-  const zoom=(curLat!==null||SAVED_LAT!==null)?15:11;
-  pickerMap=L.map('pickerMap').setView([lat,lng],zoom);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap',maxZoom:19}).addTo(pickerMap);
-  pickerMap.on('click',e=>placePin(e.latlng.lat,e.latlng.lng,true));
-  setTimeout(()=>{
-    pickerMap.invalidateSize();
-    if(curLat!==null)placePin(curLat,curLng,false);
-    else if(SAVED_LAT!==null)placePin(SAVED_LAT,SAVED_LNG,false);
-  },150);
+ if(pickerMap){setTimeout(()=>pickerMap.invalidateSize(),60);return;}
+ const curLat=parseFloat(document.getElementById('r_latitude').value)||null;
+ const curLng=parseFloat(document.getElementById('r_longitude').value)||null;
+ const lat=curLat!==null?curLat:(SAVED_LAT!==null?SAVED_LAT:14.5995);
+ const lng=curLng!==null?curLng:(SAVED_LNG!==null?SAVED_LNG:120.9842);
+ const zoom=(curLat!==null||SAVED_LAT!==null)?15:11;
+ pickerMap=L.map('pickerMap').setView([lat,lng],zoom);
+ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap',maxZoom:19}).addTo(pickerMap);
+ pickerMap.on('click',e=>placePin(e.latlng.lat,e.latlng.lng,true));
+ setTimeout(()=>{
+ pickerMap.invalidateSize();
+ if(curLat!==null)placePin(curLat,curLng,false);
+ else if(SAVED_LAT!==null)placePin(SAVED_LAT,SAVED_LNG,false);
+ },150);
 }
 function placePin(lat,lng,doRG){
-  document.getElementById('r_latitude').value=lat;
-  document.getElementById('r_longitude').value=lng;
-  if(pickerMap){
-    if(pickerMarker)pickerMap.removeLayer(pickerMarker);
-    if(pickerCircle)pickerMap.removeLayer(pickerCircle);
-    pickerCircle=L.circle([lat,lng],{radius:pickerRadius,color:'#3a8dff',fillColor:'rgba(58,141,255,.12)',fillOpacity:1,weight:2,dashArray:'6 4'}).addTo(pickerMap);
-    pickerMarker=L.marker([lat,lng],{icon:L.divIcon({html:`<svg xmlns="http://www.w3.org/2000/svg" width="30" height="38" viewBox="0 0 30 38"><path d="M15 0C6.716 0 0 6.716 0 15c0 10 15 23 15 23S30 25 30 15 23.284 0 15 0z" fill="#3a8dff" stroke="white" stroke-width="2"/><circle cx="15" cy="15" r="6" fill="white" opacity=".9"/></svg>`,className:'',iconSize:[30,38],iconAnchor:[15,38]}),draggable:true}).addTo(pickerMap);
-    pickerMarker.on('dragend',ev=>{const p=ev.target.getLatLng();placePin(p.lat,p.lng,true);});
-    pickerMap.setView([lat,lng],Math.max(pickerMap.getZoom(),15));
-  }
-  const ps=document.getElementById('pinStatus');
-  if(ps){ps.className='pin-status set';ps.innerHTML=`<i class="fas fa-circle-check"></i> ${lat.toFixed(5)}, ${lng.toFixed(5)}`;}
-  const ps2=document.getElementById('pinStatus2');
-  if(ps2){ps2.className='pin-status set';ps2.innerHTML=`<i class="fas fa-circle-check"></i> Pinned`;}
-  document.getElementById('clearPinBtn').style.display='inline-flex';
-  if(doRG)reverseGeocode(lat,lng);
+ document.getElementById('r_latitude').value=lat;
+ document.getElementById('r_longitude').value=lng;
+ if(pickerMap){
+ if(pickerMarker)pickerMap.removeLayer(pickerMarker);
+ if(pickerCircle)pickerMap.removeLayer(pickerCircle);
+ pickerCircle=L.circle([lat,lng],{radius:pickerRadius,color:'#3a8dff',fillColor:'rgba(58,141,255,.12)',fillOpacity:1,weight:2,dashArray:'6 4'}).addTo(pickerMap);
+ pickerMarker=L.marker([lat,lng],{icon:L.divIcon({html:`<svg xmlns="http://www.w3.org/2000/svg" width="30" height="38" viewBox="0 0 30 38"><path d="M15 0C6.716 0 0 6.716 0 15c0 10 15 23 15 23S30 25 30 15 23.284 0 15 0z" fill="#3a8dff" stroke="white" stroke-width="2"/><circle cx="15" cy="15" r="6" fill="white" opacity=".9"/></svg>`,className:'',iconSize:[30,38],iconAnchor:[15,38]}),draggable:true}).addTo(pickerMap);
+ pickerMarker.on('dragend',ev=>{const p=ev.target.getLatLng();placePin(p.lat,p.lng,true);});
+ pickerMap.setView([lat,lng],Math.max(pickerMap.getZoom(),15));
+ }
+ const ps=document.getElementById('pinStatus');
+ if(ps){ps.className='pin-status set';ps.innerHTML=`<i class="fas fa-circle-check"></i> ${lat.toFixed(5)}, ${lng.toFixed(5)}`;}
+ const ps2=document.getElementById('pinStatus2');
+ if(ps2){ps2.className='pin-status set';ps2.innerHTML=`<i class="fas fa-circle-check"></i> Pinned`;}
+ document.getElementById('clearPinBtn').style.display='inline-flex';
+ if(doRG)reverseGeocode(lat,lng);
 }
 function clearPin(){
-  if(pickerMap){
-    if(pickerMarker){pickerMap.removeLayer(pickerMarker);}
-    if(pickerCircle){pickerMap.removeLayer(pickerCircle);}
-  }
-  pickerMarker=null;pickerCircle=null;
-  document.getElementById('r_latitude').value='';
-  document.getElementById('r_longitude').value='';
-  document.getElementById('r_radius_m').value='200';
-  const rs=document.getElementById('radiusSlider');if(rs)rs.value=200;
-  const rv=document.getElementById('radiusVal');if(rv)rv.textContent='200 m';
-  pickerRadius=200;
-  const ps=document.getElementById('pinStatus');
-  if(ps){ps.className='pin-status';ps.innerHTML='<i class="fas fa-circle-info"></i> No pin set';}
-  const ps2=document.getElementById('pinStatus2');
-  if(ps2){ps2.className='pin-status';ps2.innerHTML='';}
-  document.getElementById('clearPinBtn').style.display='none';
+ if(pickerMap){
+ if(pickerMarker){pickerMap.removeLayer(pickerMarker);}
+ if(pickerCircle){pickerMap.removeLayer(pickerCircle);}
+ }
+ pickerMarker=null;pickerCircle=null;
+ document.getElementById('r_latitude').value='';
+ document.getElementById('r_longitude').value='';
+ document.getElementById('r_radius_m').value='200';
+ const rs=document.getElementById('radiusSlider');if(rs)rs.value=200;
+ const rv=document.getElementById('radiusVal');if(rv)rv.textContent='200 m';
+ pickerRadius=200;
+ const ps=document.getElementById('pinStatus');
+ if(ps){ps.className='pin-status';ps.innerHTML='<i class="fas fa-circle-info"></i> No pin set';}
+ const ps2=document.getElementById('pinStatus2');
+ if(ps2){ps2.className='pin-status';ps2.innerHTML='';}
+ document.getElementById('clearPinBtn').style.display='none';
 }
 function onRadiusChange(val){pickerRadius=parseInt(val);document.getElementById('radiusVal').textContent=pickerRadius>=1000?(pickerRadius/1000).toFixed(1)+' km':pickerRadius+' m';document.getElementById('r_radius_m').value=pickerRadius;if(pickerCircle)pickerCircle.setRadius(pickerRadius);}
 async function reverseGeocode(lat,lng){try{const res=await fetch(`../api/geocode_proxy.php?lat=${lat}&lon=${lng}`);const d=await res.json();if(d&&d.address){const a=d.address;if(!document.getElementById('r_location').value)document.getElementById('r_location').value=a.road||a.hamlet||a.suburb||'';if(!document.getElementById('r_barangay').value)document.getElementById('r_barangay').value=a.suburb||a.village||a.quarter||a.neighbourhood||'';if(!document.getElementById('r_city').value)document.getElementById('r_city').value=a.city||a.town||a.municipality||'';if(!document.getElementById('r_province').value)document.getElementById('r_province').value=a.state||a.province||'';}}catch{}}
 function useMyLocation(){
-  const btn=document.getElementById('locateBtn');
-  if(SAVED_LAT!==null&&SAVED_LNG!==null){placePin(SAVED_LAT,SAVED_LNG,true);return;}
-  if(!navigator.geolocation){
-    const cf=document.getElementById('r_city');if(cf)cf.focus();
-    return;
-  }
-  btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Locating…';
-  btn.disabled=true;
-  navigator.geolocation.getCurrentPosition(pos=>{
-    btn.innerHTML='<i class="fas fa-location-crosshairs"></i> Use My Location';
-    btn.disabled=false;
-    placePin(pos.coords.latitude,pos.coords.longitude,true);
-  },err=>{
-    btn.innerHTML='<i class="fas fa-location-crosshairs"></i> Use My Location';
-    btn.disabled=false;
-    const cf=document.getElementById('r_city');
-    if(cf){cf.focus();cf.placeholder='Enter your city / municipality';}
-  },{enableHighAccuracy:true,timeout:10000,maximumAge:60000});
+ const btn=document.getElementById('locateBtn');
+ if(SAVED_LAT!==null&&SAVED_LNG!==null){placePin(SAVED_LAT,SAVED_LNG,true);return;}
+ if(!navigator.geolocation){
+ const cf=document.getElementById('r_city');if(cf)cf.focus();
+ return;
+ }
+ btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Locating…';
+ btn.disabled=true;
+ navigator.geolocation.getCurrentPosition(pos=>{
+ btn.innerHTML='<i class="fas fa-location-crosshairs"></i> Use My Location';
+ btn.disabled=false;
+ placePin(pos.coords.latitude,pos.coords.longitude,true);
+ },err=>{
+ btn.innerHTML='<i class="fas fa-location-crosshairs"></i> Use My Location';
+ btn.disabled=false;
+ const cf=document.getElementById('r_city');
+ if(cf){cf.focus();cf.placeholder='Enter your city / municipality';}
+ },{enableHighAccuracy:true,timeout:10000,maximumAge:60000});
 }
 
 /* Post report modal */
 function openModal(){
-  document.getElementById('modalOverlay').classList.add('open');
-  if(SAVED_LAT!==null&&SAVED_LNG!==null){setTimeout(()=>placePin(SAVED_LAT,SAVED_LNG,true),250);}
+ document.getElementById('modalOverlay').classList.add('open');
+ if(SAVED_LAT!==null&&SAVED_LNG!==null){setTimeout(()=>placePin(SAVED_LAT,SAVED_LNG,true),250);}
 }
 function closeModal(){
-  document.getElementById('modalOverlay').classList.remove('open');
-  document.getElementById('reportForm').reset();
-  clearStatusSelection();
-  document.querySelectorAll('.cat-opt').forEach(el=>el.classList.remove('selected'));
-  document.getElementById('r_category').value='';
-  document.getElementById('modalMsg').style.display='none';
-  clearPin();
-  document.getElementById('photoPreviewRow').innerHTML='';
-  const ph=document.getElementById('r_photos');if(ph)ph.value='';
-  // Reset collapsibles
-  _locOpen=false;_optOpen=false;_mapOpen=false;
-  const ld=document.getElementById('locDetails');if(ld)ld.style.display='none';
-  const od=document.getElementById('optionalDetails');if(od)od.style.display='none';
-  const mp=document.getElementById('mapPickerSection');if(mp)mp.style.display='none';
-  const lc=document.getElementById('locChevron');if(lc)lc.style.transform='';
-  const oc=document.getElementById('optChevron');if(oc)oc.style.transform='';
-  const pb=document.getElementById('mapPickBtn');if(pb)pb.innerHTML='<i class="fas fa-map-pin"></i> Drop a Pin on Map';
+ document.getElementById('modalOverlay').classList.remove('open');
+ document.getElementById('reportForm').reset();
+ clearStatusSelection();
+ document.querySelectorAll('.cat-opt').forEach(el=>el.classList.remove('selected'));
+ document.getElementById('r_category').value='';
+ document.getElementById('modalMsg').style.display='none';
+ clearPin();
+ document.getElementById('photoPreviewRow').innerHTML='';
+ const ph=document.getElementById('r_photos');if(ph)ph.value='';
+ // Reset collapsibles
+ _locOpen=false;_optOpen=false;_mapOpen=false;
+ const ld=document.getElementById('locDetails');if(ld)ld.style.display='none';
+ const od=document.getElementById('optionalDetails');if(od)od.style.display='none';
+ const mp=document.getElementById('mapPickerSection');if(mp)mp.style.display='none';
+ const lc=document.getElementById('locChevron');if(lc)lc.style.transform='';
+ const oc=document.getElementById('optChevron');if(oc)oc.style.transform='';
+ const pb=document.getElementById('mapPickBtn');if(pb)pb.innerHTML='<i class="fas fa-map-pin"></i> Drop a Pin on Map';
 }
 function outsideClose(e){if(e.target===document.getElementById('modalOverlay'))closeModal();}
 function selectStatus(s){clearStatusSelection();document.getElementById('opt_'+s).classList.add('selected');document.getElementById('r_status').value=s;}
@@ -1075,74 +1075,74 @@ function toggleOptional(){_optOpen=!_optOpen;const od=document.getElementById('o
 function onPhotosChosen(input){const row=document.getElementById('photoPreviewRow');row.innerHTML='';Array.from(input.files).slice(0,3).forEach((file,idx)=>{const reader=new FileReader();reader.onload=e=>{const wrap=document.createElement('div');wrap.className='photo-thumb';const img=document.createElement('img');img.src=e.target.result;img.alt='preview';const btn=document.createElement('button');btn.className='remove-photo';btn.innerHTML='<i class="fas fa-xmark"></i>';btn.onclick=ev=>{ev.stopPropagation();removePhoto(idx);};wrap.appendChild(img);wrap.appendChild(btn);row.appendChild(wrap);};reader.readAsDataURL(file);});}
 function removePhoto(idx){const input=document.getElementById('r_photos');const dt=new DataTransfer();Array.from(input.files).forEach((f,i)=>{if(i!==idx)dt.items.add(f);});input.files=dt.files;onPhotosChosen(input);}
 document.getElementById('reportForm').addEventListener('submit',async function(e){
-  e.preventDefault();
-  const msgEl=document.getElementById('modalMsg'),btn=document.getElementById('submitBtn');
-  const status=document.getElementById('r_status').value;
-  const cat=document.getElementById('r_category').value;
-  const desc=document.getElementById('r_description').value.trim();
-  const city=document.getElementById('r_city').value.trim();
-  if(!status){showMsg(msgEl,'error','Choose a severity level — Step 1.');return;}
-  if(!cat){showMsg(msgEl,'error','Choose an incident type — Step 2.');return;}
-  if(!desc){showMsg(msgEl,'error','Describe what is happening — Step 3.');return;}
-  if(!city){showMsg(msgEl,'error','Enter your city or municipality — Step 4.');return;}
-  // Auto-generate title
-  let title=document.getElementById('r_title').value.trim();
-  if(!title)title=`${ucFirst(status)} ${CL[cat]||'Incident'} in ${city}`;
-  // Auto-fill location_name
-  let loc=document.getElementById('r_location').value.trim();
-  if(!loc){const la=document.getElementById('r_latitude').value,ln=document.getElementById('r_longitude').value;loc=la&&ln?`Near ${parseFloat(la).toFixed(5)}, ${parseFloat(ln).toFixed(5)}`:city;}
-  btn.disabled=true;btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Submitting…';
-  const fd=new FormData();
-  fd.append('action','post_report');fd.append('title',title);fd.append('status',status);fd.append('category',cat);
-  fd.append('location_name',loc);fd.append('barangay',document.getElementById('r_barangay').value.trim());
-  fd.append('city',city);fd.append('province',document.getElementById('r_province').value.trim());
-  fd.append('description',desc);fd.append('latitude',document.getElementById('r_latitude').value);
-  fd.append('longitude',document.getElementById('r_longitude').value);fd.append('radius_m',document.getElementById('r_radius_m').value);
-  const ph=document.getElementById('r_photos');
-  if(ph&&ph.files.length)Array.from(ph.files).slice(0,3).forEach(f=>fd.append('photos[]',f));
-  try{
-    const res=await fetch('../api/reports.php',{method:'POST',body:fd});
-    const data=await res.json();
-    if(data.status==='success'){
-      showMsg(msgEl,'success','Report posted!');
-      if(status==='dangerous'&&data.id){const nfd=new FormData();nfd.append('action','notify_report');nfd.append('report_id',data.id);fetch('../api/contacts.php',{method:'POST',body:nfd}).catch(()=>{});}
-      setTimeout(()=>{closeModal();fetchReports();},1000);
-    }else showMsg(msgEl,'error',data.message||'Failed to submit.');
-  }catch{showMsg(msgEl,'error','Network error.');}
-  btn.disabled=false;btn.innerHTML='<i class="fas fa-paper-plane"></i> Submit Report';
+ e.preventDefault();
+ const msgEl=document.getElementById('modalMsg'),btn=document.getElementById('submitBtn');
+ const status=document.getElementById('r_status').value;
+ const cat=document.getElementById('r_category').value;
+ const desc=document.getElementById('r_description').value.trim();
+ const city=document.getElementById('r_city').value.trim();
+ if(!status){showMsg(msgEl,'error','Choose a severity level - Step 1.');return;}
+ if(!cat){showMsg(msgEl,'error','Choose an incident type - Step 2.');return;}
+ if(!desc){showMsg(msgEl,'error','Describe what is happening - Step 3.');return;}
+ if(!city){showMsg(msgEl,'error','Enter your city or municipality - Step 4.');return;}
+ // Auto-generate title
+ let title=document.getElementById('r_title').value.trim();
+ if(!title)title=`${ucFirst(status)} ${CL[cat]||'Incident'} in ${city}`;
+ // Auto-fill location_name
+ let loc=document.getElementById('r_location').value.trim();
+ if(!loc){const la=document.getElementById('r_latitude').value,ln=document.getElementById('r_longitude').value;loc=la&&ln?`Near ${parseFloat(la).toFixed(5)}, ${parseFloat(ln).toFixed(5)}`:city;}
+ btn.disabled=true;btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Submitting…';
+ const fd=new FormData();
+ fd.append('action','post_report');fd.append('title',title);fd.append('status',status);fd.append('category',cat);
+ fd.append('location_name',loc);fd.append('barangay',document.getElementById('r_barangay').value.trim());
+ fd.append('city',city);fd.append('province',document.getElementById('r_province').value.trim());
+ fd.append('description',desc);fd.append('latitude',document.getElementById('r_latitude').value);
+ fd.append('longitude',document.getElementById('r_longitude').value);fd.append('radius_m',document.getElementById('r_radius_m').value);
+ const ph=document.getElementById('r_photos');
+ if(ph&&ph.files.length)Array.from(ph.files).slice(0,3).forEach(f=>fd.append('photos[]',f));
+ try{
+ const res=await fetch('../api/reports.php',{method:'POST',body:fd});
+ const data=await res.json();
+ if(data.status==='success'){
+ showMsg(msgEl,'success','Report posted!');
+ if(status==='dangerous'&&data.id){const nfd=new FormData();nfd.append('action','notify_report');nfd.append('report_id',data.id);fetch('../api/contacts.php',{method:'POST',body:nfd}).catch(()=>{});}
+ setTimeout(()=>{closeModal();fetchReports();},1000);
+ }else showMsg(msgEl,'error',data.message||'Failed to submit.');
+ }catch{showMsg(msgEl,'error','Network error.');}
+ btn.disabled=false;btn.innerHTML='<i class="fas fa-paper-plane"></i> Submit Report';
 });
 
 /* Report detail */
-function openDetail(id){const r=allReports.find(x=>x.id==id);if(!r)return;const badge=document.getElementById('d_badge');badge.textContent=ucFirst(r.status);badge.className='detail-badge '+r.status;document.getElementById('d_cat_tag').innerHTML=`<i class="fas ${CI[r.category]||'fa-circle-info'}" style="margin-right:5px;"></i>${CL[r.category]||ucFirst(r.category)}`;document.getElementById('d_title').textContent=r.title;const date=new Date(r.created_at).toLocaleDateString('en-PH',{weekday:'short',year:'numeric',month:'long',day:'numeric',hour:'2-digit',minute:'2-digit'});document.getElementById('d_reporter').innerHTML=`Posted by <span>${esc(r.poster_name)}</span> — ${date}`;const phEl=document.getElementById('d_photos');if(r.images&&r.images.length>0){phEl.style.display='flex';phEl.innerHTML=r.images.map((u,i)=>`<div class="detail-photo" onclick="openLightbox('${u.replace(/'/g,'%27')}')"><img src="${esc(u)}" alt="Photo ${i+1}" loading="lazy" onerror="this.parentElement.style.display='none'">${r.images.length>1?`<div style="position:absolute;bottom:7px;right:9px;background:rgba(0,0,0,.55);color:#fff;font-size:.68rem;padding:2px 8px;border-radius:20px;">${i+1}/${r.images.length}</div>`:''}</div>`).join('');}else phEl.style.display='none';const isVer=r.upvotes>=2;
+function openDetail(id){const r=allReports.find(x=>x.id==id);if(!r)return;const badge=document.getElementById('d_badge');badge.textContent=ucFirst(r.status);badge.className='detail-badge '+r.status;document.getElementById('d_cat_tag').innerHTML=`<i class="fas ${CI[r.category]||'fa-circle-info'}" style="margin-right:5px;"></i>${CL[r.category]||ucFirst(r.category)}`;document.getElementById('d_title').textContent=r.title;const date=new Date(r.created_at).toLocaleDateString('en-PH',{weekday:'short',year:'numeric',month:'long',day:'numeric',hour:'2-digit',minute:'2-digit'});document.getElementById('d_reporter').innerHTML=`Posted by <span>${esc(r.poster_name)}</span> - ${date}`;const phEl=document.getElementById('d_photos');if(r.images&&r.images.length>0){phEl.style.display='flex';phEl.innerHTML=r.images.map((u,i)=>`<div class="detail-photo" onclick="openLightbox('${u.replace(/'/g,'%27')}')"><img src="${esc(u)}" alt="Photo ${i+1}" loading="lazy" onerror="this.parentElement.style.display='none'">${r.images.length>1?`<div style="position:absolute;bottom:7px;right:9px;background:rgba(0,0,0,.55);color:#fff;font-size:.68rem;padding:2px 8px;border-radius:20px;">${i+1}/${r.images.length}</div>`:''}</div>`).join('');}else phEl.style.display='none';const isVer=r.upvotes>=2;
 const loc=[r.location_name,r.barangay,r.city,r.province].filter(Boolean).join(', ');
 document.getElementById('d_meta_grid').innerHTML=[
-  {icon:'fa-map-location-dot',color:SC[r.status],label:'Location',value:loc||'—'},
-  {icon:'fa-city',color:'#888',label:'City',value:r.city+(r.province?', '+r.province:'')},
-  {icon:'fa-certificate',color:isVer?'#059669':'#888',label:'Community Trust',value:isVer?`<span style="color:#059669;font-weight:700;"><i class="fas fa-check-circle"></i> Verified (${r.upvotes} Confirmed)</span>`:`<span>${r.upvotes} Upvotes · Unconfirmed</span>`},
-  {icon:'fa-circle-dot',color:SC[r.status],label:'Radius',value:`${r.radius_m||200} meters`}
+ {icon:'fa-map-location-dot',color:SC[r.status],label:'Location',value:loc||' - '},
+ {icon:'fa-city',color:'#888',label:'City',value:r.city+(r.province?', '+r.province:'')},
+ {icon:'fa-certificate',color:isVer?'#059669':'#888',label:'Community Trust',value:isVer?`<span style="color:#059669;font-weight:700;"><i class="fas fa-check-circle"></i> Verified (${r.upvotes} Confirmed)</span>`:`<span>${r.upvotes} Upvotes · Unconfirmed</span>`},
+ {icon:'fa-circle-dot',color:SC[r.status],label:'Radius',value:`${r.radius_m||200} meters`}
 ].map(m=>`<div class="detail-meta-item"><div class="detail-meta-label">${m.label}</div><div class="detail-meta-value"><i class="fas ${m.icon}" style="color:${m.color};"></i>${m.value}</div></div>`).join('');
 
 const isResolved=(r.status==='safe');
 const tlWrap=document.getElementById('d_timeline_box');
 if(tlWrap){
-  const steps=[
-    {title:'Citizen Reported',icon:'fa-bullhorn',color:'#3b82f6',done:true,time:date,desc:'Submitted by community resident'},
-    {title:'Community Trust',icon:'fa-shield-halved',color:'#10b981',done:isVer,time:isVer?`${r.upvotes} Upvotes Verified`:'Pending confirmations',desc:isVer?'Validated by local resident consensus':'Awaiting community upvotes'},
-    {title:'Local Tier Action',icon:'fa-building-shield',color:'#f59e0b',done:r.status==='dangerous'||isResolved,time:r.status==='dangerous'?'Escalated / Active Triage':'Local monitoring',desc:'Barangay / LGU operations feed'},
-    {title:'Status Clear',icon:'fa-circle-check',color:'#10b981',done:isResolved,time:isResolved?'Incident Resolved':'Active Notice',desc:isResolved?'Area cleared and marked safe':'Active hazard precautions apply'}
-  ];
-  document.getElementById('d_timeline_steps').innerHTML=steps.map(s=>`
-    <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:6px;">
-      <div style="width:24px;height:24px;border-radius:50%;background:${s.done?s.color:'#cbd5e1'};color:#fff;display:flex;align-items:center;justify-content:center;font-size:0.68rem;flex-shrink:0;margin-top:1px;"><i class="fas ${s.icon}"></i></div>
-      <div style="flex:1;min-width:0;">
-        <div style="display:flex;justify-content:space-between;align-items:center;gap:6px;">
-          <span style="font-size:0.78rem;font-weight:700;color:${s.done?'var(--text,#1e293b)':'#94a3b8'};">${s.title}</span>
-          <span style="font-size:0.68rem;color:var(--muted,#64748b);">${s.time}</span>
-        </div>
-        <div style="font-size:0.72rem;color:var(--muted,#64748b);">${s.desc}</div>
-      </div>
-    </div>
-  `).join('');
+ const steps=[
+ {title:'Citizen Reported',icon:'fa-bullhorn',color:'#3b82f6',done:true,time:date,desc:'Submitted by community resident'},
+ {title:'Community Trust',icon:'fa-shield-halved',color:'#10b981',done:isVer,time:isVer?`${r.upvotes} Upvotes Verified`:'Pending confirmations',desc:isVer?'Validated by local resident consensus':'Awaiting community upvotes'},
+ {title:'Local Tier Action',icon:'fa-building-shield',color:'#f59e0b',done:r.status==='dangerous'||isResolved,time:r.status==='dangerous'?'Escalated / Active Triage':'Local monitoring',desc:'Barangay / LGU operations feed'},
+ {title:'Status Clear',icon:'fa-circle-check',color:'#10b981',done:isResolved,time:isResolved?'Incident Resolved':'Active Notice',desc:isResolved?'Area cleared and marked safe':'Active hazard precautions apply'}
+ ];
+ document.getElementById('d_timeline_steps').innerHTML=steps.map(s=>`
+ <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:6px;">
+ <div style="width:24px;height:24px;border-radius:50%;background:${s.done?s.color:'#cbd5e1'};color:#fff;display:flex;align-items:center;justify-content:center;font-size:0.68rem;flex-shrink:0;margin-top:1px;"><i class="fas ${s.icon}"></i></div>
+ <div style="flex:1;min-width:0;">
+ <div style="display:flex;justify-content:space-between;align-items:center;gap:6px;">
+ <span style="font-size:0.78rem;font-weight:700;color:${s.done?'var(--text,#1e293b)':'#94a3b8'};">${s.title}</span>
+ <span style="font-size:0.68rem;color:var(--muted,#64748b);">${s.time}</span>
+ </div>
+ <div style="font-size:0.72rem;color:var(--muted,#64748b);">${s.desc}</div>
+ </div>
+ </div>
+ `).join('');
 }
 
 const db=document.getElementById('d_desc_box');if(r.description){db.style.display='';document.getElementById('d_desc').textContent=r.description;}else db.style.display='none';const upV=r.user_vote==='up',dnV=r.user_vote==='down',hp=r.latitude&&r.longitude;document.getElementById('d_footer').innerHTML=`<button class="vote-btn ${upV?'voted':''}" onclick="vote(${r.id},'up')"><i class="fas fa-thumbs-up"></i> ${r.upvotes}</button><button class="vote-btn down ${dnV?'voted':''}" onclick="vote(${r.id},'down')"><i class="fas fa-thumbs-down"></i> ${r.downvotes}</button>${hp?`<button class="detail-map-btn" onclick="closeDetail();openMiniMap(${r.id})"><i class="fas fa-map-pin"></i> View on Map</button>`:''}${r.user_id==MY_USER_ID?`<button class="vote-btn" onclick="closeDetail();deleteReport(${r.id})" style="margin-left:auto;border-color:var(--red);color:var(--red);"><i class="fas fa-trash-can"></i> Delete</button>`:''}`;document.getElementById('detailModal').style.borderLeft=`5px solid ${SC[r.status]||'#ccc'}`;document.getElementById('detailOverlay').classList.add('open');document.body.style.overflow='hidden';}
@@ -1150,33 +1150,33 @@ function closeDetail(){document.getElementById('detailOverlay').classList.remove
 function outsideCloseDetail(e){if(e.target===document.getElementById('detailOverlay'))closeDetail();}
 
 function copyEmergencyCoordinates(btn){
-  if(userLat!==null&&userLng!==null){
-    const text=`🚨 EMERGENCY GPS LOCATION: ${userLat.toFixed(6)}, ${userLng.toFixed(6)} (via SenTri System)`;
-    navigator.clipboard.writeText(text).then(()=>{
-      const orig=btn.innerHTML;
-      btn.innerHTML='<i class="fas fa-check"></i> Copied GPS!';
-      btn.style.background='#10b981';
-      btn.style.color='#fff';
-      setTimeout(()=>{
-        btn.innerHTML=orig;
-        btn.style.background='#f59e0b';
-        btn.style.color='#111827';
-      },2500);
-    });
-  } else if(navigator.geolocation){
-    btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Getting GPS…';
-    navigator.geolocation.getCurrentPosition(pos=>{
-      userLat=pos.coords.latitude;
-      userLng=pos.coords.longitude;
-      hasGPS=true;
-      copyEmergencyCoordinates(btn);
-    },()=>{
-      alert('Location access is disabled or unavailable.');
-      btn.innerHTML='<i class="fas fa-location-crosshairs"></i> Copy My GPS';
-    });
-  } else {
-    alert('Geolocation not supported on this device.');
-  }
+ if(userLat!==null&&userLng!==null){
+ const text=`🚨 EMERGENCY GPS LOCATION: ${userLat.toFixed(6)}, ${userLng.toFixed(6)} (via SenTri System)`;
+ navigator.clipboard.writeText(text).then(()=>{
+ const orig=btn.innerHTML;
+ btn.innerHTML='<i class="fas fa-check"></i> Copied GPS!';
+ btn.style.background='#10b981';
+ btn.style.color='#fff';
+ setTimeout(()=>{
+ btn.innerHTML=orig;
+ btn.style.background='#f59e0b';
+ btn.style.color='#111827';
+ },2500);
+ });
+ } else if(navigator.geolocation){
+ btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Getting GPS…';
+ navigator.geolocation.getCurrentPosition(pos=>{
+ userLat=pos.coords.latitude;
+ userLng=pos.coords.longitude;
+ hasGPS=true;
+ copyEmergencyCoordinates(btn);
+ },()=>{
+ alert('Location access is disabled or unavailable.');
+ btn.innerHTML='<i class="fas fa-location-crosshairs"></i> Copy My GPS';
+ });
+ } else {
+ alert('Geolocation not supported on this device.');
+ }
 }
 
 /* Mini map */
@@ -1200,301 +1200,301 @@ async function saveGPS(){if(!navigator.geolocation){alert('Geolocation not suppo
 
 /* Safety Guide */
 const GUIDE_TABS = {
-  typhoon: `
-    <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:12px 14px;margin-bottom:12px;">
-      <h4 style="color:#1d4ed8;font-size:0.9rem;font-weight:700;margin-bottom:4px;"><i class="fas fa-cloud-bolt"></i> Typhoon & Severe Weather Protocols</h4>
-      <p style="font-size:0.8rem;color:#1e3a8a;">Track PAGASA advisory bulletins, prepare emergency power banks, and secure loose outdoor roofing.</p>
-    </div>
-    <ul style="padding-left:18px;margin-bottom:12px;font-size:0.82rem;line-height:1.7;">
-      <li><b>Elevate appliances & valuables</b> if in a flood-prone low-lying zone.</li>
-      <li><b>Charge mobile phones and power banks</b> before expected utility blackouts.</li>
-      <li><b>Store at least 1 gallon of potable water</b> per person per day for 3 days.</li>
-      <li><b>Do not wade into moving floodwaters</b> to prevent leptospirosis and submerged debris injuries.</li>
-    </ul>
-  `,
-  earthquake: `
-    <div style="background:#fef3c7;border:1px solid #fde68a;border-radius:10px;padding:12px 14px;margin-bottom:12px;">
-      <h4 style="color:#b45309;font-size:0.9rem;font-weight:700;margin-bottom:4px;"><i class="fas fa-house-crack"></i> Earthquake Action: Drop, Cover, Hold On</h4>
-      <p style="font-size:0.8rem;color:#78350f;">Protect your head and neck immediately under sturdy furniture until ground shaking stops.</p>
-    </div>
-    <ul style="padding-left:18px;margin-bottom:12px;font-size:0.82rem;line-height:1.7;">
-      <li><b>Drop</b> to your hands and knees to prevent being knocked over.</li>
-      <li><b>Cover</b> your head and neck under a sturdy table or desk.</li>
-      <li><b>Hold On</b> to your shelter until shaking stops.</li>
-      <li><b>Evacuate via stairs only</b> — NEVER use elevators during or after a seismic tremor.</li>
-    </ul>
-  `,
-  fire: `
-    <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:12px 14px;margin-bottom:12px;">
-      <h4 style="color:#dc2626;font-size:0.9rem;font-weight:700;margin-bottom:4px;"><i class="fas fa-fire"></i> Fire Evacuation & Prevention</h4>
-      <p style="font-size:0.8rem;color:#991b1b;">Crawl low under smoke, feel doors with back of hand before opening, call BFP 160 immediately.</p>
-    </div>
-    <ul style="padding-left:18px;margin-bottom:12px;font-size:0.82rem;line-height:1.7;">
-      <li><b>Know 2 evacuation routes</b> out of your room or household.</li>
-      <li><b>If clothes catch fire:</b> Stop, Drop, and Roll immediately.</li>
-      <li><b>Never re-enter a burning structure</b> for personal possessions.</li>
-    </ul>
-  `,
-  bag: `
-    <div style="background:#ecfdf5;border:1px solid #a7f3d0;border-radius:10px;padding:12px 14px;margin-bottom:12px;">
-      <h4 style="color:#059669;font-size:0.9rem;font-weight:700;margin-bottom:4px;"><i class="fas fa-suitcase-medical"></i> 72-Hour Emergency Go-Bag Essentials</h4>
-      <p style="font-size:0.8rem;color:#065f46;">Pack in a waterproof backpack near your primary household exit.</p>
-    </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:0.8rem;">
-      <div><i class="fas fa-check" style="color:#10b981;margin-right:5px;"></i> Non-perishable food (canned/energy bars)</div>
-      <div><i class="fas fa-check" style="color:#10b981;margin-right:5px;"></i> 3-day water supply in sealed bottles</div>
-      <div><i class="fas fa-check" style="color:#10b981;margin-right:5px;"></i> First aid kit & personal prescription meds</div>
-      <div><i class="fas fa-check" style="color:#10b981;margin-right:5px;"></i> High-lumen LED flashlight + extra batteries</div>
-      <div><i class="fas fa-check" style="color:#10b981;margin-right:5px;"></i> Emergency whistle for signaling rescuers</div>
-      <div><i class="fas fa-check" style="color:#10b981;margin-right:5px;"></i> Copies of IDs & vital documents in ziplock</div>
-    </div>
-  `
+ typhoon: `
+ <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:12px 14px;margin-bottom:12px;">
+ <h4 style="color:#1d4ed8;font-size:0.9rem;font-weight:700;margin-bottom:4px;"><i class="fas fa-cloud-bolt"></i> Typhoon & Severe Weather Protocols</h4>
+ <p style="font-size:0.8rem;color:#1e3a8a;">Track PAGASA advisory bulletins, prepare emergency power banks, and secure loose outdoor roofing.</p>
+ </div>
+ <ul style="padding-left:18px;margin-bottom:12px;font-size:0.82rem;line-height:1.7;">
+ <li><b>Elevate appliances & valuables</b> if in a flood-prone low-lying zone.</li>
+ <li><b>Charge mobile phones and power banks</b> before expected utility blackouts.</li>
+ <li><b>Store at least 1 gallon of potable water</b> per person per day for 3 days.</li>
+ <li><b>Do not wade into moving floodwaters</b> to prevent leptospirosis and submerged debris injuries.</li>
+ </ul>
+ `,
+ earthquake: `
+ <div style="background:#fef3c7;border:1px solid #fde68a;border-radius:10px;padding:12px 14px;margin-bottom:12px;">
+ <h4 style="color:#b45309;font-size:0.9rem;font-weight:700;margin-bottom:4px;"><i class="fas fa-house-crack"></i> Earthquake Action: Drop, Cover, Hold On</h4>
+ <p style="font-size:0.8rem;color:#78350f;">Protect your head and neck immediately under sturdy furniture until ground shaking stops.</p>
+ </div>
+ <ul style="padding-left:18px;margin-bottom:12px;font-size:0.82rem;line-height:1.7;">
+ <li><b>Drop</b> to your hands and knees to prevent being knocked over.</li>
+ <li><b>Cover</b> your head and neck under a sturdy table or desk.</li>
+ <li><b>Hold On</b> to your shelter until shaking stops.</li>
+ <li><b>Evacuate via stairs only</b> - NEVER use elevators during or after a seismic tremor.</li>
+ </ul>
+ `,
+ fire: `
+ <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:12px 14px;margin-bottom:12px;">
+ <h4 style="color:#dc2626;font-size:0.9rem;font-weight:700;margin-bottom:4px;"><i class="fas fa-fire"></i> Fire Evacuation & Prevention</h4>
+ <p style="font-size:0.8rem;color:#991b1b;">Crawl low under smoke, feel doors with back of hand before opening, call BFP 160 immediately.</p>
+ </div>
+ <ul style="padding-left:18px;margin-bottom:12px;font-size:0.82rem;line-height:1.7;">
+ <li><b>Know 2 evacuation routes</b> out of your room or household.</li>
+ <li><b>If clothes catch fire:</b> Stop, Drop, and Roll immediately.</li>
+ <li><b>Never re-enter a burning structure</b> for personal possessions.</li>
+ </ul>
+ `,
+ bag: `
+ <div style="background:#ecfdf5;border:1px solid #a7f3d0;border-radius:10px;padding:12px 14px;margin-bottom:12px;">
+ <h4 style="color:#059669;font-size:0.9rem;font-weight:700;margin-bottom:4px;"><i class="fas fa-suitcase-medical"></i> 72-Hour Emergency Go-Bag Essentials</h4>
+ <p style="font-size:0.8rem;color:#065f46;">Pack in a waterproof backpack near your primary household exit.</p>
+ </div>
+ <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:0.8rem;">
+ <div><i class="fas fa-check" style="color:#10b981;margin-right:5px;"></i> Non-perishable food (canned/energy bars)</div>
+ <div><i class="fas fa-check" style="color:#10b981;margin-right:5px;"></i> 3-day water supply in sealed bottles</div>
+ <div><i class="fas fa-check" style="color:#10b981;margin-right:5px;"></i> First aid kit & personal prescription meds</div>
+ <div><i class="fas fa-check" style="color:#10b981;margin-right:5px;"></i> High-lumen LED flashlight + extra batteries</div>
+ <div><i class="fas fa-check" style="color:#10b981;margin-right:5px;"></i> Emergency whistle for signaling rescuers</div>
+ <div><i class="fas fa-check" style="color:#10b981;margin-right:5px;"></i> Copies of IDs & vital documents in ziplock</div>
+ </div>
+ `
 };
 
 function openSafetyModal(){
-  const m=document.getElementById('safetyModalOverlay');
-  if(!m) return;
-  m.classList.add('open');
-  switchGuideTab('typhoon', document.querySelector('.guide-tab-btn'));
+ const m=document.getElementById('safetyModalOverlay');
+ if(!m) return;
+ m.classList.add('open');
+ switchGuideTab('typhoon', document.querySelector('.guide-tab-btn'));
 }
 
 function closeSafetyModal(){
-  const m=document.getElementById('safetyModalOverlay');
-  if(m) m.classList.remove('open');
+ const m=document.getElementById('safetyModalOverlay');
+ if(m) m.classList.remove('open');
 }
 
 function switchGuideTab(tab, btn){
-  document.querySelectorAll('.guide-tab-btn').forEach(b=>{
-    b.style.background='var(--bg)';
-    b.style.color='var(--muted)';
-  });
-  if(btn){
-    btn.style.background='var(--blue-accent)';
-    btn.style.color='#fff';
-  }
-  const gc=document.getElementById('guideContent');
-  if(gc && GUIDE_TABS[tab]){
-    gc.innerHTML = GUIDE_TABS[tab];
-  }
+ document.querySelectorAll('.guide-tab-btn').forEach(b=>{
+ b.style.background='var(--bg)';
+ b.style.color='var(--muted)';
+ });
+ if(btn){
+ btn.style.background='var(--blue-accent)';
+ btn.style.color='#fff';
+ }
+ const gc=document.getElementById('guideContent');
+ if(gc && GUIDE_TABS[tab]){
+ gc.innerHTML = GUIDE_TABS[tab];
+ }
 }
 
 function openWeatherModal(){
-  const m=document.getElementById('weatherModalOverlay');
-  if(m) m.classList.add('open');
+ const m=document.getElementById('weatherModalOverlay');
+ if(m) m.classList.add('open');
 }
 function closeWeatherModal(){
-  const m=document.getElementById('weatherModalOverlay');
-  if(m) m.classList.remove('open');
+ const m=document.getElementById('weatherModalOverlay');
+ if(m) m.classList.remove('open');
 }
 
 const FIRST_AID_TABS = {
-  cpr: `
-    <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:12px 14px;margin-bottom:12px;">
-      <h4 style="color:#dc2626;font-size:0.9rem;font-weight:700;margin-bottom:4px;"><i class="fas fa-heart-pulse"></i> Hands-Only CPR (100–120 BPM)</h4>
-      <p style="font-size:0.8rem;color:#991b1b;">For unresponsive adult victims who are not breathing normally.</p>
-    </div>
-    <div style="display:flex;align-items:center;justify-content:space-between;background:#fff;border:1.5px solid #fee2e2;border-radius:10px;padding:10px 14px;margin-bottom:12px;">
-      <div>
-        <div style="font-size:0.75rem;font-weight:700;color:var(--muted);">METRONOME CADENCE</div>
-        <div style="font-size:1.1rem;font-weight:800;color:#dc2626;">110 BPM (Target Pace)</div>
-      </div>
-      <div style="width:36px;height:36px;border-radius:50%;background:#fee2e2;color:#dc2626;display:flex;align-items:center;justify-content:center;font-size:1.1rem;animation:pulse-dot 1s infinite;"><i class="fas fa-heart"></i></div>
-    </div>
-    <ol style="padding-left:18px;margin-bottom:12px;font-size:0.82rem;line-height:1.7;">
-      <li><b>Position Hands:</b> Place heel of one hand in center of chest; interlock other hand on top.</li>
-      <li><b>Push Hard & Fast:</b> Compress at least 2 inches deep. Allow full chest recoil between pumps.</li>
-      <li><b>Do not stop</b> until emergency medical responders arrive or an AED is deployed.</li>
-    </ol>
-  `,
-  bleed: `
-    <div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:10px;padding:12px 14px;margin-bottom:12px;">
-      <h4 style="color:#c2410c;font-size:0.9rem;font-weight:700;margin-bottom:4px;"><i class="fas fa-droplet"></i> Severe Bleeding & Tourniquet Protocol</h4>
-      <p style="font-size:0.8rem;color:#9a3412;">Control life-threatening external hemorrhage quickly.</p>
-    </div>
-    <ul style="padding-left:18px;margin-bottom:12px;font-size:0.82rem;line-height:1.7;">
-      <li><b>Direct Pressure:</b> Apply firm, continuous direct pressure with sterile gauze or clean cloth.</li>
-      <li><b>Tourniquet Placement:</b> For severe limb trauma, apply tourniquet 2–3 inches above wound (never on a joint).</li>
-      <li><b>Tighten Windlass:</b> Turn until arterial bleeding stops completely. Note exact application time.</li>
-      <li><b>Never loosen or remove</b> a tourniquet once applied; only qualified trauma surgeons should remove it.</li>
-    </ul>
-  `,
-  choking: `
-    <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:12px 14px;margin-bottom:12px;">
-      <h4 style="color:#1d4ed8;font-size:0.9rem;font-weight:700;margin-bottom:4px;"><i class="fas fa-lungs"></i> Choking / Airway Obstruction (Heimlich Maneuver)</h4>
-      <p style="font-size:0.8rem;color:#1e40af;">For conscious adults or children over 1 year unable to speak or cough.</p>
-    </div>
-    <ol style="padding-left:18px;margin-bottom:12px;font-size:0.82rem;line-height:1.7;">
-      <li><b>Stand behind victim</b> and wrap arms around their waist.</li>
-      <li><b>Make a fist</b> and place thumb side slightly above victim's navel.</li>
-      <li><b>Quick upward thrusts:</b> Grasp fist and give fast, upward abdominal thrusts until object is expelled.</li>
-    </ol>
-  `,
-  burns: `
-    <div style="background:#fefce8;border:1px solid #fef08a;border-radius:10px;padding:12px 14px;margin-bottom:12px;">
-      <h4 style="color:#a16207;font-size:0.9rem;font-weight:700;margin-bottom:4px;"><i class="fas fa-fire-flame-curved"></i> Thermal & Chemical Burn First Aid</h4>
-      <p style="font-size:0.8rem;color:#854d0e;">Immediate cooling and infection prevention.</p>
-    </div>
-    <ul style="padding-left:18px;margin-bottom:12px;font-size:0.82rem;line-height:1.7;">
-      <li><b>Cool Water:</b> Hold burned area under cool running water for 10–15 minutes. NEVER use ice or toothpaste.</li>
-      <li><b>Cover Loosely:</b> Apply sterile non-stick bandage or clean plastic wrap.</li>
-      <li><b>Do not pop blisters:</b> Intact skin protects against bacterial infection.</li>
-    </ul>
-  `
+ cpr: `
+ <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:12px 14px;margin-bottom:12px;">
+ <h4 style="color:#dc2626;font-size:0.9rem;font-weight:700;margin-bottom:4px;"><i class="fas fa-heart-pulse"></i> Hands-Only CPR (100 - 120 BPM)</h4>
+ <p style="font-size:0.8rem;color:#991b1b;">For unresponsive adult victims who are not breathing normally.</p>
+ </div>
+ <div style="display:flex;align-items:center;justify-content:space-between;background:#fff;border:1.5px solid #fee2e2;border-radius:10px;padding:10px 14px;margin-bottom:12px;">
+ <div>
+ <div style="font-size:0.75rem;font-weight:700;color:var(--muted);">METRONOME CADENCE</div>
+ <div style="font-size:1.1rem;font-weight:800;color:#dc2626;">110 BPM (Target Pace)</div>
+ </div>
+ <div style="width:36px;height:36px;border-radius:50%;background:#fee2e2;color:#dc2626;display:flex;align-items:center;justify-content:center;font-size:1.1rem;animation:pulse-dot 1s infinite;"><i class="fas fa-heart"></i></div>
+ </div>
+ <ol style="padding-left:18px;margin-bottom:12px;font-size:0.82rem;line-height:1.7;">
+ <li><b>Position Hands:</b> Place heel of one hand in center of chest; interlock other hand on top.</li>
+ <li><b>Push Hard & Fast:</b> Compress at least 2 inches deep. Allow full chest recoil between pumps.</li>
+ <li><b>Do not stop</b> until emergency medical responders arrive or an AED is deployed.</li>
+ </ol>
+ `,
+ bleed: `
+ <div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:10px;padding:12px 14px;margin-bottom:12px;">
+ <h4 style="color:#c2410c;font-size:0.9rem;font-weight:700;margin-bottom:4px;"><i class="fas fa-droplet"></i> Severe Bleeding & Tourniquet Protocol</h4>
+ <p style="font-size:0.8rem;color:#9a3412;">Control life-threatening external hemorrhage quickly.</p>
+ </div>
+ <ul style="padding-left:18px;margin-bottom:12px;font-size:0.82rem;line-height:1.7;">
+ <li><b>Direct Pressure:</b> Apply firm, continuous direct pressure with sterile gauze or clean cloth.</li>
+ <li><b>Tourniquet Placement:</b> For severe limb trauma, apply tourniquet 2 - 3 inches above wound (never on a joint).</li>
+ <li><b>Tighten Windlass:</b> Turn until arterial bleeding stops completely. Note exact application time.</li>
+ <li><b>Never loosen or remove</b> a tourniquet once applied; only qualified trauma surgeons should remove it.</li>
+ </ul>
+ `,
+ choking: `
+ <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:12px 14px;margin-bottom:12px;">
+ <h4 style="color:#1d4ed8;font-size:0.9rem;font-weight:700;margin-bottom:4px;"><i class="fas fa-lungs"></i> Choking / Airway Obstruction (Heimlich Maneuver)</h4>
+ <p style="font-size:0.8rem;color:#1e40af;">For conscious adults or children over 1 year unable to speak or cough.</p>
+ </div>
+ <ol style="padding-left:18px;margin-bottom:12px;font-size:0.82rem;line-height:1.7;">
+ <li><b>Stand behind victim</b> and wrap arms around their waist.</li>
+ <li><b>Make a fist</b> and place thumb side slightly above victim's navel.</li>
+ <li><b>Quick upward thrusts:</b> Grasp fist and give fast, upward abdominal thrusts until object is expelled.</li>
+ </ol>
+ `,
+ burns: `
+ <div style="background:#fefce8;border:1px solid #fef08a;border-radius:10px;padding:12px 14px;margin-bottom:12px;">
+ <h4 style="color:#a16207;font-size:0.9rem;font-weight:700;margin-bottom:4px;"><i class="fas fa-fire-flame-curved"></i> Thermal & Chemical Burn First Aid</h4>
+ <p style="font-size:0.8rem;color:#854d0e;">Immediate cooling and infection prevention.</p>
+ </div>
+ <ul style="padding-left:18px;margin-bottom:12px;font-size:0.82rem;line-height:1.7;">
+ <li><b>Cool Water:</b> Hold burned area under cool running water for 10 - 15 minutes. NEVER use ice or toothpaste.</li>
+ <li><b>Cover Loosely:</b> Apply sterile non-stick bandage or clean plastic wrap.</li>
+ <li><b>Do not pop blisters:</b> Intact skin protects against bacterial infection.</li>
+ </ul>
+ `
 };
 
 function openFirstAidModal(){
-  const m=document.getElementById('firstAidModalOverlay');
-  if(!m) return;
-  m.classList.add('open');
-  switchFirstAidTab('cpr', document.querySelector('.first-aid-tab-btn'));
+ const m=document.getElementById('firstAidModalOverlay');
+ if(!m) return;
+ m.classList.add('open');
+ switchFirstAidTab('cpr', document.querySelector('.first-aid-tab-btn'));
 }
 
 function closeFirstAidModal(){
-  const m=document.getElementById('firstAidModalOverlay');
-  if(m) m.classList.remove('open');
+ const m=document.getElementById('firstAidModalOverlay');
+ if(m) m.classList.remove('open');
 }
 
 function switchFirstAidTab(tab, btn){
-  document.querySelectorAll('.first-aid-tab-btn').forEach(b=>{
-    b.style.background='var(--bg)';
-    b.style.color='var(--muted)';
-  });
-  if(btn){
-    btn.style.background='var(--blue-accent)';
-    btn.style.color='#fff';
-  }
-  const fc=document.getElementById('firstAidContent');
-  if(fc && FIRST_AID_TABS[tab]){
-    fc.innerHTML = FIRST_AID_TABS[tab];
-  }
+ document.querySelectorAll('.first-aid-tab-btn').forEach(b=>{
+ b.style.background='var(--bg)';
+ b.style.color='var(--muted)';
+ });
+ if(btn){
+ btn.style.background='var(--blue-accent)';
+ btn.style.color='#fff';
+ }
+ const fc=document.getElementById('firstAidContent');
+ if(fc && FIRST_AID_TABS[tab]){
+ fc.innerHTML = FIRST_AID_TABS[tab];
+ }
 }
 
 function openHotlinesModal(){
-  const m=document.getElementById('hotlinesModalOverlay');
-  if(!m) return;
-  m.classList.add('open');
+ const m=document.getElementById('hotlinesModalOverlay');
+ if(!m) return;
+ m.classList.add('open');
 }
 
 function closeHotlinesModal(){
-  const m=document.getElementById('hotlinesModalOverlay');
-  if(m) m.classList.remove('open');
+ const m=document.getElementById('hotlinesModalOverlay');
+ if(m) m.classList.remove('open');
 }
 
 function copyHotlineNumber(num, btn){
-  if(navigator.clipboard && navigator.clipboard.writeText){
-    navigator.clipboard.writeText(num).then(()=>{
-      const orig = btn.innerHTML;
-      btn.innerHTML = '<i class="fas fa-check"></i> Copied!';
-      btn.style.background = '#16a34a';
-      btn.style.color = '#fff';
-      setTimeout(()=>{
-        btn.innerHTML = orig;
-        btn.style.background = '';
-        btn.style.color = '';
-      }, 1500);
-    });
-  } else {
-    prompt('Copy hotline number:', num);
-  }
+ if(navigator.clipboard && navigator.clipboard.writeText){
+ navigator.clipboard.writeText(num).then(()=>{
+ const orig = btn.innerHTML;
+ btn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+ btn.style.background = '#16a34a';
+ btn.style.color = '#fff';
+ setTimeout(()=>{
+ btn.innerHTML = orig;
+ btn.style.background = '';
+ btn.style.color = '';
+ }, 1500);
+ });
+ } else {
+ prompt('Copy hotline number:', num);
+ }
 }
 
 function filterHotlineList(cat, btn){
-  document.querySelectorAll('.hotline-tab-btn').forEach(b=>{
-    b.style.background='var(--bg)';
-    b.style.color='var(--muted)';
-  });
-  if(btn){
-    btn.style.background='var(--blue-accent)';
-    btn.style.color='#fff';
-  }
-  document.querySelectorAll('.hotline-item-card').forEach(card=>{
-    if(cat==='all' || card.getAttribute('data-cat')===cat){
-      card.style.display = 'flex';
-    } else {
-      card.style.display = 'none';
-    }
-  });
+ document.querySelectorAll('.hotline-tab-btn').forEach(b=>{
+ b.style.background='var(--bg)';
+ b.style.color='var(--muted)';
+ });
+ if(btn){
+ btn.style.background='var(--blue-accent)';
+ btn.style.color='#fff';
+ }
+ document.querySelectorAll('.hotline-item-card').forEach(card=>{
+ if(cat==='all' || card.getAttribute('data-cat')===cat){
+ card.style.display = 'flex';
+ } else {
+ card.style.display = 'none';
+ }
+ });
 }
 
 function openGoBagModal(){
-  const m=document.getElementById('goBagModalOverlay');
-  if(!m) return;
-  initGoBagState();
-  m.classList.add('open');
+ const m=document.getElementById('goBagModalOverlay');
+ if(!m) return;
+ initGoBagState();
+ m.classList.add('open');
 }
 
 function closeGoBagModal(){
-  const m=document.getElementById('goBagModalOverlay');
-  if(m) m.classList.remove('open');
+ const m=document.getElementById('goBagModalOverlay');
+ if(m) m.classList.remove('open');
 }
 
 const GO_BAG_DEFAULT_CHECKED = [0, 1, 2, 3, 4, 5];
 
 function initGoBagState(){
-  let saved = null;
-  try {
-    const raw = localStorage.getItem('sentri_gobag_state');
-    if(raw) saved = JSON.parse(raw);
-  } catch(e){}
-  if(!saved || !Array.isArray(saved)){
-    saved = GO_BAG_DEFAULT_CHECKED;
-  }
-  const checkboxes = document.querySelectorAll('.gobag-check');
-  checkboxes.forEach((cb, idx)=>{
-    cb.checked = saved.includes(idx);
-  });
-  updateGoBagProgress();
+ let saved = null;
+ try {
+ const raw = localStorage.getItem('sentri_gobag_state');
+ if(raw) saved = JSON.parse(raw);
+ } catch(e){}
+ if(!saved || !Array.isArray(saved)){
+ saved = GO_BAG_DEFAULT_CHECKED;
+ }
+ const checkboxes = document.querySelectorAll('.gobag-check');
+ checkboxes.forEach((cb, idx)=>{
+ cb.checked = saved.includes(idx);
+ });
+ updateGoBagProgress();
 }
 
 function toggleGoBagItem(idx){
-  const checkboxes = document.querySelectorAll('.gobag-check');
-  const checkedIndices = [];
-  checkboxes.forEach((cb, i)=>{
-    if(cb.checked) checkedIndices.push(i);
-  });
-  try {
-    localStorage.setItem('sentri_gobag_state', JSON.stringify(checkedIndices));
-  } catch(e){}
-  updateGoBagProgress();
+ const checkboxes = document.querySelectorAll('.gobag-check');
+ const checkedIndices = [];
+ checkboxes.forEach((cb, i)=>{
+ if(cb.checked) checkedIndices.push(i);
+ });
+ try {
+ localStorage.setItem('sentri_gobag_state', JSON.stringify(checkedIndices));
+ } catch(e){}
+ updateGoBagProgress();
 }
 
 function resetGoBagChecklist(){
-  try {
-    localStorage.removeItem('sentri_gobag_state');
-  } catch(e){}
-  const checkboxes = document.querySelectorAll('.gobag-check');
-  checkboxes.forEach((cb, idx)=>{
-    cb.checked = GO_BAG_DEFAULT_CHECKED.includes(idx);
-  });
-  updateGoBagProgress();
+ try {
+ localStorage.removeItem('sentri_gobag_state');
+ } catch(e){}
+ const checkboxes = document.querySelectorAll('.gobag-check');
+ checkboxes.forEach((cb, idx)=>{
+ cb.checked = GO_BAG_DEFAULT_CHECKED.includes(idx);
+ });
+ updateGoBagProgress();
 }
 
 function updateGoBagProgress(){
-  const checkboxes = document.querySelectorAll('.gobag-check');
-  let checked = 0;
-  checkboxes.forEach(cb=>{ if(cb.checked) checked++; });
-  const total = checkboxes.length || 8;
-  const pct = Math.round((checked / total) * 100);
-  const bar = document.getElementById('goBagProgressBar');
-  const lbl = document.getElementById('goBagProgressText');
-  const badge = document.getElementById('goBagStatusBadge');
-  if(bar) bar.style.width = `${pct}%`;
-  if(lbl) lbl.textContent = `${checked} of ${total} Essentials Packed (${pct}%)`;
-  if(badge){
-    if(pct >= 100){
-      badge.innerHTML = '<i class="fas fa-circle-check"></i> Fully Prepared (100%)';
-      badge.style.background = '#dcfce7';
-      badge.style.color = '#15803d';
-    } else if(pct >= 60){
-      badge.innerHTML = '<i class="fas fa-shield-halved"></i> Moderate Readiness';
-      badge.style.background = '#fef3c7';
-      badge.style.color = '#92400e';
-    } else {
-      badge.innerHTML = '<i class="fas fa-triangle-exclamation"></i> Incomplete Go Bag';
-      badge.style.background = '#fee2e2';
-      badge.style.color = '#b91c1c';
-    }
-  }
+ const checkboxes = document.querySelectorAll('.gobag-check');
+ let checked = 0;
+ checkboxes.forEach(cb=>{ if(cb.checked) checked++; });
+ const total = checkboxes.length || 8;
+ const pct = Math.round((checked / total) * 100);
+ const bar = document.getElementById('goBagProgressBar');
+ const lbl = document.getElementById('goBagProgressText');
+ const badge = document.getElementById('goBagStatusBadge');
+ if(bar) bar.style.width = `${pct}%`;
+ if(lbl) lbl.textContent = `${checked} of ${total} Essentials Packed (${pct}%)`;
+ if(badge){
+ if(pct >= 100){
+ badge.innerHTML = '<i class="fas fa-circle-check"></i> Fully Prepared (100%)';
+ badge.style.background = '#dcfce7';
+ badge.style.color = '#15803d';
+ } else if(pct >= 60){
+ badge.innerHTML = '<i class="fas fa-shield-halved"></i> Moderate Readiness';
+ badge.style.background = '#fef3c7';
+ badge.style.color = '#92400e';
+ } else {
+ badge.innerHTML = '<i class="fas fa-triangle-exclamation"></i> Incomplete Go Bag';
+ badge.style.background = '#fee2e2';
+ badge.style.color = '#b91c1c';
+ }
+ }
 }
 
 /* Helpers */
@@ -1514,363 +1514,363 @@ window.addEventListener('load',()=>{if(mainMap)mainMap.invalidateSize();if(inlin
 
 <!-- ── Weather Advisory & Flash Warning Modal ── -->
 <div class="modal-overlay" id="weatherModalOverlay" onclick="if(event.target===this)closeWeatherModal()">
-  <div class="modal" style="max-width:600px;">
-    <button class="modal-close" onclick="closeWeatherModal()"><i class="fas fa-xmark"></i></button>
-    <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
-      <div style="width:40px;height:40px;border-radius:11px;background:#e0f2fe;color:#0284c7;display:flex;align-items:center;justify-content:center;font-size:1.25rem;flex-shrink:0;"><i class="fas fa-cloud-showers-heavy"></i></div>
-      <div>
-        <h2>Severe Weather Bulletin</h2>
-        <div class="subtitle" style="margin-bottom:0;">PAGASA Doppler Radar & NCR DRRMO Flash Warning</div>
-      </div>
-    </div>
-    <div style="background:#f8fafc;border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:14px;display:grid;grid-template-columns:repeat(3,1fr);gap:10px;text-align:center;">
-      <div><div style="font-size:0.7rem;color:var(--muted);font-weight:700;text-transform:uppercase;">Rainfall Rate</div><div style="font-size:1.15rem;font-weight:800;color:#0284c7;">24.5 mm/h</div><div style="font-size:0.68rem;color:#e11d48;font-weight:600;">Heavy / Torrential</div></div>
-      <div><div style="font-size:0.7rem;color:var(--muted);font-weight:700;text-transform:uppercase;">Wind Gusts</div><div style="font-size:1.15rem;font-weight:800;color:var(--text);">38 km/h</div><div style="font-size:0.68rem;color:#059669;font-weight:600;">Moderate Breeze</div></div>
-      <div><div style="font-size:0.7rem;color:var(--muted);font-weight:700;text-transform:uppercase;">Flood Threat</div><div style="font-size:1.15rem;font-weight:800;color:#dc2626;">High Risk</div><div style="font-size:0.68rem;color:var(--muted);font-weight:600;">Low-Lying Zones</div></div>
-    </div>
-    <div style="border-left:3px solid #0284c7;background:#f0f9ff;border-radius:0 10px 10px 0;padding:12px 14px;margin-bottom:14px;font-size:0.83rem;color:#0369a1;line-height:1.6;">
-      <strong>Precautionary Measures:</strong> Residents near Tullahan and Marikina river basins should monitor barangay warning sirens. Keep battery-powered radios tuned to official NDRRMO announcements.
-    </div>
-    <div style="display:flex;justify-content:flex-end;">
-      <button type="button" onclick="closeWeatherModal()" style="padding:8px 18px;border:none;background:var(--blue-accent);color:#fff;border-radius:8px;font-size:0.84rem;font-weight:700;cursor:pointer;font-family:'Poppins',sans-serif;">Acknowledge</button>
-    </div>
-  </div>
+ <div class="modal" style="max-width:600px;">
+ <button class="modal-close" onclick="closeWeatherModal()"><i class="fas fa-xmark"></i></button>
+ <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+ <div style="width:40px;height:40px;border-radius:11px;background:#e0f2fe;color:#0284c7;display:flex;align-items:center;justify-content:center;font-size:1.25rem;flex-shrink:0;"><i class="fas fa-cloud-showers-heavy"></i></div>
+ <div>
+ <h2>Severe Weather Bulletin</h2>
+ <div class="subtitle" style="margin-bottom:0;">PAGASA Doppler Radar & NCR DRRMO Flash Warning</div>
+ </div>
+ </div>
+ <div style="background:#f8fafc;border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:14px;display:grid;grid-template-columns:repeat(3,1fr);gap:10px;text-align:center;">
+ <div><div style="font-size:0.7rem;color:var(--muted);font-weight:700;text-transform:uppercase;">Rainfall Rate</div><div style="font-size:1.15rem;font-weight:800;color:#0284c7;">24.5 mm/h</div><div style="font-size:0.68rem;color:#e11d48;font-weight:600;">Heavy / Torrential</div></div>
+ <div><div style="font-size:0.7rem;color:var(--muted);font-weight:700;text-transform:uppercase;">Wind Gusts</div><div style="font-size:1.15rem;font-weight:800;color:var(--text);">38 km/h</div><div style="font-size:0.68rem;color:#059669;font-weight:600;">Moderate Breeze</div></div>
+ <div><div style="font-size:0.7rem;color:var(--muted);font-weight:700;text-transform:uppercase;">Flood Threat</div><div style="font-size:1.15rem;font-weight:800;color:#dc2626;">High Risk</div><div style="font-size:0.68rem;color:var(--muted);font-weight:600;">Low-Lying Zones</div></div>
+ </div>
+ <div style="border-left:3px solid #0284c7;background:#f0f9ff;border-radius:0 10px 10px 0;padding:12px 14px;margin-bottom:14px;font-size:0.83rem;color:#0369a1;line-height:1.6;">
+ <strong>Precautionary Measures:</strong> Residents near Tullahan and Marikina river basins should monitor barangay warning sirens. Keep battery-powered radios tuned to official NDRRMO announcements.
+ </div>
+ <div style="display:flex;justify-content:flex-end;">
+ <button type="button" onclick="closeWeatherModal()" style="padding:8px 18px;border:none;background:var(--blue-accent);color:#fff;border-radius:8px;font-size:0.84rem;font-weight:700;cursor:pointer;font-family:'Poppins',sans-serif;">Acknowledge</button>
+ </div>
+ </div>
 </div>
 
 <!-- ── Safety Guide & Disaster Preparedness Modal ── -->
 <div class="modal-overlay" id="safetyModalOverlay" onclick="if(event.target===this)closeSafetyModal()">
-  <div class="modal" style="max-width:640px;">
-    <button class="modal-close" onclick="closeSafetyModal()"><i class="fas fa-xmark"></i></button>
-    <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
-      <div style="width:40px;height:40px;border-radius:11px;background:#ebf2ff;color:#2563eb;display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0;"><i class="fas fa-shield-heart"></i></div>
-      <div>
-        <h2>Emergency Preparedness Guide</h2>
-        <div class="subtitle" style="margin-bottom:0;">Essential disaster safety protocols & 72-hour family go-bag checklist</div>
-      </div>
-    </div>
-    <div style="display:flex;gap:6px;border-bottom:1.5px solid var(--border);margin:16px 0 14px;padding-bottom:8px;overflow-x:auto;">
-      <button type="button" class="guide-tab-btn" onclick="switchGuideTab('typhoon',this)" style="padding:6px 12px;border:none;background:var(--blue-accent);color:#fff;border-radius:8px;font-size:0.8rem;font-weight:700;cursor:pointer;font-family:'Poppins',sans-serif;">Typhoon / Flood</button>
-      <button type="button" class="guide-tab-btn" onclick="switchGuideTab('earthquake',this)" style="padding:6px 12px;border:none;background:var(--bg);color:var(--muted);border-radius:8px;font-size:0.8rem;font-weight:700;cursor:pointer;font-family:'Poppins',sans-serif;">Earthquake</button>
-      <button type="button" class="guide-tab-btn" onclick="switchGuideTab('fire',this)" style="padding:6px 12px;border:none;background:var(--bg);color:var(--muted);border-radius:8px;font-size:0.8rem;font-weight:700;cursor:pointer;font-family:'Poppins',sans-serif;">Fire Safety</button>
-      <button type="button" class="guide-tab-btn" onclick="switchGuideTab('bag',this)" style="padding:6px 12px;border:none;background:var(--bg);color:var(--muted);border-radius:8px;font-size:0.8rem;font-weight:700;cursor:pointer;font-family:'Poppins',sans-serif;">72-Hr Go Bag</button>
-    </div>
-    <div id="guideContent" style="font-size:0.85rem;line-height:1.6;color:var(--text);min-height:180px;"></div>
-  </div>
+ <div class="modal" style="max-width:640px;">
+ <button class="modal-close" onclick="closeSafetyModal()"><i class="fas fa-xmark"></i></button>
+ <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
+ <div style="width:40px;height:40px;border-radius:11px;background:#ebf2ff;color:#2563eb;display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0;"><i class="fas fa-shield-heart"></i></div>
+ <div>
+ <h2>Emergency Preparedness Guide</h2>
+ <div class="subtitle" style="margin-bottom:0;">Essential disaster safety protocols & 72-hour family go-bag checklist</div>
+ </div>
+ </div>
+ <div style="display:flex;gap:6px;border-bottom:1.5px solid var(--border);margin:16px 0 14px;padding-bottom:8px;overflow-x:auto;">
+ <button type="button" class="guide-tab-btn" onclick="switchGuideTab('typhoon',this)" style="padding:6px 12px;border:none;background:var(--blue-accent);color:#fff;border-radius:8px;font-size:0.8rem;font-weight:700;cursor:pointer;font-family:'Poppins',sans-serif;">Typhoon / Flood</button>
+ <button type="button" class="guide-tab-btn" onclick="switchGuideTab('earthquake',this)" style="padding:6px 12px;border:none;background:var(--bg);color:var(--muted);border-radius:8px;font-size:0.8rem;font-weight:700;cursor:pointer;font-family:'Poppins',sans-serif;">Earthquake</button>
+ <button type="button" class="guide-tab-btn" onclick="switchGuideTab('fire',this)" style="padding:6px 12px;border:none;background:var(--bg);color:var(--muted);border-radius:8px;font-size:0.8rem;font-weight:700;cursor:pointer;font-family:'Poppins',sans-serif;">Fire Safety</button>
+ <button type="button" class="guide-tab-btn" onclick="switchGuideTab('bag',this)" style="padding:6px 12px;border:none;background:var(--bg);color:var(--muted);border-radius:8px;font-size:0.8rem;font-weight:700;cursor:pointer;font-family:'Poppins',sans-serif;">72-Hr Go Bag</button>
+ </div>
+ <div id="guideContent" style="font-size:0.85rem;line-height:1.6;color:var(--text);min-height:180px;"></div>
+ </div>
 </div>
 
 <!-- ── Emergency First-Aid Quick Cards Modal ── -->
 <div class="modal-overlay" id="firstAidModalOverlay" onclick="if(event.target===this)closeFirstAidModal()">
-  <div class="modal" style="max-width:640px;">
-    <button class="modal-close" onclick="closeFirstAidModal()"><i class="fas fa-xmark"></i></button>
-    <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
-      <div style="width:40px;height:40px;border-radius:11px;background:#fef2f2;color:#dc2626;display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0;"><i class="fas fa-kit-medical"></i></div>
-      <div>
-        <h2>Emergency First-Aid Quick Cards</h2>
-        <div class="subtitle" style="margin-bottom:0;">Life-saving bystander first aid procedures & rapid triage directives</div>
-      </div>
-    </div>
-    <div style="display:flex;gap:6px;border-bottom:1.5px solid var(--border);margin:16px 0 14px;padding-bottom:8px;overflow-x:auto;">
-      <button type="button" class="first-aid-tab-btn" onclick="switchFirstAidTab('cpr',this)" style="padding:6px 12px;border:none;background:var(--blue-accent);color:#fff;border-radius:8px;font-size:0.8rem;font-weight:700;cursor:pointer;font-family:'Poppins',sans-serif;">Hands-Only CPR</button>
-      <button type="button" class="first-aid-tab-btn" onclick="switchFirstAidTab('bleed',this)" style="padding:6px 12px;border:none;background:var(--bg);color:var(--muted);border-radius:8px;font-size:0.8rem;font-weight:700;cursor:pointer;font-family:'Poppins',sans-serif;">Severe Bleeding</button>
-      <button type="button" class="first-aid-tab-btn" onclick="switchFirstAidTab('choking',this)" style="padding:6px 12px;border:none;background:var(--bg);color:var(--muted);border-radius:8px;font-size:0.8rem;font-weight:700;cursor:pointer;font-family:'Poppins',sans-serif;">Choking / Airway</button>
-      <button type="button" class="first-aid-tab-btn" onclick="switchFirstAidTab('burns',this)" style="padding:6px 12px;border:none;background:var(--bg);color:var(--muted);border-radius:8px;font-size:0.8rem;font-weight:700;cursor:pointer;font-family:'Poppins',sans-serif;">Burn Care</button>
-    </div>
-    <div id="firstAidContent" style="font-size:0.85rem;line-height:1.6;color:var(--text);min-height:180px;"></div>
-  </div>
+ <div class="modal" style="max-width:640px;">
+ <button class="modal-close" onclick="closeFirstAidModal()"><i class="fas fa-xmark"></i></button>
+ <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
+ <div style="width:40px;height:40px;border-radius:11px;background:#fef2f2;color:#dc2626;display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0;"><i class="fas fa-kit-medical"></i></div>
+ <div>
+ <h2>Emergency First-Aid Quick Cards</h2>
+ <div class="subtitle" style="margin-bottom:0;">Life-saving bystander first aid procedures & rapid triage directives</div>
+ </div>
+ </div>
+ <div style="display:flex;gap:6px;border-bottom:1.5px solid var(--border);margin:16px 0 14px;padding-bottom:8px;overflow-x:auto;">
+ <button type="button" class="first-aid-tab-btn" onclick="switchFirstAidTab('cpr',this)" style="padding:6px 12px;border:none;background:var(--blue-accent);color:#fff;border-radius:8px;font-size:0.8rem;font-weight:700;cursor:pointer;font-family:'Poppins',sans-serif;">Hands-Only CPR</button>
+ <button type="button" class="first-aid-tab-btn" onclick="switchFirstAidTab('bleed',this)" style="padding:6px 12px;border:none;background:var(--bg);color:var(--muted);border-radius:8px;font-size:0.8rem;font-weight:700;cursor:pointer;font-family:'Poppins',sans-serif;">Severe Bleeding</button>
+ <button type="button" class="first-aid-tab-btn" onclick="switchFirstAidTab('choking',this)" style="padding:6px 12px;border:none;background:var(--bg);color:var(--muted);border-radius:8px;font-size:0.8rem;font-weight:700;cursor:pointer;font-family:'Poppins',sans-serif;">Choking / Airway</button>
+ <button type="button" class="first-aid-tab-btn" onclick="switchFirstAidTab('burns',this)" style="padding:6px 12px;border:none;background:var(--bg);color:var(--muted);border-radius:8px;font-size:0.8rem;font-weight:700;cursor:pointer;font-family:'Poppins',sans-serif;">Burn Care</button>
+ </div>
+ <div id="firstAidContent" style="font-size:0.85rem;line-height:1.6;color:var(--text);min-height:180px;"></div>
+ </div>
 </div>
 
 <!-- ── Emergency Hotlines & One-Touch Quick-Dial Directory Modal ── -->
 <div class="modal-overlay" id="hotlinesModalOverlay" onclick="if(event.target===this)closeHotlinesModal()">
-  <div class="modal" style="max-width:700px;max-height:86vh;display:flex;flex-direction:column;overflow:hidden;">
-    <button class="modal-close" onclick="closeHotlinesModal()"><i class="fas fa-xmark"></i></button>
-    <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;flex-shrink:0;">
-      <div style="width:42px;height:42px;border-radius:12px;background:#fef2f2;color:#ef4444;display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0;">
-        <i class="fas fa-phone-volume"></i>
-      </div>
-      <div>
-        <h2>Emergency Hotlines Directory</h2>
-        <div class="subtitle" style="margin-bottom:0;">National & NCR emergency dispatchers, disaster agencies, and lifelines</div>
-      </div>
-    </div>
+ <div class="modal" style="max-width:700px;max-height:86vh;display:flex;flex-direction:column;overflow:hidden;">
+ <button class="modal-close" onclick="closeHotlinesModal()"><i class="fas fa-xmark"></i></button>
+ <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;flex-shrink:0;">
+ <div style="width:42px;height:42px;border-radius:12px;background:#fef2f2;color:#ef4444;display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0;">
+ <i class="fas fa-phone-volume"></i>
+ </div>
+ <div>
+ <h2>Emergency Hotlines Directory</h2>
+ <div class="subtitle" style="margin-bottom:0;">National & NCR emergency dispatchers, disaster agencies, and lifelines</div>
+ </div>
+ </div>
 
-    <!-- Category Tabs -->
-    <div style="display:flex;gap:6px;border-bottom:1.5px solid var(--border);margin:16px 0 14px;padding-bottom:8px;overflow-x:auto;flex-shrink:0;">
-      <button type="button" class="hotline-tab-btn" onclick="filterHotlineList('all',this)" style="padding:6px 12px;border:none;background:var(--blue-accent);color:#fff;border-radius:8px;font-size:0.8rem;font-weight:700;cursor:pointer;font-family:'Poppins',sans-serif;">All (10)</button>
-      <button type="button" class="hotline-tab-btn" onclick="filterHotlineList('disaster',this)" style="padding:6px 12px;border:none;background:var(--bg);color:var(--muted);border-radius:8px;font-size:0.8rem;font-weight:700;cursor:pointer;font-family:'Poppins',sans-serif;">Disaster / Rescue</button>
-      <button type="button" class="hotline-tab-btn" onclick="filterHotlineList('medical',this)" style="padding:6px 12px;border:none;background:var(--bg);color:var(--muted);border-radius:8px;font-size:0.8rem;font-weight:700;cursor:pointer;font-family:'Poppins',sans-serif;">Medical / EMS</button>
-      <button type="button" class="hotline-tab-btn" onclick="filterHotlineList('security',this)" style="padding:6px 12px;border:none;background:var(--bg);color:var(--muted);border-radius:8px;font-size:0.8rem;font-weight:700;cursor:pointer;font-family:'Poppins',sans-serif;">Police / Security</button>
-      <button type="button" class="hotline-tab-btn" onclick="filterHotlineList('utilities',this)" style="padding:6px 12px;border:none;background:var(--bg);color:var(--muted);border-radius:8px;font-size:0.8rem;font-weight:700;cursor:pointer;font-family:'Poppins',sans-serif;">Lifelines & Utilities</button>
-    </div>
+ <!-- Category Tabs -->
+ <div style="display:flex;gap:6px;border-bottom:1.5px solid var(--border);margin:16px 0 14px;padding-bottom:8px;overflow-x:auto;flex-shrink:0;">
+ <button type="button" class="hotline-tab-btn" onclick="filterHotlineList('all',this)" style="padding:6px 12px;border:none;background:var(--blue-accent);color:#fff;border-radius:8px;font-size:0.8rem;font-weight:700;cursor:pointer;font-family:'Poppins',sans-serif;">All (10)</button>
+ <button type="button" class="hotline-tab-btn" onclick="filterHotlineList('disaster',this)" style="padding:6px 12px;border:none;background:var(--bg);color:var(--muted);border-radius:8px;font-size:0.8rem;font-weight:700;cursor:pointer;font-family:'Poppins',sans-serif;">Disaster / Rescue</button>
+ <button type="button" class="hotline-tab-btn" onclick="filterHotlineList('medical',this)" style="padding:6px 12px;border:none;background:var(--bg);color:var(--muted);border-radius:8px;font-size:0.8rem;font-weight:700;cursor:pointer;font-family:'Poppins',sans-serif;">Medical / EMS</button>
+ <button type="button" class="hotline-tab-btn" onclick="filterHotlineList('security',this)" style="padding:6px 12px;border:none;background:var(--bg);color:var(--muted);border-radius:8px;font-size:0.8rem;font-weight:700;cursor:pointer;font-family:'Poppins',sans-serif;">Police / Security</button>
+ <button type="button" class="hotline-tab-btn" onclick="filterHotlineList('utilities',this)" style="padding:6px 12px;border:none;background:var(--bg);color:var(--muted);border-radius:8px;font-size:0.8rem;font-weight:700;cursor:pointer;font-family:'Poppins',sans-serif;">Lifelines & Utilities</button>
+ </div>
 
-    <!-- Hotlines Grid -->
-    <div id="hotlinesListContainer" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:10px;flex:1;min-height:0;overflow-y:auto;padding-right:4px;">
-      
-      <!-- 911 National -->
-      <div class="hotline-item-card" data-cat="disaster" style="background:#fff;border:1px solid var(--border);border-left:4px solid #ef4444;border-radius:10px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px;">
-        <div style="min-width:0;">
-          <div style="font-size:0.88rem;font-weight:800;color:var(--text);">911 Emergency Command</div>
-          <div style="font-size:0.73rem;color:var(--muted);">National Unified 24/7 Dispatch</div>
-          <span style="font-size:0.68rem;background:#fee2e2;color:#991b1b;padding:2px 6px;border-radius:4px;font-weight:700;">Toll-Free 24/7</span>
-        </div>
-        <div style="display:flex;gap:6px;flex-shrink:0;">
-          <button onclick="copyHotlineNumber('911', this)" style="border:1px solid #cbd5e1;background:#f8fafc;padding:6px 10px;border-radius:8px;font-size:0.75rem;cursor:pointer;"><i class="fas fa-copy"></i></button>
-          <a href="tel:911" style="background:#ef4444;color:#fff;padding:6px 12px;border-radius:8px;font-size:0.75rem;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:5px;"><i class="fas fa-phone"></i> Call</a>
-        </div>
-      </div>
+ <!-- Hotlines Grid -->
+ <div id="hotlinesListContainer" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:10px;flex:1;min-height:0;overflow-y:auto;padding-right:4px;">
+ 
+ <!-- 911 National -->
+ <div class="hotline-item-card" data-cat="disaster" style="background:#fff;border:1px solid var(--border);border-left:4px solid #ef4444;border-radius:10px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px;">
+ <div style="min-width:0;">
+ <div style="font-size:0.88rem;font-weight:800;color:var(--text);">911 Emergency Command</div>
+ <div style="font-size:0.73rem;color:var(--muted);">National Unified 24/7 Dispatch</div>
+ <span style="font-size:0.68rem;background:#fee2e2;color:#991b1b;padding:2px 6px;border-radius:4px;font-weight:700;">Toll-Free 24/7</span>
+ </div>
+ <div style="display:flex;gap:6px;flex-shrink:0;">
+ <button onclick="copyHotlineNumber('911', this)" style="border:1px solid #cbd5e1;background:#f8fafc;padding:6px 10px;border-radius:8px;font-size:0.75rem;cursor:pointer;"><i class="fas fa-copy"></i></button>
+ <a href="tel:911" style="background:#ef4444;color:#fff;padding:6px 12px;border-radius:8px;font-size:0.75rem;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:5px;"><i class="fas fa-phone"></i> Call</a>
+ </div>
+ </div>
 
-      <!-- Philippine Red Cross -->
-      <div class="hotline-item-card" data-cat="medical" style="background:#fff;border:1px solid var(--border);border-left:4px solid #dc2626;border-radius:10px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px;">
-        <div style="min-width:0;">
-          <div style="font-size:0.88rem;font-weight:800;color:var(--text);">Philippine Red Cross</div>
-          <div style="font-size:0.73rem;color:var(--muted);">Ambulance & Blood Center</div>
-          <span style="font-size:0.68rem;background:#fee2e2;color:#991b1b;padding:2px 6px;border-radius:4px;font-weight:700;">Hotline 143</span>
-        </div>
-        <div style="display:flex;gap:6px;flex-shrink:0;">
-          <button onclick="copyHotlineNumber('143', this)" style="border:1px solid #cbd5e1;background:#f8fafc;padding:6px 10px;border-radius:8px;font-size:0.75rem;cursor:pointer;"><i class="fas fa-copy"></i></button>
-          <a href="tel:143" style="background:#dc2626;color:#fff;padding:6px 12px;border-radius:8px;font-size:0.75rem;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:5px;"><i class="fas fa-phone"></i> Call</a>
-        </div>
-      </div>
+ <!-- Philippine Red Cross -->
+ <div class="hotline-item-card" data-cat="medical" style="background:#fff;border:1px solid var(--border);border-left:4px solid #dc2626;border-radius:10px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px;">
+ <div style="min-width:0;">
+ <div style="font-size:0.88rem;font-weight:800;color:var(--text);">Philippine Red Cross</div>
+ <div style="font-size:0.73rem;color:var(--muted);">Ambulance & Blood Center</div>
+ <span style="font-size:0.68rem;background:#fee2e2;color:#991b1b;padding:2px 6px;border-radius:4px;font-weight:700;">Hotline 143</span>
+ </div>
+ <div style="display:flex;gap:6px;flex-shrink:0;">
+ <button onclick="copyHotlineNumber('143', this)" style="border:1px solid #cbd5e1;background:#f8fafc;padding:6px 10px;border-radius:8px;font-size:0.75rem;cursor:pointer;"><i class="fas fa-copy"></i></button>
+ <a href="tel:143" style="background:#dc2626;color:#fff;padding:6px 12px;border-radius:8px;font-size:0.75rem;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:5px;"><i class="fas fa-phone"></i> Call</a>
+ </div>
+ </div>
 
-      <!-- NDRRMC -->
-      <div class="hotline-item-card" data-cat="disaster" style="background:#fff;border:1px solid var(--border);border-left:4px solid #0284c7;border-radius:10px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px;">
-        <div style="min-width:0;">
-          <div style="font-size:0.88rem;font-weight:800;color:var(--text);">NDRRMC Operations</div>
-          <div style="font-size:0.73rem;color:var(--muted);">(02) 8911-1406</div>
-          <span style="font-size:0.68rem;background:#e0f2fe;color:#0369a1;padding:2px 6px;border-radius:4px;font-weight:700;">National Disaster OpCen</span>
-        </div>
-        <div style="display:flex;gap:6px;flex-shrink:0;">
-          <button onclick="copyHotlineNumber('(02) 8911-1406', this)" style="border:1px solid #cbd5e1;background:#f8fafc;padding:6px 10px;border-radius:8px;font-size:0.75rem;cursor:pointer;"><i class="fas fa-copy"></i></button>
-          <a href="tel:0289111406" style="background:#0284c7;color:#fff;padding:6px 12px;border-radius:8px;font-size:0.75rem;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:5px;"><i class="fas fa-phone"></i> Call</a>
-        </div>
-      </div>
+ <!-- NDRRMC -->
+ <div class="hotline-item-card" data-cat="disaster" style="background:#fff;border:1px solid var(--border);border-left:4px solid #0284c7;border-radius:10px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px;">
+ <div style="min-width:0;">
+ <div style="font-size:0.88rem;font-weight:800;color:var(--text);">NDRRMC Operations</div>
+ <div style="font-size:0.73rem;color:var(--muted);">(02) 8911-1406</div>
+ <span style="font-size:0.68rem;background:#e0f2fe;color:#0369a1;padding:2px 6px;border-radius:4px;font-weight:700;">National Disaster OpCen</span>
+ </div>
+ <div style="display:flex;gap:6px;flex-shrink:0;">
+ <button onclick="copyHotlineNumber('(02) 8911-1406', this)" style="border:1px solid #cbd5e1;background:#f8fafc;padding:6px 10px;border-radius:8px;font-size:0.75rem;cursor:pointer;"><i class="fas fa-copy"></i></button>
+ <a href="tel:0289111406" style="background:#0284c7;color:#fff;padding:6px 12px;border-radius:8px;font-size:0.75rem;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:5px;"><i class="fas fa-phone"></i> Call</a>
+ </div>
+ </div>
 
-      <!-- BFP Fire -->
-      <div class="hotline-item-card" data-cat="disaster" style="background:#fff;border:1px solid var(--border);border-left:4px solid #ea580c;border-radius:10px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px;">
-        <div style="min-width:0;">
-          <div style="font-size:0.88rem;font-weight:800;color:var(--text);">BFP Fire Suppression</div>
-          <div style="font-size:0.73rem;color:var(--muted);">(02) 8426-0219</div>
-          <span style="font-size:0.68rem;background:#ffedd5;color:#9a3412;padding:2px 6px;border-radius:4px;font-weight:700;">Hotline 160 / NCR BFP</span>
-        </div>
-        <div style="display:flex;gap:6px;flex-shrink:0;">
-          <button onclick="copyHotlineNumber('(02) 8426-0219', this)" style="border:1px solid #cbd5e1;background:#f8fafc;padding:6px 10px;border-radius:8px;font-size:0.75rem;cursor:pointer;"><i class="fas fa-copy"></i></button>
-          <a href="tel:160" style="background:#ea580c;color:#fff;padding:6px 12px;border-radius:8px;font-size:0.75rem;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:5px;"><i class="fas fa-phone"></i> Call</a>
-        </div>
-      </div>
+ <!-- BFP Fire -->
+ <div class="hotline-item-card" data-cat="disaster" style="background:#fff;border:1px solid var(--border);border-left:4px solid #ea580c;border-radius:10px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px;">
+ <div style="min-width:0;">
+ <div style="font-size:0.88rem;font-weight:800;color:var(--text);">BFP Fire Suppression</div>
+ <div style="font-size:0.73rem;color:var(--muted);">(02) 8426-0219</div>
+ <span style="font-size:0.68rem;background:#ffedd5;color:#9a3412;padding:2px 6px;border-radius:4px;font-weight:700;">Hotline 160 / NCR BFP</span>
+ </div>
+ <div style="display:flex;gap:6px;flex-shrink:0;">
+ <button onclick="copyHotlineNumber('(02) 8426-0219', this)" style="border:1px solid #cbd5e1;background:#f8fafc;padding:6px 10px;border-radius:8px;font-size:0.75rem;cursor:pointer;"><i class="fas fa-copy"></i></button>
+ <a href="tel:160" style="background:#ea580c;color:#fff;padding:6px 12px;border-radius:8px;font-size:0.75rem;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:5px;"><i class="fas fa-phone"></i> Call</a>
+ </div>
+ </div>
 
-      <!-- PNP Police -->
-      <div class="hotline-item-card" data-cat="security" style="background:#fff;border:1px solid var(--border);border-left:4px solid #2563eb;border-radius:10px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px;">
-        <div style="min-width:0;">
-          <div style="font-size:0.88rem;font-weight:800;color:var(--text);">PNP Emergency Patrol</div>
-          <div style="font-size:0.73rem;color:var(--muted);">117 / (02) 8722-0650</div>
-          <span style="font-size:0.68rem;background:#dbeafe;color:#1e40af;padding:2px 6px;border-radius:4px;font-weight:700;">National Police OpCen</span>
-        </div>
-        <div style="display:flex;gap:6px;flex-shrink:0;">
-          <button onclick="copyHotlineNumber('117', this)" style="border:1px solid #cbd5e1;background:#f8fafc;padding:6px 10px;border-radius:8px;font-size:0.75rem;cursor:pointer;"><i class="fas fa-copy"></i></button>
-          <a href="tel:117" style="background:#2563eb;color:#fff;padding:6px 12px;border-radius:8px;font-size:0.75rem;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:5px;"><i class="fas fa-phone"></i> Call</a>
-        </div>
-      </div>
+ <!-- PNP Police -->
+ <div class="hotline-item-card" data-cat="security" style="background:#fff;border:1px solid var(--border);border-left:4px solid #2563eb;border-radius:10px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px;">
+ <div style="min-width:0;">
+ <div style="font-size:0.88rem;font-weight:800;color:var(--text);">PNP Emergency Patrol</div>
+ <div style="font-size:0.73rem;color:var(--muted);">117 / (02) 8722-0650</div>
+ <span style="font-size:0.68rem;background:#dbeafe;color:#1e40af;padding:2px 6px;border-radius:4px;font-weight:700;">National Police OpCen</span>
+ </div>
+ <div style="display:flex;gap:6px;flex-shrink:0;">
+ <button onclick="copyHotlineNumber('117', this)" style="border:1px solid #cbd5e1;background:#f8fafc;padding:6px 10px;border-radius:8px;font-size:0.75rem;cursor:pointer;"><i class="fas fa-copy"></i></button>
+ <a href="tel:117" style="background:#2563eb;color:#fff;padding:6px 12px;border-radius:8px;font-size:0.75rem;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:5px;"><i class="fas fa-phone"></i> Call</a>
+ </div>
+ </div>
 
-      <!-- PAGASA Weather -->
-      <div class="hotline-item-card" data-cat="disaster" style="background:#fff;border:1px solid var(--border);border-left:4px solid #0891b2;border-radius:10px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px;">
-        <div style="min-width:0;">
-          <div style="font-size:0.88rem;font-weight:800;color:var(--text);">PAGASA Weather Central</div>
-          <div style="font-size:0.73rem;color:var(--muted);">(02) 8284-0800</div>
-          <span style="font-size:0.68rem;background:#cffafe;color:#155e75;padding:2px 6px;border-radius:4px;font-weight:700;">Hydro-Met Forecasting</span>
-        </div>
-        <div style="display:flex;gap:6px;flex-shrink:0;">
-          <button onclick="copyHotlineNumber('(02) 8284-0800', this)" style="border:1px solid #cbd5e1;background:#f8fafc;padding:6px 10px;border-radius:8px;font-size:0.75rem;cursor:pointer;"><i class="fas fa-copy"></i></button>
-          <a href="tel:0282840800" style="background:#0891b2;color:#fff;padding:6px 12px;border-radius:8px;font-size:0.75rem;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:5px;"><i class="fas fa-phone"></i> Call</a>
-        </div>
-      </div>
+ <!-- PAGASA Weather -->
+ <div class="hotline-item-card" data-cat="disaster" style="background:#fff;border:1px solid var(--border);border-left:4px solid #0891b2;border-radius:10px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px;">
+ <div style="min-width:0;">
+ <div style="font-size:0.88rem;font-weight:800;color:var(--text);">PAGASA Weather Central</div>
+ <div style="font-size:0.73rem;color:var(--muted);">(02) 8284-0800</div>
+ <span style="font-size:0.68rem;background:#cffafe;color:#155e75;padding:2px 6px;border-radius:4px;font-weight:700;">Hydro-Met Forecasting</span>
+ </div>
+ <div style="display:flex;gap:6px;flex-shrink:0;">
+ <button onclick="copyHotlineNumber('(02) 8284-0800', this)" style="border:1px solid #cbd5e1;background:#f8fafc;padding:6px 10px;border-radius:8px;font-size:0.75rem;cursor:pointer;"><i class="fas fa-copy"></i></button>
+ <a href="tel:0282840800" style="background:#0891b2;color:#fff;padding:6px 12px;border-radius:8px;font-size:0.75rem;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:5px;"><i class="fas fa-phone"></i> Call</a>
+ </div>
+ </div>
 
-      <!-- PHIVOLCS Volcano & Earthquake -->
-      <div class="hotline-item-card" data-cat="disaster" style="background:#fff;border:1px solid var(--border);border-left:4px solid #7c3aed;border-radius:10px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px;">
-        <div style="min-width:0;">
-          <div style="font-size:0.88rem;font-weight:800;color:var(--text);">PHIVOLCS Seismology</div>
-          <div style="font-size:0.73rem;color:var(--muted);">(02) 8426-1468</div>
-          <span style="font-size:0.68rem;background:#ede9fe;color:#5b21b6;padding:2px 6px;border-radius:4px;font-weight:700;">Earthquake & Tsunami Alert</span>
-        </div>
-        <div style="display:flex;gap:6px;flex-shrink:0;">
-          <button onclick="copyHotlineNumber('(02) 8426-1468', this)" style="border:1px solid #cbd5e1;background:#f8fafc;padding:6px 10px;border-radius:8px;font-size:0.75rem;cursor:pointer;"><i class="fas fa-copy"></i></button>
-          <a href="tel:0284261468" style="background:#7c3aed;color:#fff;padding:6px 12px;border-radius:8px;font-size:0.75rem;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:5px;"><i class="fas fa-phone"></i> Call</a>
-        </div>
-      </div>
+ <!-- PHIVOLCS Volcano & Earthquake -->
+ <div class="hotline-item-card" data-cat="disaster" style="background:#fff;border:1px solid var(--border);border-left:4px solid #7c3aed;border-radius:10px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px;">
+ <div style="min-width:0;">
+ <div style="font-size:0.88rem;font-weight:800;color:var(--text);">PHIVOLCS Seismology</div>
+ <div style="font-size:0.73rem;color:var(--muted);">(02) 8426-1468</div>
+ <span style="font-size:0.68rem;background:#ede9fe;color:#5b21b6;padding:2px 6px;border-radius:4px;font-weight:700;">Earthquake & Tsunami Alert</span>
+ </div>
+ <div style="display:flex;gap:6px;flex-shrink:0;">
+ <button onclick="copyHotlineNumber('(02) 8426-1468', this)" style="border:1px solid #cbd5e1;background:#f8fafc;padding:6px 10px;border-radius:8px;font-size:0.75rem;cursor:pointer;"><i class="fas fa-copy"></i></button>
+ <a href="tel:0284261468" style="background:#7c3aed;color:#fff;padding:6px 12px;border-radius:8px;font-size:0.75rem;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:5px;"><i class="fas fa-phone"></i> Call</a>
+ </div>
+ </div>
 
-      <!-- DOH Health Emergency -->
-      <div class="hotline-item-card" data-cat="medical" style="background:#fff;border:1px solid var(--border);border-left:4px solid #059669;border-radius:10px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px;">
-        <div style="min-width:0;">
-          <div style="font-size:0.88rem;font-weight:800;color:var(--text);">DOH Health Emergency (HEMB)</div>
-          <div style="font-size:0.73rem;color:var(--muted);">(02) 8651-7800</div>
-          <span style="font-size:0.68rem;background:#d1fae5;color:#065f46;padding:2px 6px;border-radius:4px;font-weight:700;">National Hospital Referral</span>
-        </div>
-        <div style="display:flex;gap:6px;flex-shrink:0;">
-          <button onclick="copyHotlineNumber('(02) 8651-7800', this)" style="border:1px solid #cbd5e1;background:#f8fafc;padding:6px 10px;border-radius:8px;font-size:0.75rem;cursor:pointer;"><i class="fas fa-copy"></i></button>
-          <a href="tel:0286517800" style="background:#059669;color:#fff;padding:6px 12px;border-radius:8px;font-size:0.75rem;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:5px;"><i class="fas fa-phone"></i> Call</a>
-        </div>
-      </div>
+ <!-- DOH Health Emergency -->
+ <div class="hotline-item-card" data-cat="medical" style="background:#fff;border:1px solid var(--border);border-left:4px solid #059669;border-radius:10px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px;">
+ <div style="min-width:0;">
+ <div style="font-size:0.88rem;font-weight:800;color:var(--text);">DOH Health Emergency (HEMB)</div>
+ <div style="font-size:0.73rem;color:var(--muted);">(02) 8651-7800</div>
+ <span style="font-size:0.68rem;background:#d1fae5;color:#065f46;padding:2px 6px;border-radius:4px;font-weight:700;">National Hospital Referral</span>
+ </div>
+ <div style="display:flex;gap:6px;flex-shrink:0;">
+ <button onclick="copyHotlineNumber('(02) 8651-7800', this)" style="border:1px solid #cbd5e1;background:#f8fafc;padding:6px 10px;border-radius:8px;font-size:0.75rem;cursor:pointer;"><i class="fas fa-copy"></i></button>
+ <a href="tel:0286517800" style="background:#059669;color:#fff;padding:6px 12px;border-radius:8px;font-size:0.75rem;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:5px;"><i class="fas fa-phone"></i> Call</a>
+ </div>
+ </div>
 
-      <!-- Meralco Emergency -->
-      <div class="hotline-item-card" data-cat="utilities" style="background:#fff;border:1px solid var(--border);border-left:4px solid #f59e0b;border-radius:10px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px;">
-        <div style="min-width:0;">
-          <div style="font-size:0.88rem;font-weight:800;color:var(--text);">Meralco 24/7 Power Outage</div>
-          <div style="font-size:0.73rem;color:var(--muted);">16211 / (02) 16211</div>
-          <span style="font-size:0.68rem;background:#fef3c7;color:#92400e;padding:2px 6px;border-radius:4px;font-weight:700;">Downed Line & Transformer Hazard</span>
-        </div>
-        <div style="display:flex;gap:6px;flex-shrink:0;">
-          <button onclick="copyHotlineNumber('16211', this)" style="border:1px solid #cbd5e1;background:#f8fafc;padding:6px 10px;border-radius:8px;font-size:0.75rem;cursor:pointer;"><i class="fas fa-copy"></i></button>
-          <a href="tel:16211" style="background:#f59e0b;color:#111827;padding:6px 12px;border-radius:8px;font-size:0.75rem;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:5px;"><i class="fas fa-phone"></i> Call</a>
-        </div>
-      </div>
+ <!-- Meralco Emergency -->
+ <div class="hotline-item-card" data-cat="utilities" style="background:#fff;border:1px solid var(--border);border-left:4px solid #f59e0b;border-radius:10px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px;">
+ <div style="min-width:0;">
+ <div style="font-size:0.88rem;font-weight:800;color:var(--text);">Meralco 24/7 Power Outage</div>
+ <div style="font-size:0.73rem;color:var(--muted);">16211 / (02) 16211</div>
+ <span style="font-size:0.68rem;background:#fef3c7;color:#92400e;padding:2px 6px;border-radius:4px;font-weight:700;">Downed Line & Transformer Hazard</span>
+ </div>
+ <div style="display:flex;gap:6px;flex-shrink:0;">
+ <button onclick="copyHotlineNumber('16211', this)" style="border:1px solid #cbd5e1;background:#f8fafc;padding:6px 10px;border-radius:8px;font-size:0.75rem;cursor:pointer;"><i class="fas fa-copy"></i></button>
+ <a href="tel:16211" style="background:#f59e0b;color:#111827;padding:6px 12px;border-radius:8px;font-size:0.75rem;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:5px;"><i class="fas fa-phone"></i> Call</a>
+ </div>
+ </div>
 
-      <!-- Maynilad Water -->
-      <div class="hotline-item-card" data-cat="utilities" style="background:#fff;border:1px solid var(--border);border-left:4px solid #0284c7;border-radius:10px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px;">
-        <div style="min-width:0;">
-          <div style="font-size:0.88rem;font-weight:800;color:var(--text);">Maynilad Water Tanker Dispatch</div>
-          <div style="font-size:0.73rem;color:var(--muted);">1626 / 1-800-1000-WATER</div>
-          <span style="font-size:0.68rem;background:#e0f2fe;color:#0369a1;padding:2px 6px;border-radius:4px;font-weight:700;">Emergency Potable Water</span>
-        </div>
-        <div style="display:flex;gap:6px;flex-shrink:0;">
-          <button onclick="copyHotlineNumber('1626', this)" style="border:1px solid #cbd5e1;background:#f8fafc;padding:6px 10px;border-radius:8px;font-size:0.75rem;cursor:pointer;"><i class="fas fa-copy"></i></button>
-          <a href="tel:1626" style="background:#0284c7;color:#fff;padding:6px 12px;border-radius:8px;font-size:0.75rem;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:5px;"><i class="fas fa-phone"></i> Call</a>
-        </div>
-      </div>
+ <!-- Maynilad Water -->
+ <div class="hotline-item-card" data-cat="utilities" style="background:#fff;border:1px solid var(--border);border-left:4px solid #0284c7;border-radius:10px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px;">
+ <div style="min-width:0;">
+ <div style="font-size:0.88rem;font-weight:800;color:var(--text);">Maynilad Water Tanker Dispatch</div>
+ <div style="font-size:0.73rem;color:var(--muted);">1626 / 1-800-1000-WATER</div>
+ <span style="font-size:0.68rem;background:#e0f2fe;color:#0369a1;padding:2px 6px;border-radius:4px;font-weight:700;">Emergency Potable Water</span>
+ </div>
+ <div style="display:flex;gap:6px;flex-shrink:0;">
+ <button onclick="copyHotlineNumber('1626', this)" style="border:1px solid #cbd5e1;background:#f8fafc;padding:6px 10px;border-radius:8px;font-size:0.75rem;cursor:pointer;"><i class="fas fa-copy"></i></button>
+ <a href="tel:1626" style="background:#0284c7;color:#fff;padding:6px 12px;border-radius:8px;font-size:0.75rem;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:5px;"><i class="fas fa-phone"></i> Call</a>
+ </div>
+ </div>
 
-    </div>
-  </div>
+ </div>
+ </div>
 </div>
 
 <!-- ── 72-Hour Calamity Go Bag & Emergency Kit Planner Modal ── -->
 <div class="modal-overlay" id="goBagModalOverlay" onclick="if(event.target===this)closeGoBagModal()">
-  <div class="modal" style="max-width:700px;max-height:90vh;display:flex;flex-direction:column;overflow:hidden;">
-    <button class="modal-close" onclick="closeGoBagModal()"><i class="fas fa-xmark"></i></button>
-    <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;flex-shrink:0;">
-      <div style="width:42px;height:42px;border-radius:12px;background:#fef3c7;color:#d97706;display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0;">
-        <i class="fas fa-bag-shopping"></i>
-      </div>
-      <div>
-        <h2 style="font-size:1.15rem;font-weight:800;color:var(--text);margin:0;">72-Hour Calamity Go Bag Planner</h2>
-        <p style="font-size:0.78rem;color:var(--muted);margin:0;">Essential survival kit checklist recommended by NDRRMC & OCD for 72-hour family self-reliance.</p>
-      </div>
-    </div>
+ <div class="modal" style="max-width:700px;max-height:90vh;display:flex;flex-direction:column;overflow:hidden;">
+ <button class="modal-close" onclick="closeGoBagModal()"><i class="fas fa-xmark"></i></button>
+ <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;flex-shrink:0;">
+ <div style="width:42px;height:42px;border-radius:12px;background:#fef3c7;color:#d97706;display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0;">
+ <i class="fas fa-bag-shopping"></i>
+ </div>
+ <div>
+ <h2 style="font-size:1.15rem;font-weight:800;color:var(--text);margin:0;">72-Hour Calamity Go Bag Planner</h2>
+ <p style="font-size:0.78rem;color:var(--muted);margin:0;">Essential survival kit checklist recommended by NDRRMC & OCD for 72-hour family self-reliance.</p>
+ </div>
+ </div>
 
-    <!-- Progress Card -->
-    <div style="background:#f8fafc;border:1px solid var(--border);border-radius:10px;padding:12px 16px;margin:12px 0;flex-shrink:0;">
-      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px;">
-        <span style="font-size:0.8rem;font-weight:700;color:var(--text);" id="goBagProgressText">6 of 8 Essentials Packed (75%)</span>
-        <span id="goBagStatusBadge" style="font-size:0.7rem;font-weight:800;padding:2px 8px;border-radius:20px;background:#fef3c7;color:#92400e;"><i class="fas fa-shield-halved"></i> Moderate Readiness</span>
-      </div>
-      <div style="width:100%;height:8px;background:#e2e8f0;border-radius:4px;overflow:hidden;">
-        <div id="goBagProgressBar" style="width:75%;height:100%;background:linear-gradient(90deg,#f59e0b,#10b981);transition:width 0.3s ease;"></div>
-      </div>
-    </div>
+ <!-- Progress Card -->
+ <div style="background:#f8fafc;border:1px solid var(--border);border-radius:10px;padding:12px 16px;margin:12px 0;flex-shrink:0;">
+ <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px;">
+ <span style="font-size:0.8rem;font-weight:700;color:var(--text);" id="goBagProgressText">6 of 8 Essentials Packed (75%)</span>
+ <span id="goBagStatusBadge" style="font-size:0.7rem;font-weight:800;padding:2px 8px;border-radius:20px;background:#fef3c7;color:#92400e;"><i class="fas fa-shield-halved"></i> Moderate Readiness</span>
+ </div>
+ <div style="width:100%;height:8px;background:#e2e8f0;border-radius:4px;overflow:hidden;">
+ <div id="goBagProgressBar" style="width:75%;height:100%;background:linear-gradient(90deg,#f59e0b,#10b981);transition:width 0.3s ease;"></div>
+ </div>
+ </div>
 
-    <!-- Checklist Items Grid -->
-    <div style="display:grid;grid-template-columns:1fr;gap:7px;flex:1;min-height:0;max-height:54vh;overflow-y:auto;padding:2px 6px 6px 2px;">
-      
-      <!-- Item 1 -->
-      <label style="background:#fff;border:1px solid var(--border);border-radius:8px;padding:8px 12px;display:flex;align-items:flex-start;gap:10px;cursor:pointer;transition:background 0.15s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='#fff'">
-        <input type="checkbox" class="gobag-check" onchange="toggleGoBagItem(0)" style="margin-top:2px;transform:scale(1.15);cursor:pointer;">
-        <div style="flex:1;min-width:0;">
-          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
-            <strong style="font-size:0.83rem;color:var(--text);">Drinking Water (1 gal / 4L per person per day)</strong>
-            <span style="font-size:0.66rem;background:#e0f2fe;color:#0369a1;padding:1px 5px;border-radius:4px;font-weight:700;">Hydration</span>
-          </div>
-          <div style="font-size:0.72rem;color:var(--muted);margin-top:1px;">Minimum 3-day supply in sealed, clean plastic containers plus water purification tablets.</div>
-        </div>
-      </label>
+ <!-- Checklist Items Grid -->
+ <div style="display:grid;grid-template-columns:1fr;gap:7px;flex:1;min-height:0;max-height:54vh;overflow-y:auto;padding:2px 6px 6px 2px;">
+ 
+ <!-- Item 1 -->
+ <label style="background:#fff;border:1px solid var(--border);border-radius:8px;padding:8px 12px;display:flex;align-items:flex-start;gap:10px;cursor:pointer;transition:background 0.15s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='#fff'">
+ <input type="checkbox" class="gobag-check" onchange="toggleGoBagItem(0)" style="margin-top:2px;transform:scale(1.15);cursor:pointer;">
+ <div style="flex:1;min-width:0;">
+ <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+ <strong style="font-size:0.83rem;color:var(--text);">Drinking Water (1 gal / 4L per person per day)</strong>
+ <span style="font-size:0.66rem;background:#e0f2fe;color:#0369a1;padding:1px 5px;border-radius:4px;font-weight:700;">Hydration</span>
+ </div>
+ <div style="font-size:0.72rem;color:var(--muted);margin-top:1px;">Minimum 3-day supply in sealed, clean plastic containers plus water purification tablets.</div>
+ </div>
+ </label>
 
-      <!-- Item 2 -->
-      <label style="background:#fff;border:1px solid var(--border);border-radius:8px;padding:8px 12px;display:flex;align-items:flex-start;gap:10px;cursor:pointer;transition:background 0.15s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='#fff'">
-        <input type="checkbox" class="gobag-check" onchange="toggleGoBagItem(1)" style="margin-top:2px;transform:scale(1.15);cursor:pointer;">
-        <div style="flex:1;min-width:0;">
-          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
-            <strong style="font-size:0.83rem;color:var(--text);">Ready-to-Eat Non-Perishable Food</strong>
-            <span style="font-size:0.66rem;background:#fef3c7;color:#92400e;padding:1px 5px;border-radius:4px;font-weight:700;">Nutrition</span>
-          </div>
-          <div style="font-size:0.72rem;color:var(--muted);margin-top:1px;">Canned fish/meat, biscuits, high-calorie energy bars, and a manual rotary can opener.</div>
-        </div>
-      </label>
+ <!-- Item 2 -->
+ <label style="background:#fff;border:1px solid var(--border);border-radius:8px;padding:8px 12px;display:flex;align-items:flex-start;gap:10px;cursor:pointer;transition:background 0.15s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='#fff'">
+ <input type="checkbox" class="gobag-check" onchange="toggleGoBagItem(1)" style="margin-top:2px;transform:scale(1.15);cursor:pointer;">
+ <div style="flex:1;min-width:0;">
+ <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+ <strong style="font-size:0.83rem;color:var(--text);">Ready-to-Eat Non-Perishable Food</strong>
+ <span style="font-size:0.66rem;background:#fef3c7;color:#92400e;padding:1px 5px;border-radius:4px;font-weight:700;">Nutrition</span>
+ </div>
+ <div style="font-size:0.72rem;color:var(--muted);margin-top:1px;">Canned fish/meat, biscuits, high-calorie energy bars, and a manual rotary can opener.</div>
+ </div>
+ </label>
 
-      <!-- Item 3 -->
-      <label style="background:#fff;border:1px solid var(--border);border-radius:8px;padding:8px 12px;display:flex;align-items:flex-start;gap:10px;cursor:pointer;transition:background 0.15s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='#fff'">
-        <input type="checkbox" class="gobag-check" onchange="toggleGoBagItem(2)" style="margin-top:2px;transform:scale(1.15);cursor:pointer;">
-        <div style="flex:1;min-width:0;">
-          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
-            <strong style="font-size:0.83rem;color:var(--text);">First-Aid Kit & 7-Day Prescription Meds</strong>
-            <span style="font-size:0.66rem;background:#fee2e2;color:#b91c1c;padding:1px 5px;border-radius:4px;font-weight:700;">Medical</span>
-          </div>
-          <div style="font-size:0.72rem;color:var(--muted);margin-top:1px;">Bandages, povidone-iodine, paracetamol, maintenance meds, and emergency medical cards.</div>
-        </div>
-      </label>
+ <!-- Item 3 -->
+ <label style="background:#fff;border:1px solid var(--border);border-radius:8px;padding:8px 12px;display:flex;align-items:flex-start;gap:10px;cursor:pointer;transition:background 0.15s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='#fff'">
+ <input type="checkbox" class="gobag-check" onchange="toggleGoBagItem(2)" style="margin-top:2px;transform:scale(1.15);cursor:pointer;">
+ <div style="flex:1;min-width:0;">
+ <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+ <strong style="font-size:0.83rem;color:var(--text);">First-Aid Kit & 7-Day Prescription Meds</strong>
+ <span style="font-size:0.66rem;background:#fee2e2;color:#b91c1c;padding:1px 5px;border-radius:4px;font-weight:700;">Medical</span>
+ </div>
+ <div style="font-size:0.72rem;color:var(--muted);margin-top:1px;">Bandages, povidone-iodine, paracetamol, maintenance meds, and emergency medical cards.</div>
+ </div>
+ </label>
 
-      <!-- Item 4 -->
-      <label style="background:#fff;border:1px solid var(--border);border-radius:8px;padding:8px 12px;display:flex;align-items:flex-start;gap:10px;cursor:pointer;transition:background 0.15s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='#fff'">
-        <input type="checkbox" class="gobag-check" onchange="toggleGoBagItem(3)" style="margin-top:2px;transform:scale(1.15);cursor:pointer;">
-        <div style="flex:1;min-width:0;">
-          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
-            <strong style="font-size:0.83rem;color:var(--text);">Waterproof LED Flashlight & Spare Batteries</strong>
-            <span style="font-size:0.66rem;background:#f3e8ff;color:#6b21a8;padding:1px 5px;border-radius:4px;font-weight:700;">Lighting</span>
-          </div>
-          <div style="font-size:0.72rem;color:var(--muted);margin-top:1px;">High-lumen flashlight or headlamp with fresh AA/AAA batteries sealed in dry bag.</div>
-        </div>
-      </label>
+ <!-- Item 4 -->
+ <label style="background:#fff;border:1px solid var(--border);border-radius:8px;padding:8px 12px;display:flex;align-items:flex-start;gap:10px;cursor:pointer;transition:background 0.15s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='#fff'">
+ <input type="checkbox" class="gobag-check" onchange="toggleGoBagItem(3)" style="margin-top:2px;transform:scale(1.15);cursor:pointer;">
+ <div style="flex:1;min-width:0;">
+ <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+ <strong style="font-size:0.83rem;color:var(--text);">Waterproof LED Flashlight & Spare Batteries</strong>
+ <span style="font-size:0.66rem;background:#f3e8ff;color:#6b21a8;padding:1px 5px;border-radius:4px;font-weight:700;">Lighting</span>
+ </div>
+ <div style="font-size:0.72rem;color:var(--muted);margin-top:1px;">High-lumen flashlight or headlamp with fresh AA/AAA batteries sealed in dry bag.</div>
+ </div>
+ </label>
 
-      <!-- Item 5 -->
-      <label style="background:#fff;border:1px solid var(--border);border-radius:8px;padding:8px 12px;display:flex;align-items:flex-start;gap:10px;cursor:pointer;transition:background 0.15s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='#fff'">
-        <input type="checkbox" class="gobag-check" onchange="toggleGoBagItem(4)" style="margin-top:2px;transform:scale(1.15);cursor:pointer;">
-        <div style="flex:1;min-width:0;">
-          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
-            <strong style="font-size:0.83rem;color:var(--text);">High-Decibel Whistle & Multi-Tool Knife</strong>
-            <span style="font-size:0.66rem;background:#f1f5f9;color:#334155;padding:1px 5px;border-radius:4px;font-weight:700;">Rescue & Utility</span>
-          </div>
-          <div style="font-size:0.72rem;color:var(--muted);margin-top:1px;">120dB pea-less whistle for acoustic rescue signaling under rubble or high water.</div>
-        </div>
-      </label>
+ <!-- Item 5 -->
+ <label style="background:#fff;border:1px solid var(--border);border-radius:8px;padding:8px 12px;display:flex;align-items:flex-start;gap:10px;cursor:pointer;transition:background 0.15s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='#fff'">
+ <input type="checkbox" class="gobag-check" onchange="toggleGoBagItem(4)" style="margin-top:2px;transform:scale(1.15);cursor:pointer;">
+ <div style="flex:1;min-width:0;">
+ <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+ <strong style="font-size:0.83rem;color:var(--text);">High-Decibel Whistle & Multi-Tool Knife</strong>
+ <span style="font-size:0.66rem;background:#f1f5f9;color:#334155;padding:1px 5px;border-radius:4px;font-weight:700;">Rescue & Utility</span>
+ </div>
+ <div style="font-size:0.72rem;color:var(--muted);margin-top:1px;">120dB pea-less whistle for acoustic rescue signaling under rubble or high water.</div>
+ </div>
+ </label>
 
-      <!-- Item 6 -->
-      <label style="background:#fff;border:1px solid var(--border);border-radius:8px;padding:8px 12px;display:flex;align-items:flex-start;gap:10px;cursor:pointer;transition:background 0.15s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='#fff'">
-        <input type="checkbox" class="gobag-check" onchange="toggleGoBagItem(5)" style="margin-top:2px;transform:scale(1.15);cursor:pointer;">
-        <div style="flex:1;min-width:0;">
-          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
-            <strong style="font-size:0.83rem;color:var(--text);">Heavy-Duty Powerbank (20,000mAh) & Cables</strong>
-            <span style="font-size:0.66rem;background:#dbeafe;color:#1e40af;padding:1px 5px;border-radius:4px;font-weight:700;">Power</span>
-          </div>
-          <div style="font-size:0.72rem;color:var(--muted);margin-top:1px;">Fully charged battery bank with lightning/USB-C cables in a waterproof phone pouch.</div>
-        </div>
-      </label>
+ <!-- Item 6 -->
+ <label style="background:#fff;border:1px solid var(--border);border-radius:8px;padding:8px 12px;display:flex;align-items:flex-start;gap:10px;cursor:pointer;transition:background 0.15s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='#fff'">
+ <input type="checkbox" class="gobag-check" onchange="toggleGoBagItem(5)" style="margin-top:2px;transform:scale(1.15);cursor:pointer;">
+ <div style="flex:1;min-width:0;">
+ <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+ <strong style="font-size:0.83rem;color:var(--text);">Heavy-Duty Powerbank (20,000mAh) & Cables</strong>
+ <span style="font-size:0.66rem;background:#dbeafe;color:#1e40af;padding:1px 5px;border-radius:4px;font-weight:700;">Power</span>
+ </div>
+ <div style="font-size:0.72rem;color:var(--muted);margin-top:1px;">Fully charged battery bank with lightning/USB-C cables in a waterproof phone pouch.</div>
+ </div>
+ </label>
 
-      <!-- Item 7 -->
-      <label style="background:#fff;border:1px solid var(--border);border-radius:8px;padding:8px 12px;display:flex;align-items:flex-start;gap:10px;cursor:pointer;transition:background 0.15s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='#fff'">
-        <input type="checkbox" class="gobag-check" onchange="toggleGoBagItem(6)" style="margin-top:2px;transform:scale(1.15);cursor:pointer;">
-        <div style="flex:1;min-width:0;">
-          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
-            <strong style="font-size:0.83rem;color:var(--text);">Vital Documents & IDs in Sealed Ziplock</strong>
-            <span style="font-size:0.66rem;background:#dcfce7;color:#15803d;padding:1px 5px;border-radius:4px;font-weight:700;">Documents</span>
-          </div>
-          <div style="font-size:0.72rem;color:var(--muted);margin-top:1px;">Birth certificates, PhilHealth/Gov IDs, land titles, and emergency cash in small denominations.</div>
-        </div>
-      </label>
+ <!-- Item 7 -->
+ <label style="background:#fff;border:1px solid var(--border);border-radius:8px;padding:8px 12px;display:flex;align-items:flex-start;gap:10px;cursor:pointer;transition:background 0.15s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='#fff'">
+ <input type="checkbox" class="gobag-check" onchange="toggleGoBagItem(6)" style="margin-top:2px;transform:scale(1.15);cursor:pointer;">
+ <div style="flex:1;min-width:0;">
+ <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+ <strong style="font-size:0.83rem;color:var(--text);">Vital Documents & IDs in Sealed Ziplock</strong>
+ <span style="font-size:0.66rem;background:#dcfce7;color:#15803d;padding:1px 5px;border-radius:4px;font-weight:700;">Documents</span>
+ </div>
+ <div style="font-size:0.72rem;color:var(--muted);margin-top:1px;">Birth certificates, PhilHealth/Gov IDs, land titles, and emergency cash in small denominations.</div>
+ </div>
+ </label>
 
-      <!-- Item 8 -->
-      <label style="background:#fff;border:1px solid var(--border);border-radius:8px;padding:8px 12px;display:flex;align-items:flex-start;gap:10px;cursor:pointer;transition:background 0.15s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='#fff'">
-        <input type="checkbox" class="gobag-check" onchange="toggleGoBagItem(7)" style="margin-top:2px;transform:scale(1.15);cursor:pointer;">
-        <div style="flex:1;min-width:0;">
-          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
-            <strong style="font-size:0.83rem;color:var(--text);">N95 Masks, Alcohol & Personal Sanitation Kit</strong>
-            <span style="font-size:0.66rem;background:#ede9fe;color:#5b21b6;padding:1px 5px;border-radius:4px;font-weight:700;">Sanitation</span>
-          </div>
-          <div style="font-size:0.72rem;color:var(--muted);margin-top:1px;">70% isopropyl alcohol, antibacterial wet wipes, heavy-duty trash bags, and toothbrushes.</div>
-        </div>
-      </label>
+ <!-- Item 8 -->
+ <label style="background:#fff;border:1px solid var(--border);border-radius:8px;padding:8px 12px;display:flex;align-items:flex-start;gap:10px;cursor:pointer;transition:background 0.15s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='#fff'">
+ <input type="checkbox" class="gobag-check" onchange="toggleGoBagItem(7)" style="margin-top:2px;transform:scale(1.15);cursor:pointer;">
+ <div style="flex:1;min-width:0;">
+ <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+ <strong style="font-size:0.83rem;color:var(--text);">N95 Masks, Alcohol & Personal Sanitation Kit</strong>
+ <span style="font-size:0.66rem;background:#ede9fe;color:#5b21b6;padding:1px 5px;border-radius:4px;font-weight:700;">Sanitation</span>
+ </div>
+ <div style="font-size:0.72rem;color:var(--muted);margin-top:1px;">70% isopropyl alcohol, antibacterial wet wipes, heavy-duty trash bags, and toothbrushes.</div>
+ </div>
+ </label>
 
-    </div>
+ </div>
 
-    <!-- Modal Footer Actions -->
-    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:14px;padding-top:12px;border-top:1px solid var(--border);flex-shrink:0;">
-      <button type="button" onclick="resetGoBagChecklist()" style="padding:6px 12px;background:#f8fafc;border:1px solid var(--border);color:var(--muted);border-radius:8px;font-size:0.75rem;font-weight:700;cursor:pointer;"><i class="fas fa-rotate-left"></i> Reset Checklist</button>
-      <button type="button" onclick="closeGoBagModal()" style="padding:6px 16px;background:var(--blue-accent);color:#fff;border:none;border-radius:8px;font-size:0.78rem;font-weight:700;cursor:pointer;">Done</button>
-    </div>
-  </div>
+ <!-- Modal Footer Actions -->
+ <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:14px;padding-top:12px;border-top:1px solid var(--border);flex-shrink:0;">
+ <button type="button" onclick="resetGoBagChecklist()" style="padding:6px 12px;background:#f8fafc;border:1px solid var(--border);color:var(--muted);border-radius:8px;font-size:0.75rem;font-weight:700;cursor:pointer;"><i class="fas fa-rotate-left"></i> Reset Checklist</button>
+ <button type="button" onclick="closeGoBagModal()" style="padding:6px 16px;background:var(--blue-accent);color:#fff;border:none;border-radius:8px;font-size:0.78rem;font-weight:700;cursor:pointer;">Done</button>
+ </div>
+ </div>
 </div>
 
 <?= csrf_script() ?>

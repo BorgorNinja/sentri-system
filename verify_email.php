@@ -2,64 +2,64 @@
 session_start(['cookie_httponly'=>true,'cookie_samesite'=>'Lax','cookie_secure'=>!empty($_SERVER['HTTPS'])]);
 require __DIR__ . '/config/db.php';
 
-$token  = trim($_GET['token'] ?? '');
+$token = trim($_GET['token'] ?? '');
 $status = 'invalid';
 
 if (!empty($token) && preg_match('/^[a-f0-9]{64}$/', $token)) {
-    $stmt = $conn->prepare(
-        "SELECT id, first_name, email_verified, token_expires_at FROM users WHERE verification_token = ? LIMIT 1"
-    );
-    $stmt->bind_param("s", $token);
-    $stmt->execute();
-    $res  = $stmt->get_result();
-    $user = $res->fetch_assoc();
-    $stmt->close();
+ $stmt = $conn->prepare(
+ "SELECT id, first_name, email_verified, token_expires_at FROM users WHERE verification_token = ? LIMIT 1"
+ );
+ $stmt->bind_param("s", $token);
+ $stmt->execute();
+ $res = $stmt->get_result();
+ $user = $res->fetch_assoc();
+ $stmt->close();
 
-    if (!$user) {
-        $status = 'invalid';
-    } elseif ($user['email_verified']) {
-        $status = 'already';
-    } elseif (strtotime($user['token_expires_at']) < time()) {
-        $status = 'expired';
-    } else {
-        $upd = $conn->prepare(
-            "UPDATE users SET email_verified=1, verification_token=NULL, token_expires_at=NULL WHERE id=?"
-        );
-        $upd->bind_param("i", $user['id']);
-        $upd->execute();
-        $upd->close();
-        $status    = 'success';
-        $firstname = htmlspecialchars($user['first_name']);
-    }
+ if (!$user) {
+ $status = 'invalid';
+ } elseif ($user['email_verified']) {
+ $status = 'already';
+ } elseif (strtotime($user['token_expires_at']) < time()) {
+ $status = 'expired';
+ } else {
+ $upd = $conn->prepare(
+ "UPDATE users SET email_verified=1, verification_token=NULL, token_expires_at=NULL WHERE id=?"
+ );
+ $upd->bind_param("i", $user['id']);
+ $upd->execute();
+ $upd->close();
+ $status = 'success';
+ $firstname = htmlspecialchars($user['first_name']);
+ }
 }
 
 // Handle resend POST
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'resend') {
-    header('Content-Type: application/json');
-    $resendEmail = trim($_POST['email'] ?? '');
-    if (!filter_var($resendEmail, FILTER_VALIDATE_EMAIL)) {
-        echo json_encode(['status'=>'error','message'=>'Invalid email.']); exit;
-    }
-    $stmt = $conn->prepare("SELECT id, first_name, email_verified FROM users WHERE email=? LIMIT 1");
-    $stmt->bind_param("s", $resendEmail);
-    $stmt->execute();
-    $res  = $stmt->get_result();
-    $user = $res->fetch_assoc();
-    $stmt->close();
+ header('Content-Type: application/json');
+ $resendEmail = trim($_POST['email'] ?? '');
+ if (!filter_var($resendEmail, FILTER_VALIDATE_EMAIL)) {
+ echo json_encode(['status'=>'error','message'=>'Invalid email.']); exit;
+ }
+ $stmt = $conn->prepare("SELECT id, first_name, email_verified FROM users WHERE email=? LIMIT 1");
+ $stmt->bind_param("s", $resendEmail);
+ $stmt->execute();
+ $res = $stmt->get_result();
+ $user = $res->fetch_assoc();
+ $stmt->close();
 
-    if (!$user || $user['email_verified']) {
-        echo json_encode(['status'=>'success','message'=>'If that email is pending verification, a new link has been sent.']); exit;
-    }
-    $newToken  = bin2hex(random_bytes(32));
-    $expiresAt = date('Y-m-d H:i:s', strtotime('+24 hours'));
-    $upd = $conn->prepare("UPDATE users SET verification_token=?, token_expires_at=? WHERE id=?");
-    $upd->bind_param("ssi", $newToken, $expiresAt, $user['id']);
-    $upd->execute(); $upd->close();
-    try {
-        require_once __DIR__ . '/core/SenTriMailer.php';
-        sendVerificationEmail($resendEmail, $user['first_name'], $newToken);
-    } catch (Throwable $e) { error_log('SenTri resend: ' . $e->getMessage()); }
-    echo json_encode(['status'=>'success','message'=>'Verification email resent. Please check your inbox.']); exit;
+ if (!$user || $user['email_verified']) {
+ echo json_encode(['status'=>'success','message'=>'If that email is pending verification, a new link has been sent.']); exit;
+ }
+ $newToken = bin2hex(random_bytes(32));
+ $expiresAt = date('Y-m-d H:i:s', strtotime('+24 hours'));
+ $upd = $conn->prepare("UPDATE users SET verification_token=?, token_expires_at=? WHERE id=?");
+ $upd->bind_param("ssi", $newToken, $expiresAt, $user['id']);
+ $upd->execute(); $upd->close();
+ try {
+ require_once __DIR__ . '/core/SenTriMailer.php';
+ sendVerificationEmail($resendEmail, $user['first_name'], $newToken);
+ } catch (Throwable $e) { error_log('SenTri resend: ' . $e->getMessage()); }
+ echo json_encode(['status'=>'success','message'=>'Verification email resent. Please check your inbox.']); exit;
 }
 ?>
 <!DOCTYPE html>
@@ -67,7 +67,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'resen
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Email Verification – SenTri</title>
+<title>Email Verification - SenTri</title>
 <link rel="stylesheet" href="assets/vendor/fonts/fonts.css">
 <link rel="stylesheet" href="assets/vendor/fontawesome/css/all.min.css">
 <style>
@@ -113,63 +113,63 @@ p strong{color:#1a1a2e;}
 <body>
 <div class="bg-canvas"><div id="particles" style="position:absolute;inset:0;overflow:hidden;"></div></div>
 <div class="card">
-  <a href="index.php" class="brand">
-    <div class="brand-icon"><i class="fas fa-shield-halved"></i></div>
-    <span class="brand-name">SenTri</span>
-  </a>
+ <a href="index.php" class="brand">
+ <div class="brand-icon"><i class="fas fa-shield-halved"></i></div>
+ <span class="brand-name">SenTri</span>
+ </a>
 
-  <?php if ($status === 'success'): ?>
-    <div class="icon-wrap success"><i class="fas fa-circle-check"></i></div>
-    <h1>Email Verified!</h1>
-    <p>Welcome to SenTri, <strong><?= $firstname ?></strong>! Your account is now active. You can sign in and start contributing to your community's safety.</p>
-    <a href="login.php" class="btn btn-primary"><i class="fas fa-right-to-bracket"></i> Sign In Now</a>
+ <?php if ($status === 'success'): ?>
+ <div class="icon-wrap success"><i class="fas fa-circle-check"></i></div>
+ <h1>Email Verified!</h1>
+ <p>Welcome to SenTri, <strong><?= $firstname ?></strong>! Your account is now active. You can sign in and start contributing to your community's safety.</p>
+ <a href="login.php" class="btn btn-primary"><i class="fas fa-right-to-bracket"></i> Sign In Now</a>
 
-  <?php elseif ($status === 'already'): ?>
-    <div class="icon-wrap already"><i class="fas fa-envelope-open-text"></i></div>
-    <h1>Already Verified</h1>
-    <p>This email address has already been verified. You can sign in to your account.</p>
-    <a href="login.php" class="btn btn-primary"><i class="fas fa-right-to-bracket"></i> Go to Sign In</a>
+ <?php elseif ($status === 'already'): ?>
+ <div class="icon-wrap already"><i class="fas fa-envelope-open-text"></i></div>
+ <h1>Already Verified</h1>
+ <p>This email address has already been verified. You can sign in to your account.</p>
+ <a href="login.php" class="btn btn-primary"><i class="fas fa-right-to-bracket"></i> Go to Sign In</a>
 
-  <?php elseif ($status === 'expired'): ?>
-    <div class="icon-wrap expired"><i class="fas fa-clock"></i></div>
-    <h1>Link Expired</h1>
-    <p>Your verification link has expired (links are valid for 24 hours). Enter your email below and we'll send a fresh one.</p>
-    <div id="resendFeedback" class="feedback"></div>
-    <div class="form-group"><label>Email Address</label><input type="email" id="resendEmail" placeholder="you@example.com"></div>
-    <button class="btn btn-primary" id="resendBtn" onclick="resend()"><i class="fas fa-paper-plane"></i> Resend Verification Email</button>
-    <hr class="divider">
-    <a href="login.php" class="btn-ghost">Back to Sign In</a>
+ <?php elseif ($status === 'expired'): ?>
+ <div class="icon-wrap expired"><i class="fas fa-clock"></i></div>
+ <h1>Link Expired</h1>
+ <p>Your verification link has expired (links are valid for 24 hours). Enter your email below and we'll send a fresh one.</p>
+ <div id="resendFeedback" class="feedback"></div>
+ <div class="form-group"><label>Email Address</label><input type="email" id="resendEmail" placeholder="you@example.com"></div>
+ <button class="btn btn-primary" id="resendBtn" onclick="resend()"><i class="fas fa-paper-plane"></i> Resend Verification Email</button>
+ <hr class="divider">
+ <a href="login.php" class="btn-ghost">Back to Sign In</a>
 
-  <?php else: ?>
-    <div class="icon-wrap invalid"><i class="fas fa-triangle-exclamation"></i></div>
-    <h1>Invalid Link</h1>
-    <p>This verification link is not valid or has already been used. If you need a new link, enter your email below.</p>
-    <div id="resendFeedback" class="feedback"></div>
-    <div class="form-group"><label>Email Address</label><input type="email" id="resendEmail" placeholder="you@example.com"></div>
-    <button class="btn btn-primary" id="resendBtn" onclick="resend()"><i class="fas fa-paper-plane"></i> Request New Verification Email</button>
-    <hr class="divider">
-    <a href="login.php" class="btn-ghost">Back to Sign In</a>
-  <?php endif; ?>
+ <?php else: ?>
+ <div class="icon-wrap invalid"><i class="fas fa-triangle-exclamation"></i></div>
+ <h1>Invalid Link</h1>
+ <p>This verification link is not valid or has already been used. If you need a new link, enter your email below.</p>
+ <div id="resendFeedback" class="feedback"></div>
+ <div class="form-group"><label>Email Address</label><input type="email" id="resendEmail" placeholder="you@example.com"></div>
+ <button class="btn btn-primary" id="resendBtn" onclick="resend()"><i class="fas fa-paper-plane"></i> Request New Verification Email</button>
+ <hr class="divider">
+ <a href="login.php" class="btn-ghost">Back to Sign In</a>
+ <?php endif; ?>
 </div>
 
 <script>
 (function(){
-  const c=document.getElementById('particles');
-  for(let i=0;i<30;i++){const p=document.createElement('div');p.className='particle';p.style.cssText=`left:${Math.random()*100}%;animation-duration:${7+Math.random()*10}s;animation-delay:${-Math.random()*17}s;width:${1+Math.random()*2}px;height:${1+Math.random()*2}px;background:rgba(255,255,255,${0.2+Math.random()*0.4});`;c.appendChild(p);}
+ const c=document.getElementById('particles');
+ for(let i=0;i<30;i++){const p=document.createElement('div');p.className='particle';p.style.cssText=`left:${Math.random()*100}%;animation-duration:${7+Math.random()*10}s;animation-delay:${-Math.random()*17}s;width:${1+Math.random()*2}px;height:${1+Math.random()*2}px;background:rgba(255,255,255,${0.2+Math.random()*0.4});`;c.appendChild(p);}
 })();
 async function resend(){
-  const email=document.getElementById('resendEmail')?.value?.trim();
-  const btn=document.getElementById('resendBtn');
-  if(!email){showFb('error','Please enter your email address.');return;}
-  const orig=btn.innerHTML;btn.disabled=true;btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Sending...';
-  try{
-    const fd=new FormData();fd.append('action','resend');fd.append('email',email);
-    const res=await fetch('verify_email.php',{method:'POST',body:fd});
-    const data=await res.json();
-    showFb(data.status,data.message);
-    if(data.status==='success')btn.innerHTML='<i class="fas fa-check"></i> Sent!';
-    else{btn.disabled=false;btn.innerHTML=orig;}
-  }catch{showFb('error','Something went wrong.');btn.disabled=false;btn.innerHTML=orig;}
+ const email=document.getElementById('resendEmail')?.value?.trim();
+ const btn=document.getElementById('resendBtn');
+ if(!email){showFb('error','Please enter your email address.');return;}
+ const orig=btn.innerHTML;btn.disabled=true;btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Sending...';
+ try{
+ const fd=new FormData();fd.append('action','resend');fd.append('email',email);
+ const res=await fetch('verify_email.php',{method:'POST',body:fd});
+ const data=await res.json();
+ showFb(data.status,data.message);
+ if(data.status==='success')btn.innerHTML='<i class="fas fa-check"></i> Sent!';
+ else{btn.disabled=false;btn.innerHTML=orig;}
+ }catch{showFb('error','Something went wrong.');btn.disabled=false;btn.innerHTML=orig;}
 }
 function showFb(type,msg){const fb=document.getElementById('resendFeedback');fb.className='feedback '+type;fb.textContent=msg;fb.style.display='block';}
 </script>

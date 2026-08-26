@@ -8,52 +8,52 @@
 ```
 sentri-system/
 │
-├── index.php              # Landing / welcome page
-├── login.php              # Multi-portal login (community, barangay, LGU, responder, admin)
-├── signup.php             # New user registration with role selector + auto-migration
-├── logout.php             # Session destroy
-├── dashboard.php          # Main community feed, map, report form
-├── admin.php              # Admin control panel (reports, users, audit log, security monitor)
-├── forgot_password.php    # Password reset request
-├── reset_password.php     # Password reset (via token)
-├── verify_email.php       # Email verification handler + resend endpoint
-├── install.php            # One-time DB installer - delete after use
+├── index.php # Landing / welcome page
+├── login.php # Multi-portal login (community, barangay, LGU, responder, admin)
+├── signup.php # New user registration with role selector + auto-migration
+├── logout.php # Session destroy
+├── dashboard.php # Main community feed, map, report form
+├── admin.php # Admin control panel (reports, users, audit log, security monitor)
+├── forgot_password.php # Password reset request
+├── reset_password.php # Password reset (via token)
+├── verify_email.php # Email verification handler + resend endpoint
+├── install.php # One-time DB installer - delete after use
 │
 ├── config/
-│   ├── db.php             # Database connection (MySQLi, socket + TCP fallback)
-│   ├── email.php          # SMTP credentials + APP_URL override (see note below)
-│   ├── .htaccess          # Blocks direct web access to config/
-│   ├── csrf.php           # CSRF token generation and validation
+│ ├── db.php # Database connection (MySQLi, socket + TCP fallback)
+│ ├── email.php # SMTP credentials + APP_URL override (see note below)
+│ ├── .htaccess # Blocks direct web access to config/
+│ ├── csrf.php # CSRF token generation and validation
 │
 ├── core/
-│   └── SenTriMailer.php   # Minimal Gmail SMTP mailer - dynamic APP_URL, no Composer
+│ └── SenTriMailer.php # Minimal Gmail SMTP mailer - dynamic APP_URL, no Composer
 │
 ├── api/
-│   ├── reports.php        # Reports CRUD, voting, profile, GPS, image upload, audit log
-│   ├── contacts.php       # Emergency contacts CRUD + notification dispatch
-│   ├── geocode_proxy.php  # Server-side Nominatim proxy (CORS-safe)
-│   └── security.php       # Security Monitor endpoint (failed logins, audit events)
+│ ├── reports.php # Reports CRUD, voting, profile, GPS, image upload, audit log
+│ ├── contacts.php # Emergency contacts CRUD + notification dispatch
+│ ├── geocode_proxy.php # Server-side Nominatim proxy (CORS-safe)
+│ └── security.php # Security Monitor endpoint (failed logins, audit events)
 │
 ├── portal/
-│   ├── community.php      # Community member portal
-│   ├── barangay.php       # Barangay official portal
-│   ├── lgu.php            # LGU portal
-│   ├── responder.php      # First responder portal
-│   └── _report_table.php  # Shared report table partial
+│ ├── community.php # Community member portal
+│ ├── barangay.php # Barangay official portal
+│ ├── lgu.php # LGU portal
+│ ├── responder.php # First responder portal
+│ └── _report_table.php # Shared report table partial
 │
 ├── uploads/
-│   ├── .htaccess          # Blocks PHP execution inside uploads/
-│   └── reports/           # Uploaded incident photos (runtime, git-ignored)
+│ ├── .htaccess # Blocks PHP execution inside uploads/
+│ └── reports/ # Uploaded incident photos (runtime, git-ignored)
 │
 └── sql/
-    ├── sentri.sql                          # Full fresh-install schema
-    └── migrations/
-        ├── 001_map.sql                     # Geo columns (lat/lng/radius)
-        ├── 002_email_verification.sql      # Email token columns
-        ├── 003_profile.sql                 # Avatar colour, GPS columns
-        ├── 004_report_images.sql           # Photo upload table
-        ├── 005_emergency_contacts.sql      # LGU/Hospital/Traffic contacts
-        └── 006_roles.sql                   # Expanded role ENUM + community columns
+ ├── sentri.sql # Full fresh-install schema
+ └── migrations/
+ ├── 001_map.sql # Geo columns (lat/lng/radius)
+ ├── 002_email_verification.sql # Email token columns
+ ├── 003_profile.sql # Avatar colour, GPS columns
+ ├── 004_report_images.sql # Photo upload table
+ ├── 005_emergency_contacts.sql # LGU/Hospital/Traffic contacts
+ └── 006_roles.sql # Expanded role ENUM + community columns
 ```
 
 ---
@@ -68,27 +68,27 @@ sentri-system/
 
 ### Steps
 
-1. Copy the project folder into your web server root  
-   (e.g. `htdocs/sentri-system/` for XAMPP)
+1. Copy the project folder into your web server root 
+ (e.g. `htdocs/sentri-system/` for XAMPP)
 
 2. Configure `config/email.php`:
-   - Set your Gmail App Password credentials (see instructions inside the file)
-   - Set `APP_URL` **only if** you want to pin a specific address (see note below)
+ - Set your Gmail App Password credentials (see instructions inside the file)
+ - Set `APP_URL` **only if** you want to pin a specific address (see note below)
 
 3. Run the installer in your browser:
-   ```
-   http://localhost/sentri-system/install.php
-   ```
-   This creates the `sentri` database and all tables automatically, including
-   all community columns and the full role ENUM.
+ ```
+ http://localhost/sentri-system/install.php
+ ```
+ This creates the `sentri` database and all tables automatically, including
+ all community columns and the full role ENUM.
 
-4. The installer **automatically locks itself** after a successful run via . You do not need to delete  — it will refuse to run again. To re-run setup on a fresh DB, delete  first.
+4. The installer **automatically locks itself** after a successful run via . You do not need to delete - it will refuse to run again. To re-run setup on a fresh DB, delete first.
 
 5. Access the system:
-   - Community:    `http://localhost/sentri-system/`
-   - Admin panel:  `http://localhost/sentri-system/admin.php`
-   - Default admin: set via `install.php` on first run — change immediately after setup
-   ⚠️  Change the admin password immediately after first login.
+ - Community: `http://localhost/sentri-system/`
+ - Admin panel: `http://localhost/sentri-system/admin.php`
+ - Default admin: set via `install.php` on first run - change immediately after setup
+ ⚠️ Change the admin password immediately after first login.
 
 ---
 
@@ -167,32 +167,32 @@ emergency contacts whose city (and optionally barangay) matches the report locat
 
 ## Technology Stack
 
-| Layer        | Technology                              |
+| Layer | Technology |
 |--------------|-----------------------------------------|
-| Backend      | PHP 8.0+ (procedural + MySQLi)          |
-| Database     | MySQL 8.0 (InnoDB, utf8mb4)             |
-| Frontend     | Vanilla HTML5, CSS3, JavaScript ES6+    |
-| Map Engine   | Leaflet.js 1.9.4 + OpenStreetMap        |
-| Geocoding    | Nominatim (server-proxied)              |
-| Icons        | Font Awesome 6.5                        |
-| Typography   | Google Fonts - Inter / Poppins          |
-| Auth         | PHP native sessions + bcrypt (cost 12)  |
-| Email        | Gmail SMTP via SenTriMailer (no Composer) |
-| Web Server   | Apache or Nginx + PHP-FPM               |
+| Backend | PHP 8.0+ (procedural + MySQLi) |
+| Database | MySQL 8.0 (InnoDB, utf8mb4) |
+| Frontend | Vanilla HTML5, CSS3, JavaScript ES6+ |
+| Map Engine | Leaflet.js 1.9.4 + OpenStreetMap |
+| Geocoding | Nominatim (server-proxied) |
+| Icons | Font Awesome 6.5 |
+| Typography | Google Fonts - Inter / Poppins |
+| Auth | PHP native sessions + bcrypt (cost 12) |
+| Email | Gmail SMTP via SenTriMailer (no Composer) |
+| Web Server | Apache or Nginx + PHP-FPM |
 
 ---
 
 ## Database Tables
 
-| Table                  | Purpose                                         |
+| Table | Purpose |
 |------------------------|-------------------------------------------------|
-| users                  | Accounts - roles: community / barangay / lgu / first_responder / admin |
-| reports                | Incident reports with geo fields                |
-| report_images          | Photo attachments linked to reports             |
-| report_votes           | Upvote / downvote records (1 per user/report)   |
-| emergency_contacts     | LGU, hospital, traffic, police, fire directory  |
-| contact_notifications  | Log of emails sent per report                   |
-| login_logs             | Authentication audit trail                      |
+| users | Accounts - roles: community / barangay / lgu / first_responder / admin |
+| reports | Incident reports with geo fields |
+| report_images | Photo attachments linked to reports |
+| report_votes | Upvote / downvote records (1 per user/report) |
+| emergency_contacts | LGU, hospital, traffic, police, fire directory |
+| contact_notifications | Log of emails sent per report |
+| login_logs | Authentication audit trail |
 
 ### users table columns (current)
 `id`, `first_name`, `last_name`, `email`, `password`, `role`, `phone_number`,
@@ -216,7 +216,7 @@ emergency contacts whose city (and optionally barangay) matches the report locat
 
 ## Changelog
 
-| Date       | Change |
+| Date | Change |
 |------------|--------|
 | 2026-06-11 | feat: Live GTA-style heading-up in-app navigation (Leaflet/OSM) replacing Google Maps redirects; auto-arrival detection |
 | 2026-06-11 | feat: Auto-arrival resolves report without flipping status to Safe; added Resolved/Unresolved badge |
@@ -253,6 +253,6 @@ emergency contacts whose city (and optionally barangay) matches the report locat
 - [ ] Report analytics and trend charts
 
 ### Deferred (budget-dependent)
-- [ ] SMS notification support (Semaphore / Vonage PH) — requires paid API
-- [ ] Auto-call integration for Dangerous reports (Twilio) — requires paid API
+- [ ] SMS notification support (Semaphore / Vonage PH) - requires paid API
+- [ ] Auto-call integration for Dangerous reports (Twilio) - requires paid API
 - [ ] Mobile app wrapper
