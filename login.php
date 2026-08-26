@@ -311,7 +311,7 @@ body{min-height:100vh;background:var(--navy-dark);display:flex;flex-direction:co
 .pw-wrap .toggle-pw{position:absolute;right:11px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#6b7280;font-size:0.78rem;font-weight:700;font-family:'Inter',sans-serif;}
 .forgot-row{display:flex;justify-content:flex-end;margin-top:-8px;margin-bottom:16px;}
 .forgot-row a{font-size:0.79rem;color:#2563eb;text-decoration:none;font-weight:600;}
-.btn-login{width:100%;padding:12px;border:none;border-radius:11px;font-size:0.94rem;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer;transition:all 0.2s;color:#fff;display:flex;align-items:center;justify-content:center;gap:8px;}
+.btn-login{width:100%;padding:12px;border:none;border-radius:11px;font-size:0.94rem;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer;transition:transform 0.18s ease,box-shadow 0.18s ease,opacity 0.18s ease;color:#fff;display:flex;align-items:center;justify-content:center;gap:8px;}
 .btn-login:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 8px 24px rgba(0,0,0,0.25);}
 .btn-login:disabled{opacity:0.6;cursor:not-allowed;background:#9ca3af;}
 .msg{padding:10px 14px;border-radius:9px;font-size:0.83rem;font-weight:500;margin-bottom:14px;display:none;text-align:center;}
@@ -329,35 +329,26 @@ body{min-height:100vh;background:var(--navy-dark);display:flex;flex-direction:co
 .notice.success{background:#f0fdf4;color:#15803d;border:1px solid #bbf7d0;}
 .site-footer{background:var(--navy-dark);border-top:1px solid rgba(255,255,255,0.07);padding:20px 32px;text-align:center;margin-top:auto;}
 .site-footer p{font-size:0.76rem;color:rgba(255,255,255,0.35);}
-@media(max-width:840px){.portal-grid{grid-template-columns:repeat(3,1fr);}.hero-badge{display:none;}.gov-links{display:none;}.form-card{padding:26px 20px;}.form-wrap{padding:0 20px 40px;}.portal-section{padding:20px 20px 0;}}
-@media(max-width:520px){.portal-grid{grid-template-columns:repeat(2,1fr);}.hero-inner h2{font-size:1.4rem;}.hero-stats{gap:16px;}}
+@media(max-width:840px){.portal-grid{grid-template-columns:repeat(3,1fr);transform:translateY(14px);}.hero-badge{display:none;}.gov-links{display:none;}.form-card{padding:30px 22px 26px;margin-top:24px;}.form-wrap{padding:0 20px 40px;}.portal-section{padding:20px 20px 0;}}
+@media(max-width:580px){.portal-grid{grid-template-columns:repeat(2,1fr);transform:translateY(10px);gap:8px;}.portal-card.p-admin{grid-column:span 2;max-width:240px;margin:0 auto;width:100%;}.hero-inner h2{font-size:1.45rem;}.hero-stats{gap:16px;}.form-card{padding:26px 18px 22px;margin-top:20px;}}
 
 /* ── Motion ── */
 @keyframes fadeSlideDown{from{opacity:0;transform:translateY(-14px);}to{opacity:1;transform:translateY(0);}}
 @keyframes fadeSlideUp{from{opacity:0;transform:translateY(22px);}to{opacity:1;transform:translateY(0);}}
-@keyframes cardPop{from{opacity:0;transform:translateY(16px) scale(.93);}to{opacity:1;transform:translateY(0) scale(1);}}
 @keyframes iconSwap{0%{opacity:0;transform:scale(.5) rotate(-12deg);}100%{opacity:1;transform:scale(1) rotate(0);}}
-@keyframes pulseRing{0%{box-shadow:0 0 0 0 rgba(243,156,18,.45);}100%{box-shadow:0 0 0 12px rgba(243,156,18,0);}}
 @keyframes msgError{0%{opacity:0;transform:translateY(-8px);}45%{opacity:1;transform:translateY(0);}55%{transform:translateX(-6px);}65%{transform:translateX(6px);}75%{transform:translateX(-4px);}85%{transform:translateX(4px);}100%{transform:translateX(0);}}
 @keyframes msgSuccess{from{opacity:0;transform:translateY(-8px);}to{opacity:1;transform:translateY(0);}}
-@keyframes formFade{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
 
 .gov-bar{animation:fadeSlideDown .5s ease both;}
 .hero-inner>div:first-child{animation:fadeSlideUp .6s ease .08s both;}
 .hero-badge{animation:fadeSlideUp .6s ease .2s both;}
 .page-notice .notice{animation:fadeSlideDown .45s ease both;}
-.form-card{animation:fadeSlideUp .55s ease .3s both;}
-.site-footer{animation:fadeSlideUp .5s ease .5s both;}
+.form-card{animation:fadeSlideUp .55s ease .25s both;}
+.site-footer{animation:fadeSlideUp .5s ease .4s both;}
 
-.portal-card{opacity:0;animation:cardPop .5s cubic-bezier(.34,1.56,.64,1) both;}
-.portal-card:nth-child(1){animation-delay:.3s;}
-.portal-card:nth-child(2){animation-delay:.36s;}
-.portal-card:nth-child(3){animation-delay:.42s;}
-.portal-card:nth-child(4){animation-delay:.48s;}
-.portal-card:nth-child(5){animation-delay:.54s;}
-.portal-card.justSelected{animation:pulseRing .5s ease-out;}
+.portal-card{opacity:1;transition:transform 0.2s cubic-bezier(0.4,0,0.2,1),box-shadow 0.2s cubic-bezier(0.4,0,0.2,1),border-color 0.2s cubic-bezier(0.4,0,0.2,1);}
+.portal-card.justSelected{box-shadow:0 0 0 4px rgba(243,156,18,0.4),0 8px 28px rgba(243,156,18,0.3);}
 .portal-card:focus-visible{outline:2.5px solid var(--gold);outline-offset:3px;}
-@supports not (animation-name:cardPop){.portal-card{opacity:1;}}
 
 .portal-icon{transition:transform .25s ease;}
 .portal-card:hover .portal-icon{transform:scale(1.08) rotate(-3deg);}
@@ -365,8 +356,6 @@ body{min-height:100vh;background:var(--navy-dark);display:flex;flex-direction:co
 .ph-icon i{animation:iconSwap .35s ease;}
 
 .btn-login:active:not(:disabled){transform:translateY(0) scale(.98);}
-
-#loginForm,#otpSection{animation:formFade .35s ease;}
 
 .msg.error{animation:msgError .5s ease;}
 .msg.success{animation:msgSuccess .35s ease;}
@@ -431,7 +420,7 @@ body{min-height:100vh;background:var(--navy-dark);display:flex;flex-direction:co
       <div class="form-group"><label>Email Address</label><input type="email" name="email" id="emailField" placeholder="you@example.com" required autocomplete="email"></div>
       <div class="form-group"><label>Password</label><div class="pw-wrap"><input type="password" name="password" id="pwField" placeholder="••••••••" required><button type="button" class="toggle-pw" onclick="togglePw()">SHOW</button></div></div>
       <div class="forgot-row"><a href="forgot_password.php">Forgot Password?</a></div>
-      <button type="submit" class="btn-login" id="loginBtn" style="background:linear-gradient(135deg,#3b82f6,#2563eb);"><i class="fas fa-right-to-bracket"></i> Sign In to Community Portal</button>
+      <button type="submit" class="btn-login" id="loginBtn" style="background:linear-gradient(135deg,#3b82f6,#2563eb);"><i class="fas fa-right-to-bracket" id="loginBtnIcon"></i> <span id="loginBtnLabel">Sign In to Community Portal</span></button>
     </form>
     <div id="otpSection" style="display:none;">
       <form id="otpForm" novalidate>
@@ -471,17 +460,19 @@ function selectPortal(key,el){
   current=key;
   document.querySelectorAll('.portal-card').forEach(c=>c.classList.remove('selected','justSelected'));
   el.classList.add('selected','justSelected');
-  setTimeout(()=>el.classList.remove('justSelected'),500);
+  setTimeout(()=>el.classList.remove('justSelected'),400);
   const p=portals[key];
   const pi=document.getElementById('phIcon');
-  pi.style.cssText=`background:${p.bg};color:${p.color};`;
+  pi.style.backgroundColor=p.bg;
+  pi.style.color=p.color;
   pi.innerHTML=`<i class="fas ${p.icon}"></i>`;
   document.getElementById('phTitle').textContent=p.title;
   document.getElementById('phSub').innerHTML=p.sub;
   document.getElementById('portalField').value=key;
   const btn=document.getElementById('loginBtn');
   btn.style.background=p.btn;
-  btn.innerHTML=`<i class="fas fa-right-to-bracket"></i> ${p.label}`;
+  const lbl=document.getElementById('loginBtnLabel');
+  if(lbl){lbl.textContent=p.label;}else{btn.innerHTML=`<i class="fas fa-right-to-bracket" id="loginBtnIcon"></i> <span id="loginBtnLabel">${p.label}</span>`;}
   const on=document.getElementById('officialNotice');
   on.style.display=p.official?'flex':'none';
   document.getElementById('signupRow').style.display=(key==='community')?'block':'none';
@@ -553,7 +544,7 @@ function startLockTimer(seconds) {
       clearInterval(timerInterval);
       btn.disabled = false;
       const p = portals[current];
-      btn.innerHTML = `<i class="fas fa-right-to-bracket"></i> ${p.label}`;
+      btn.innerHTML = `<i class="fas fa-right-to-bracket" id="loginBtnIcon"></i> <span id="loginBtnLabel">${p.label}</span>`;
       msg.style.display = 'none';
     }
   }, 1000);
@@ -580,7 +571,7 @@ document.getElementById('loginForm').addEventListener('submit',async e=>{
       } else {
         btn.disabled=false;
         const p = portals[current];
-        btn.innerHTML = `<i class="fas fa-right-to-bracket"></i> ${p.label}`;
+        btn.innerHTML = `<i class="fas fa-right-to-bracket" id="loginBtnIcon"></i> <span id="loginBtnLabel">${p.label}</span>`;
       }
       if(data.unverified){document.getElementById('resendBox').style.display='block';document.getElementById('resendEmail').value=document.getElementById('emailField').value;}
     }
