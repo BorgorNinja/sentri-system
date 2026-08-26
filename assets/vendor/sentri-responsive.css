@@ -1,0 +1,74 @@
+/* SenTri mobile safety net. Loaded from fonts.css so every portal gets the same responsive fixes. */
+@media (max-width: 900px) {
+  body { overflow-x: hidden !important; }
+  .sidebar { transform: translateX(calc(-1 * var(--sidebar-w))) !important; }
+  .sidebar.mobile-open { transform: translateX(0) !important; }
+  .main { margin-left: 0 !important; width: 100% !important; min-width: 0 !important; }
+  .ham-btn { display: inline-flex !important; align-items: center; justify-content: center; }
+  .toggle-btn { display: inline-flex !important; align-items: center; justify-content: center; }
+  .content { padding: 16px !important; width: 100% !important; min-width: 0 !important; }
+  .topbar { padding: 12px 16px !important; gap: 10px; }
+  .topbar-right, .right-top { min-width: 0; }
+  .topbar-right > *:not(.topbar-avatar), .right-top > .gps-chip { max-width: 100%; }
+  .stats-row { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 10px !important; }
+  .profile-grid { grid-template-columns: 1fr !important; }
+  .detail-meta-grid { grid-template-columns: 1fr !important; }
+  #incidentMap { height: 420px !important; }
+  .panel { max-width: 100% !important; min-width: 0 !important; }
+  .table-wrap { max-width: 100%; overflow-x: auto !important; -webkit-overflow-scrolling: touch; }
+  .filter-bar { align-items: stretch !important; }
+  .filter-bar input, .filter-bar select { min-width: 0 !important; width: 100% !important; }
+  .modal { max-width: calc(100vw - 24px) !important; width: calc(100vw - 24px) !important; }
+}
+
+@media (max-width: 600px) {
+  .topbar { padding: 10px 12px !important; }
+  .topbar h1 { font-size: .95rem !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .topbar-right, .right-top { gap: 5px !important; }
+  .topbar-name, .user-name { display: none !important; }
+  .content { padding: 12px !important; }
+  .stats-row { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 8px !important; margin-bottom: 16px !important; }
+  .stat-card { padding: 13px !important; gap: 9px !important; min-width: 0 !important; }
+  .stat-icon { width: 40px !important; height: 40px !important; font-size: 1rem !important; }
+  .stat-num { font-size: 1.35rem !important; }
+  .stat-label { font-size: .68rem !important; }
+  .panel { padding: 14px !important; border-radius: 12px !important; margin-bottom: 14px !important; }
+  .panel-header { align-items: flex-start !important; }
+  .tab-nav { overflow-x: auto !important; -webkit-overflow-scrolling: touch; }
+  .tab-nav-btn { flex: 0 0 auto !important; padding: 9px 12px !important; font-size: .76rem !important; }
+  .filter-bar { flex-direction: column !important; }
+  .filter-bar input, .filter-bar select { flex: none !important; }
+  .severity-row { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 6px !important; }
+  .sev-btn { padding: 12px 4px !important; border-width: 2px !important; }
+  .sev-btn i { font-size: 1.3rem !important; }
+  .sev-btn span { font-size: .68rem !important; }
+  .cat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 7px !important; }
+  .cat-opt { min-width: 0 !important; padding: 10px 4px !important; }
+  .loc-auto-row { align-items: stretch !important; }
+  .locate-btn-big, .map-pick-btn { width: 100% !important; justify-content: center !important; }
+  .modal-row, .form-row { grid-template-columns: 1fr !important; }
+  .contacts-grid { grid-template-columns: 1fr !important; }
+  .detail-photos { padding-left: 12px !important; padding-right: 12px !important; }
+  .detail-photo { width: min(72vw, 220px) !important; }
+  .detail-body { padding-left: 12px !important; padding-right: 12px !important; }
+  .detail-footer { padding-left: 12px !important; padding-right: 12px !important; }
+  #incidentMap { height: 360px !important; }
+  #miniMap { height: 300px !important; }
+  .mini-map-modal { padding: 10px !important; }
+  .mini-map-box { border-radius: 12px !important; max-width: 100% !important; }
+  #toastContainer { left: 10px !important; right: 10px !important; bottom: 12px !important; max-width: none !important; }
+  .toast { width: 100% !important; }
+
+  /* Admin-specific responsive rules */
+  .sidebar + .main .stats-row { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+  .admin-badge { display: none !important; }
+  .user-card { min-width: 0 !important; }
+  .user-info-side { min-width: 0 !important; }
+}
+
+@media (max-width: 380px) {
+  .stats-row { grid-template-columns: 1fr !important; }
+  .severity-row { grid-template-columns: 1fr !important; }
+  .sev-btn { flex-direction: row !important; justify-content: center !important; gap: 8px !important; }
+  .topbar h1 { max-width: 145px !important; }
+}
