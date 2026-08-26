@@ -520,6 +520,25 @@ body.dark .locate-btn-big{background:#1f3a5f;color:var(--blue-accent);}
       <div class="stat-card"><div class="stat-icon green"><i class="fas fa-circle-check"></i></div><div><strong><?= $safe_count ?></strong><span>Safe Areas</span></div></div>
       <div class="stat-card"><div class="stat-icon orange"><i class="fas fa-pen-to-square"></i></div><div><strong><?= $my_count ?></strong><span>My Reports</span></div></div>
     </div>
+
+    <!-- ── Emergency Response Action Bar ── -->
+    <div class="emergency-quick-bar" style="background:linear-gradient(135deg,#0a3d62 0%,#1e3a8a 100%);color:#fff;border-radius:14px;padding:14px 18px;margin-bottom:18px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;box-shadow:0 4px 16px rgba(10,61,98,0.18);">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div style="width:38px;height:38px;border-radius:10px;background:rgba(239,68,68,0.25);border:1.5px solid #ef4444;display:flex;align-items:center;justify-content:center;color:#fca5a5;font-size:1.05rem;flex-shrink:0;">
+          <i class="fas fa-phone-volume"></i>
+        </div>
+        <div>
+          <div style="font-size:0.92rem;font-weight:800;letter-spacing:-0.2px;">Emergency Response Hotlines</div>
+          <div style="font-size:0.75rem;color:rgba(255,255,255,0.75);">Instant 1-tap direct emergency dispatch connections</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+        <a href="tel:911" style="display:inline-flex;align-items:center;gap:6px;padding:7px 12px;background:#ef4444;color:#fff;border-radius:8px;font-size:0.78rem;font-weight:700;text-decoration:none;transition:transform 0.15s;" onmouseover="this.style.transform='scale(1.04)'" onmouseout="this.style.transform='scale(1)'"><i class="fas fa-phone"></i> 911 National</a>
+        <a href="tel:160" style="display:inline-flex;align-items:center;gap:6px;padding:7px 12px;background:rgba(255,255,255,0.15);color:#fff;border-radius:8px;font-size:0.78rem;font-weight:700;text-decoration:none;border:1px solid rgba(255,255,255,0.25);transition:background 0.15s;" onmouseover="this.style.background='rgba(255,255,255,0.25)'" onmouseout="this.style.background='rgba(255,255,255,0.15)'"><i class="fas fa-fire-extinguisher"></i> BFP Fire (160)</a>
+        <a href="tel:117" style="display:inline-flex;align-items:center;gap:6px;padding:7px 12px;background:rgba(255,255,255,0.15);color:#fff;border-radius:8px;font-size:0.78rem;font-weight:700;text-decoration:none;border:1px solid rgba(255,255,255,0.25);transition:background 0.15s;" onmouseover="this.style.background='rgba(255,255,255,0.25)'" onmouseout="this.style.background='rgba(255,255,255,0.15)'"><i class="fas fa-shield-halved"></i> PNP Police (117)</a>
+        <button onclick="copyEmergencyCoordinates(this)" style="display:inline-flex;align-items:center;gap:6px;padding:7px 12px;background:#f59e0b;color:#111827;border:none;border-radius:8px;font-size:0.78rem;font-weight:700;cursor:pointer;transition:transform 0.15s;" onmouseover="this.style.transform='scale(1.04)'" onmouseout="this.style.transform='scale(1)'"><i class="fas fa-location-crosshairs"></i> Copy My GPS</button>
+      </div>
+    </div>
     <div class="filters">
       <input type="text" id="searchInput" placeholder="Search location, keyword...">
       <select id="statusFilter"><option value="">All Statuses</option><option value="dangerous">🔴 Dangerous</option><option value="caution">🟠 Caution</option><option value="safe">🟢 Safe</option></select>
@@ -760,6 +779,12 @@ body.dark .locate-btn-big{background:#1f3a5f;color:var(--blue-accent);}
     <div class="detail-photos" id="d_photos" style="display:none;"></div>
     <div class="detail-body">
       <div class="detail-meta-grid" id="d_meta_grid"></div>
+      <div class="detail-timeline-box" id="d_timeline_box" style="margin-top:14px;background:var(--card-bg, #f8fafc);border:1px solid var(--border,#e2e8f0);border-radius:12px;padding:12px 14px;">
+        <div style="font-size:0.75rem;font-weight:700;color:var(--muted,#64748b);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px;display:flex;align-items:center;gap:6px;">
+          <i class="fas fa-route" style="color:var(--blue-accent,#2563eb);"></i> Incident Response Journey &amp; Status
+        </div>
+        <div id="d_timeline_steps" style="display:flex;flex-direction:column;gap:6px;"></div>
+      </div>
       <div class="detail-desc-box" id="d_desc_box" style="display:none;"><div class="detail-desc-label"><i class="fas fa-align-left" style="margin-right:5px;"></i>Description</div><div class="detail-desc-text" id="d_desc"></div></div>
     </div>
     <div class="detail-footer" id="d_footer"></div>
@@ -1072,9 +1097,64 @@ document.getElementById('d_meta_grid').innerHTML=[
   {icon:'fa-city',color:'#888',label:'City',value:r.city+(r.province?', '+r.province:'')},
   {icon:'fa-certificate',color:isVer?'#059669':'#888',label:'Community Trust',value:isVer?`<span style="color:#059669;font-weight:700;"><i class="fas fa-check-circle"></i> Verified (${r.upvotes} Confirmed)</span>`:`<span>${r.upvotes} Upvotes · Unconfirmed</span>`},
   {icon:'fa-circle-dot',color:SC[r.status],label:'Radius',value:`${r.radius_m||200} meters`}
-].map(m=>`<div class="detail-meta-item"><div class="detail-meta-label">${m.label}</div><div class="detail-meta-value"><i class="fas ${m.icon}" style="color:${m.color};"></i>${m.value}</div></div>`).join('');const db=document.getElementById('d_desc_box');if(r.description){db.style.display='';document.getElementById('d_desc').textContent=r.description;}else db.style.display='none';const upV=r.user_vote==='up',dnV=r.user_vote==='down',hp=r.latitude&&r.longitude;document.getElementById('d_footer').innerHTML=`<button class="vote-btn ${upV?'voted':''}" onclick="vote(${r.id},'up')"><i class="fas fa-thumbs-up"></i> ${r.upvotes}</button><button class="vote-btn down ${dnV?'voted':''}" onclick="vote(${r.id},'down')"><i class="fas fa-thumbs-down"></i> ${r.downvotes}</button>${hp?`<button class="detail-map-btn" onclick="closeDetail();openMiniMap(${r.id})"><i class="fas fa-map-pin"></i> View on Map</button>`:''}${r.user_id==MY_USER_ID?`<button class="vote-btn" onclick="closeDetail();deleteReport(${r.id})" style="margin-left:auto;border-color:var(--red);color:var(--red);"><i class="fas fa-trash-can"></i> Delete</button>`:''}`;document.getElementById('detailModal').style.borderLeft=`5px solid ${SC[r.status]||'#ccc'}`;document.getElementById('detailOverlay').classList.add('open');document.body.style.overflow='hidden';}
+].map(m=>`<div class="detail-meta-item"><div class="detail-meta-label">${m.label}</div><div class="detail-meta-value"><i class="fas ${m.icon}" style="color:${m.color};"></i>${m.value}</div></div>`).join('');
+
+const isResolved=(r.status==='safe');
+const tlWrap=document.getElementById('d_timeline_box');
+if(tlWrap){
+  const steps=[
+    {title:'Citizen Reported',icon:'fa-bullhorn',color:'#3b82f6',done:true,time:date,desc:'Submitted by community resident'},
+    {title:'Community Trust',icon:'fa-shield-halved',color:'#10b981',done:isVer,time:isVer?`${r.upvotes} Upvotes Verified`:'Pending confirmations',desc:isVer?'Validated by local resident consensus':'Awaiting community upvotes'},
+    {title:'Local Tier Action',icon:'fa-building-shield',color:'#f59e0b',done:r.status==='dangerous'||isResolved,time:r.status==='dangerous'?'Escalated / Active Triage':'Local monitoring',desc:'Barangay / LGU operations feed'},
+    {title:'Status Clear',icon:'fa-circle-check',color:'#10b981',done:isResolved,time:isResolved?'Incident Resolved':'Active Notice',desc:isResolved?'Area cleared and marked safe':'Active hazard precautions apply'}
+  ];
+  document.getElementById('d_timeline_steps').innerHTML=steps.map(s=>`
+    <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:6px;">
+      <div style="width:24px;height:24px;border-radius:50%;background:${s.done?s.color:'#cbd5e1'};color:#fff;display:flex;align-items:center;justify-content:center;font-size:0.68rem;flex-shrink:0;margin-top:1px;"><i class="fas ${s.icon}"></i></div>
+      <div style="flex:1;min-width:0;">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:6px;">
+          <span style="font-size:0.78rem;font-weight:700;color:${s.done?'var(--text,#1e293b)':'#94a3b8'};">${s.title}</span>
+          <span style="font-size:0.68rem;color:var(--muted,#64748b);">${s.time}</span>
+        </div>
+        <div style="font-size:0.72rem;color:var(--muted,#64748b);">${s.desc}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+const db=document.getElementById('d_desc_box');if(r.description){db.style.display='';document.getElementById('d_desc').textContent=r.description;}else db.style.display='none';const upV=r.user_vote==='up',dnV=r.user_vote==='down',hp=r.latitude&&r.longitude;document.getElementById('d_footer').innerHTML=`<button class="vote-btn ${upV?'voted':''}" onclick="vote(${r.id},'up')"><i class="fas fa-thumbs-up"></i> ${r.upvotes}</button><button class="vote-btn down ${dnV?'voted':''}" onclick="vote(${r.id},'down')"><i class="fas fa-thumbs-down"></i> ${r.downvotes}</button>${hp?`<button class="detail-map-btn" onclick="closeDetail();openMiniMap(${r.id})"><i class="fas fa-map-pin"></i> View on Map</button>`:''}${r.user_id==MY_USER_ID?`<button class="vote-btn" onclick="closeDetail();deleteReport(${r.id})" style="margin-left:auto;border-color:var(--red);color:var(--red);"><i class="fas fa-trash-can"></i> Delete</button>`:''}`;document.getElementById('detailModal').style.borderLeft=`5px solid ${SC[r.status]||'#ccc'}`;document.getElementById('detailOverlay').classList.add('open');document.body.style.overflow='hidden';}
 function closeDetail(){document.getElementById('detailOverlay').classList.remove('open');document.body.style.overflow='';}
 function outsideCloseDetail(e){if(e.target===document.getElementById('detailOverlay'))closeDetail();}
+
+function copyEmergencyCoordinates(btn){
+  if(userLat!==null&&userLng!==null){
+    const text=`🚨 EMERGENCY GPS LOCATION: ${userLat.toFixed(6)}, ${userLng.toFixed(6)} (via SenTri System)`;
+    navigator.clipboard.writeText(text).then(()=>{
+      const orig=btn.innerHTML;
+      btn.innerHTML='<i class="fas fa-check"></i> Copied GPS!';
+      btn.style.background='#10b981';
+      btn.style.color='#fff';
+      setTimeout(()=>{
+        btn.innerHTML=orig;
+        btn.style.background='#f59e0b';
+        btn.style.color='#111827';
+      },2500);
+    });
+  } else if(navigator.geolocation){
+    btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Getting GPS…';
+    navigator.geolocation.getCurrentPosition(pos=>{
+      userLat=pos.coords.latitude;
+      userLng=pos.coords.longitude;
+      hasGPS=true;
+      copyEmergencyCoordinates(btn);
+    },()=>{
+      alert('Location access is disabled or unavailable.');
+      btn.innerHTML='<i class="fas fa-location-crosshairs"></i> Copy My GPS';
+    });
+  } else {
+    alert('Geolocation not supported on this device.');
+  }
+}
 
 /* Mini map */
 let miniMap=null,miniLayers=[];

@@ -673,6 +673,48 @@ switch ($action) {
         $s_upd->close();
         break;
 
+    case 'get_timeline':
+    case 'get_lifecycle':
+        $report_id = (int)($_GET['report_id'] ?? 0);
+        if (!$report_id) { echo json_encode(['status'=>'error','message'=>'Invalid report ID.']); exit; }
+        $s = $conn->prepare("
+            SELECT r.id, r.title, r.status, r.category, r.location_name, r.barangay, r.city,
+                   r.upvotes, r.downvotes, r.escalated_to_lgu, r.created_at, r.accepted_at,
+                   r.responded_at, r.resolved_at, r.assigned_to,
+                   CONCAT(u.first_name, ' ', u.last_name) AS reporter_name,
+                   CONCAT(resp.first_name, ' ', resp.last_name) AS responder_name,
+                   resp.responder_type AS responder_agency
+            FROM reports r
+            JOIN users u ON u.id = r.user_id
+            LEFT JOIN users resp ON resp.id = r.assigned_to
+            WHERE r.id = ? AND r.is_archived = 0
+            LIMIT 1
+        ");
+        $s->bind_param('i', $report_id);
+        $s->execute();
+        $rep = $s->get_result()->fetch_assoc();
+        $s->close();
+
+        if (!$rep) { echo json_encode(['status'=>'error','message'=>'Report not found.']); exit; }
+
+        // Fetch audit trail
+        $audits = [];
+        $sa = $conn->prepare("SELECT action, performed_by_name, performed_at FROM report_audit_logs WHERE report_id = ? ORDER BY performed_at ASC");
+        $sa->bind_param('i', $report_id);
+        $sa->execute();
+        $res_a = $sa->get_result();
+        while ($row = $res_a->fetch_assoc()) {
+            $audits[] = $row;
+        }
+        $sa->close();
+
+        echo json_encode([
+            'status' => 'success',
+            'report' => $rep,
+            'audits' => $audits
+        ]);
+        break;
+
     case 'export':
         if (!in_array($role, ['admin', 'lgu', 'barangay'])) {
             echo json_encode(['status'=>'error','message'=>'Unauthorized for export.']); exit;
