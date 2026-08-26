@@ -1,3 +1,6 @@
+/* Shared responsive overrides. Must be imported before all other CSS rules. */
+@import url('../sentri-responsive.css');
+
 /* Self-hosted Poppins (latin subset) */
 @font-face{font-family:'Poppins';font-style:normal;font-weight:400;font-display:swap;src:url('poppins/poppins-latin-400-normal.woff2') format('woff2');}
 @font-face{font-family:'Poppins';font-style:normal;font-weight:500;font-display:swap;src:url('poppins/poppins-latin-500-normal.woff2') format('woff2');}
@@ -11,6 +14,3 @@
 @font-face{font-family:'Inter';font-style:normal;font-weight:600;font-display:swap;src:url('inter/inter-latin-600-normal.woff2') format('woff2');}
 @font-face{font-family:'Inter';font-style:normal;font-weight:700;font-display:swap;src:url('inter/inter-latin-700-normal.woff2') format('woff2');}
 @font-face{font-family:'Inter';font-style:normal;font-weight:800;font-display:swap;src:url('inter/inter-latin-800-normal.woff2') format('woff2');}
-
-/* Shared responsive overrides. !important is intentional because portal pages use inline styles. */
-@import url('../sentri-responsive.css');
