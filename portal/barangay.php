@@ -349,7 +349,8 @@ tr:hover td{background:#fafafa;}
         <div class="page-sub"><?= htmlspecialchars($org) ?><?= $city ? ' &mdash; '.htmlspecialchars($city) : '' ?></div>
       </div>
     </div>
-    <span class="badge-brgy"><i class="fas fa-house-flag"></i>&nbsp; Barangay Official</span>
+      <button onclick="openEvacModal()" style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;background:#f0fdf4;border:1px solid #86efac;color:#166534;border-radius:20px;font-size:0.72rem;font-weight:700;cursor:pointer;margin-right:8px;font-family:'Inter',sans-serif;transition:all 0.15s;" onmouseover="this.style.background='#dcfce7'" onmouseout="this.style.background='#f0fdf4'"><i class="fas fa-person-shelter"></i> Evacuation Centers (3 Active)</button>
+      <span class="badge-brgy"><i class="fas fa-house-flag"></i>&nbsp; Barangay Official</span>
   </div>
 
   <div class="content">
@@ -1072,6 +1073,92 @@ async function saveContact(){
   } catch(e){ err.textContent='Request failed.'; err.style.display='block'; btn.disabled=false; btn.innerHTML='<i class="fas fa-floppy-disk"></i> Save Contact'; }
 }
 document.getElementById('contactModal').addEventListener('click',function(e){if(e.target===this)closeContactModal();});
+</script>
+
+<!-- EVACUATION CENTERS MODAL -->
+<div class="modal-bg" id="evacModal">
+  <div class="modal" style="max-width:580px;">
+    <div class="modal-header">
+      <h3><i class="fas fa-person-shelter" style="color:var(--green);margin-right:6px;"></i>Barangay Evacuation Centers Directory</h3>
+      <button class="modal-close" onclick="closeEvacModal()"><i class="fas fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        <div style="background:#f8fafc;border:1px solid var(--border);border-radius:12px;padding:14px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+            <strong style="font-size:0.9rem;">San Jose Covered Court</strong>
+            <span style="background:#f0fdf4;color:#166534;font-size:0.7rem;font-weight:700;padding:2px 8px;border-radius:12px;border:1px solid #bbf7d0;">Operational</span>
+          </div>
+          <div style="font-size:0.76rem;color:var(--muted);margin-bottom:8px;"><i class="fas fa-location-dot" style="margin-right:4px;"></i>Barangay Compound, J.P. Rizal St. &middot; Contact: Kagawad Perez (0917-555-0123)</div>
+          <div style="display:flex;align-items:center;justify-content:space-between;font-size:0.78rem;font-weight:600;margin-bottom:4px;">
+            <span>Occupancy: <b id="evac1_occ">84</b> / 350 persons</span>
+            <span id="evac1_pct" style="color:#16a34a;">24%</span>
+          </div>
+          <div style="width:100%;height:8px;background:#e2e8f0;border-radius:4px;overflow:hidden;margin-bottom:8px;">
+            <div id="evac1_bar" style="width:24%;height:100%;background:#16a34a;border-radius:4px;transition:width 0.3s;"></div>
+          </div>
+          <div style="display:flex;gap:6px;justify-content:flex-end;">
+            <button onclick="updateEvacCount(1, 5)" style="background:#fff;border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:0.74rem;font-weight:600;cursor:pointer;">+5 Evacuees</button>
+            <button onclick="updateEvacCount(1, -5)" style="background:#fff;border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:0.74rem;font-weight:600;cursor:pointer;">-5 Evacuees</button>
+          </div>
+        </div>
+
+        <div style="background:#f8fafc;border:1px solid var(--border);border-radius:12px;padding:14px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+            <strong style="font-size:0.9rem;">San Jose Elementary Gymnasium</strong>
+            <span style="background:#eff6ff;color:#2563eb;font-size:0.7rem;font-weight:700;padding:2px 8px;border-radius:12px;border:1px solid #bfdbfe;">Standby Ready</span>
+          </div>
+          <div style="font-size:0.76rem;color:var(--muted);margin-bottom:8px;"><i class="fas fa-location-dot" style="margin-right:4px;"></i>School Grounds, Mabini St. &middot; Contact: Principal Ramos (0918-555-0456)</div>
+          <div style="display:flex;align-items:center;justify-content:space-between;font-size:0.78rem;font-weight:600;margin-bottom:4px;">
+            <span>Occupancy: <b id="evac2_occ">0</b> / 500 persons</span>
+            <span id="evac2_pct" style="color:#2563eb;">0%</span>
+          </div>
+          <div style="width:100%;height:8px;background:#e2e8f0;border-radius:4px;overflow:hidden;margin-bottom:8px;">
+            <div id="evac2_bar" style="width:0%;height:100%;background:#2563eb;border-radius:4px;transition:width 0.3s;"></div>
+          </div>
+          <div style="display:flex;gap:6px;justify-content:flex-end;">
+            <button onclick="updateEvacCount(2, 10)" style="background:#fff;border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:0.74rem;font-weight:600;cursor:pointer;">+10 Evacuees</button>
+            <button onclick="updateEvacCount(2, -10)" style="background:#fff;border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:0.74rem;font-weight:600;cursor:pointer;">-10 Evacuees</button>
+          </div>
+        </div>
+
+        <div style="background:#f8fafc;border:1px solid var(--border);border-radius:12px;padding:14px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+            <strong style="font-size:0.9rem;">Barangay Health & Relief Annex</strong>
+            <span style="background:#f0fdf4;color:#166534;font-size:0.7rem;font-weight:700;padding:2px 8px;border-radius:12px;border:1px solid #bbf7d0;">Operational</span>
+          </div>
+          <div style="font-size:0.76rem;color:var(--muted);margin-bottom:8px;"><i class="fas fa-location-dot" style="margin-right:4px;"></i>Relief Operations Center &middot; Medical Staff On Duty</div>
+          <div style="display:flex;align-items:center;justify-content:space-between;font-size:0.78rem;font-weight:600;margin-bottom:4px;">
+            <span>Occupancy: <b id="evac3_occ">15</b> / 120 persons</span>
+            <span id="evac3_pct" style="color:#16a34a;">12%</span>
+          </div>
+          <div style="width:100%;height:8px;background:#e2e8f0;border-radius:4px;overflow:hidden;margin-bottom:8px;">
+            <div id="evac3_bar" style="width:12%;height:100%;background:#16a34a;border-radius:4px;transition:width 0.3s;"></div>
+          </div>
+          <div style="display:flex;gap:6px;justify-content:flex-end;">
+            <button onclick="updateEvacCount(3, 5)" style="background:#fff;border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:0.74rem;font-weight:600;cursor:pointer;">+5 Evacuees</button>
+            <button onclick="updateEvacCount(3, -5)" style="background:#fff;border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:0.74rem;font-weight:600;cursor:pointer;">-5 Evacuees</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function openEvacModal(){ document.getElementById('evacModal').classList.add('show'); }
+function closeEvacModal(){ document.getElementById('evacModal').classList.remove('show'); }
+const evacCaps = {1: 350, 2: 500, 3: 120};
+let evacVals = {1: 84, 2: 0, 3: 15};
+function updateEvacCount(id, delta){
+  evacVals[id] = Math.max(0, Math.min(evacCaps[id], evacVals[id] + delta));
+  const pct = Math.round((evacVals[id] / evacCaps[id]) * 100);
+  document.getElementById(`evac${id}_occ`).textContent = evacVals[id];
+  document.getElementById(`evac${id}_pct`).textContent = pct + '%';
+  document.getElementById(`evac${id}_bar`).style.width = pct + '%';
+  showToast(`Evacuation center updated: ${evacVals[id]} / ${evacCaps[id]} (${pct}%)`, 'success');
+}
+document.getElementById('evacModal').addEventListener('click',function(e){if(e.target===this)closeEvacModal();});
 </script>
 <?= csrf_script() ?>
 </body>

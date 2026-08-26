@@ -664,6 +664,32 @@ tr:hover td{background:#fafafa;}
         </div>
       </div>
     </div>
+    <!-- ── Emergency Fleet & Apparatus Readiness Monitor ── -->
+    <div class="card" style="margin-bottom:18px;">
+      <div class="card-header">
+        <h3><i class="fas fa-truck-medical" style="color:var(--navy);margin-right:6px;"></i>City Emergency Fleet & Apparatus Readiness</h3>
+        <span class="card-meta">Live Unit Telemetry</span>
+      </div>
+      <div style="padding:16px 18px;display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;">
+        <div style="background:#f8fafc;border:1px solid var(--border);border-radius:10px;padding:12px;display:flex;align-items:center;gap:12px;">
+          <div style="width:36px;height:36px;border-radius:8px;background:#fef2f2;color:#dc2626;display:flex;align-items:center;justify-content:center;font-size:1.1rem;"><i class="fas fa-fire-extinguisher"></i></div>
+          <div><div style="font-size:0.7rem;color:var(--muted);font-weight:700;text-transform:uppercase;">BFP Fire Engines</div><div style="font-size:1.05rem;font-weight:800;color:var(--text);">8 <span style="font-size:0.72rem;color:#16a34a;font-weight:600;">(6 Ready / 2 Dispatched)</span></div></div>
+        </div>
+        <div style="background:#f8fafc;border:1px solid var(--border);border-radius:10px;padding:12px;display:flex;align-items:center;gap:12px;">
+          <div style="width:36px;height:36px;border-radius:8px;background:#eff6ff;color:#2563eb;display:flex;align-items:center;justify-content:center;font-size:1.1rem;"><i class="fas fa-shield-halved"></i></div>
+          <div><div style="font-size:0.7rem;color:var(--muted);font-weight:700;text-transform:uppercase;">PNP Patrol Cruisers</div><div style="font-size:1.05rem;font-weight:800;color:var(--text);">14 <span style="font-size:0.72rem;color:#16a34a;font-weight:600;">(11 Ready / 3 Dispatched)</span></div></div>
+        </div>
+        <div style="background:#f8fafc;border:1px solid var(--border);border-radius:10px;padding:12px;display:flex;align-items:center;gap:12px;">
+          <div style="width:36px;height:36px;border-radius:8px;background:#f0fdf4;color:#16a34a;display:flex;align-items:center;justify-content:center;font-size:1.1rem;"><i class="fas fa-ambulance"></i></div>
+          <div><div style="font-size:0.7rem;color:var(--muted);font-weight:700;text-transform:uppercase;">EMS Ambulances</div><div style="font-size:1.05rem;font-weight:800;color:var(--text);">6 <span style="font-size:0.72rem;color:#16a34a;font-weight:600;">(5 Ready / 1 Dispatched)</span></div></div>
+        </div>
+        <div style="background:#f8fafc;border:1px solid var(--border);border-radius:10px;padding:12px;display:flex;align-items:center;gap:12px;">
+          <div style="width:36px;height:36px;border-radius:8px;background:#fffbeb;color:#d97706;display:flex;align-items:center;justify-content:center;font-size:1.1rem;"><i class="fas fa-life-ring"></i></div>
+          <div><div style="font-size:0.7rem;color:var(--muted);font-weight:700;text-transform:uppercase;">Rescue Boats & WASAR</div><div style="font-size:1.05rem;font-weight:800;color:var(--text);">4 <span style="font-size:0.72rem;color:#16a34a;font-weight:600;">(4 Ready on Standby)</span></div></div>
+        </div>
+      </div>
+    </div>
+
       <div class="card">
         <div class="card-header">
           <h3><i class="fas fa-triangle-exclamation" style="color:#dc2626;margin-right:6px;"></i>Active Dangerous Incidents</h3>

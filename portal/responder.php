@@ -314,11 +314,18 @@ tr:hover td{background:#fafafa;}
 .step-chip.done{background:#ecfdf5;color:#059669;border:1px solid #a7f3d0;}
 .step-chip.active{background:#fffbeb;color:#b45309;border:1px solid #fde68a;}
 .step-chip.pending{background:#f1f5f9;color:#94a3b8;border:1px solid #e2e8f0;}
+.toast-container{position:fixed;bottom:24px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:10px;pointer-events:none;}
+.toast{display:flex;align-items:center;gap:10px;padding:13px 18px;border-radius:12px;font-size:0.84rem;font-weight:600;box-shadow:0 8px 30px rgba(0,0,0,0.18);pointer-events:all;min-width:260px;max-width:360px;}
+.toast-success{background:#166534;color:#fff;}
+.toast-error{background:#991b1b;color:#fff;}
+.toast-info{background:#1e40af;color:#fff;}
+.toast i{font-size:1rem;flex-shrink:0;}
 </style>
 <link rel="stylesheet" href="../assets/vendor/leaflet/leaflet.css">
 <script src="../assets/vendor/leaflet/leaflet.js"></script>
 </head>
 <body>
+<div class="toast-container" id="toastContainer"></div>
 <div class="overlay" id="overlay" onclick="closeSidebar()"></div>
 
 <aside class="sidebar" id="sidebar">
@@ -582,6 +589,13 @@ tr:hover td{background:#fafafa;}
               <span class="step-chip <?= $step_resp ? 'done' : ($step_acc ? 'active' : 'pending') ?>"><i class="fas <?= $step_resp ? 'fa-check' : 'fa-truck-fast' ?>"></i> <?= $step_resp ? 'En Route / On Site' : 'Standby' ?></span>
               <i class="fas fa-chevron-right" style="font-size:0.6rem;color:#cbd5e1;"></i>
               <span class="step-chip <?= $step_res ? 'done' : 'pending' ?>"><i class="fas <?= $step_res ? 'fa-check' : 'fa-circle-dot' ?>"></i> <?= $step_res ? 'Resolved' : 'Active Operation' ?></span>
+            </div>
+            <div class="sitrep-bar" style="margin-top:8px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+              <span style="font-size:0.7rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;"><i class="fas fa-bullhorn" style="color:var(--red-light);margin-right:2px;"></i> Tactical SITREP:</span>
+              <button type="button" onclick="logSitrep(<?= $r['id'] ?>, 'Perimeter Secured', this)" style="background:#f8fafc;border:1px solid #cbd5e1;border-radius:6px;padding:2px 8px;font-size:0.7rem;font-weight:600;cursor:pointer;color:#334155;transition:all 0.15s;" onmouseover="this.style.borderColor='#94a3b8'" onmouseout="this.style.borderColor='#cbd5e1'">🛡️ Perimeter Secured</button>
+              <button type="button" onclick="logSitrep(<?= $r['id'] ?>, 'Hazards Isolated', this)" style="background:#f8fafc;border:1px solid #cbd5e1;border-radius:6px;padding:2px 8px;font-size:0.7rem;font-weight:600;cursor:pointer;color:#334155;transition:all 0.15s;" onmouseover="this.style.borderColor='#94a3b8'" onmouseout="this.style.borderColor='#cbd5e1'">🚧 Hazards Isolated</button>
+              <button type="button" onclick="logSitrep(<?= $r['id'] ?>, 'Under Control', this)" style="background:#f8fafc;border:1px solid #cbd5e1;border-radius:6px;padding:2px 8px;font-size:0.7rem;font-weight:600;cursor:pointer;color:#334155;transition:all 0.15s;" onmouseover="this.style.borderColor='#94a3b8'" onmouseout="this.style.borderColor='#cbd5e1'">✅ Under Control</button>
+              <span id="sitrep_badge_<?= $r['id'] ?>" style="font-size:0.7rem;font-weight:700;color:#059669;display:none;background:#ecfdf5;border:1px solid #a7f3d0;padding:2px 7px;border-radius:6px;"></span>
             </div>
           </div>
           <div class="inc-actions">
@@ -1126,6 +1140,33 @@ function playDispatchTone(){
   } catch(e) {
     console.warn('AudioContext alert tone notice:', e);
   }
+}
+
+function logSitrep(id, status, btn){
+  var badge = document.getElementById('sitrep_badge_' + id);
+  if(badge){
+    badge.innerHTML = '<i class="fas fa-check-circle"></i> ' + status + ' (' + new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) + ')';
+    badge.style.display = 'inline-flex';
+  }
+  btn.style.background = '#dcfce7';
+  btn.style.borderColor = '#86efac';
+  btn.style.color = '#166534';
+  showRespToast('SITREP updated: ' + status, 'success');
+}
+
+function showRespToast(msg, type){
+  var tc = document.getElementById('toastContainer');
+  if(!tc) return;
+  var t = document.createElement('div');
+  t.className = 'toast toast-' + (type || 'info');
+  var icon = type === 'success' ? 'fa-circle-check' : (type === 'error' ? 'fa-triangle-exclamation' : 'fa-circle-info');
+  t.innerHTML = '<i class="fas ' + icon + '"></i><span>' + msg + '</span>';
+  tc.appendChild(t);
+  setTimeout(function(){
+    t.style.opacity = '0';
+    t.style.transition = 'opacity 0.3s';
+    setTimeout(function(){ t.remove(); }, 300);
+  }, 3500);
 }
 
 // Auto-refresh queue every 90 seconds

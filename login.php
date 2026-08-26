@@ -295,8 +295,8 @@ body{min-height:100vh;background:var(--navy-dark);display:flex;flex-direction:co
 .p-community .portal-icon{background:#eff6ff;color:#2563eb;}.p-barangay .portal-icon{background:#f0fdf4;color:#166534;}.p-lgu .portal-icon{background:#f0f7ff;color:#0a3d62;}.p-responder .portal-icon{background:#fef2f2;color:#b91c1c;}.p-admin .portal-icon{background:#f5f3ff;color:#5b21b6;}
 .portal-name{font-size:0.76rem;font-weight:700;color:#1a1a2e;line-height:1.3;}
 .portal-sub{font-size:0.66rem;color:#6b7280;margin-top:2px;}
-.form-wrap{max-width:980px;margin:0 auto;padding:0 32px 48px;}
-.form-card{background:#fff;border-radius:20px;padding:56px 42px 38px;margin-top:48px;box-shadow:0 8px 40px rgba(0,0,0,0.2);}
+.form-wrap{max-width:540px;width:100%;margin:0 auto;padding:0 24px 48px;position:relative;z-index:2;}
+.form-card{background:#fff;border-radius:20px;padding:44px 38px 32px;margin-top:40px;box-shadow:0 8px 40px rgba(0,0,0,0.2);width:100%;}
 .portal-header{display:flex;align-items:center;gap:14px;margin-bottom:26px;padding-bottom:18px;border-bottom:2px solid #e5e7eb;}
 .ph-icon{width:50px;height:50px;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0;}
 .ph-title{font-size:1.1rem;font-weight:800;color:#1a1a2e;}
@@ -311,7 +311,7 @@ body{min-height:100vh;background:var(--navy-dark);display:flex;flex-direction:co
 .pw-wrap .toggle-pw{position:absolute;right:11px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#6b7280;font-size:0.78rem;font-weight:700;font-family:'Inter',sans-serif;}
 .forgot-row{display:flex;justify-content:flex-end;margin-top:-8px;margin-bottom:16px;}
 .forgot-row a{font-size:0.79rem;color:#2563eb;text-decoration:none;font-weight:600;}
-.btn-login{width:100%;padding:12px;border:none;border-radius:11px;font-size:0.94rem;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer;transition:transform 0.18s ease,box-shadow 0.18s ease,opacity 0.18s ease;color:#fff;display:flex;align-items:center;justify-content:center;gap:8px;}
+.btn-login{width:100%;min-height:46px;padding:12px;border:none;border-radius:11px;font-size:0.94rem;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer;transition:transform 0.18s ease,box-shadow 0.18s ease;color:#fff;display:flex;align-items:center;justify-content:center;gap:8px;}
 .btn-login:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 8px 24px rgba(0,0,0,0.25);}
 .btn-login:disabled{opacity:0.6;cursor:not-allowed;background:#9ca3af;}
 .msg{padding:10px 14px;border-radius:9px;font-size:0.83rem;font-weight:500;margin-bottom:14px;display:none;text-align:center;}
@@ -329,22 +329,22 @@ body{min-height:100vh;background:var(--navy-dark);display:flex;flex-direction:co
 .notice.success{background:#f0fdf4;color:#15803d;border:1px solid #bbf7d0;}
 .site-footer{background:var(--navy-dark);border-top:1px solid rgba(255,255,255,0.07);padding:20px 32px;text-align:center;margin-top:auto;}
 .site-footer p{font-size:0.76rem;color:rgba(255,255,255,0.35);}
-@media(max-width:840px){.portal-grid{grid-template-columns:repeat(3,1fr);transform:translateY(14px);}.hero-badge{display:none;}.gov-links{display:none;}.form-card{padding:30px 22px 26px;margin-top:24px;}.form-wrap{padding:0 20px 40px;}.portal-section{padding:20px 20px 0;}}
-@media(max-width:580px){.portal-grid{grid-template-columns:repeat(2,1fr);transform:translateY(10px);gap:8px;}.portal-card.p-admin{grid-column:span 2;max-width:240px;margin:0 auto;width:100%;}.hero-inner h2{font-size:1.45rem;}.hero-stats{gap:16px;}.form-card{padding:26px 18px 22px;margin-top:20px;}}
+@media(max-width:840px){.portal-grid{grid-template-columns:repeat(3,1fr);transform:translateY(14px);}.hero-badge{display:none;}.gov-links{display:none;}.form-card{padding:30px 22px 26px;margin-top:24px;}.form-wrap{max-width:500px;padding:0 20px 40px;}.portal-section{padding:20px 20px 0;}}
+@media(max-width:580px){.portal-grid{grid-template-columns:repeat(2,1fr);transform:translateY(10px);gap:8px;}.portal-card.p-admin{grid-column:span 2;max-width:240px;margin:0 auto;width:100%;}.hero-inner h2{font-size:1.45rem;}.hero-stats{gap:16px;}.form-card{padding:26px 18px 22px;margin-top:20px;}.form-wrap{max-width:100%;padding:0 16px 36px;}}
 
 /* ── Motion ── */
 @keyframes fadeSlideDown{from{opacity:0;transform:translateY(-14px);}to{opacity:1;transform:translateY(0);}}
-@keyframes fadeSlideUp{from{opacity:0;transform:translateY(22px);}to{opacity:1;transform:translateY(0);}}
+@keyframes fadeSlideUp{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
 @keyframes iconSwap{0%{opacity:0;transform:scale(.5) rotate(-12deg);}100%{opacity:1;transform:scale(1) rotate(0);}}
 @keyframes msgError{0%{opacity:0;transform:translateY(-8px);}45%{opacity:1;transform:translateY(0);}55%{transform:translateX(-6px);}65%{transform:translateX(6px);}75%{transform:translateX(-4px);}85%{transform:translateX(4px);}100%{transform:translateX(0);}}
 @keyframes msgSuccess{from{opacity:0;transform:translateY(-8px);}to{opacity:1;transform:translateY(0);}}
 
 .gov-bar{animation:fadeSlideDown .5s ease both;}
-.hero-inner>div:first-child{animation:fadeSlideUp .6s ease .08s both;}
-.hero-badge{animation:fadeSlideUp .6s ease .2s both;}
+.hero-inner>div:first-child{animation:fadeSlideUp .5s ease both;}
+.hero-badge{animation:fadeSlideUp .5s ease both;}
 .page-notice .notice{animation:fadeSlideDown .45s ease both;}
-.form-card{animation:fadeSlideUp .55s ease .25s both;}
-.site-footer{animation:fadeSlideUp .5s ease .4s both;}
+.form-card{animation:fadeSlideUp .4s ease both;}
+.site-footer{animation:fadeSlideUp .4s ease both;}
 
 .portal-card{opacity:1;transition:transform 0.2s cubic-bezier(0.4,0,0.2,1),box-shadow 0.2s cubic-bezier(0.4,0,0.2,1),border-color 0.2s cubic-bezier(0.4,0,0.2,1);}
 .portal-card.justSelected{box-shadow:0 0 0 4px rgba(243,156,18,0.4),0 8px 28px rgba(243,156,18,0.3);}

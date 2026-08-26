@@ -521,6 +521,15 @@ body.dark .locate-btn-big{background:#1f3a5f;color:var(--blue-accent);}
       <div class="stat-card" style="cursor:pointer;" onclick="location.href='community.php?view=my_reports'" title="Click to view your submitted reports"><div class="stat-icon orange"><i class="fas fa-pen-to-square"></i></div><div><strong><?= $my_count ?></strong><span>My Reports</span></div></div>
     </div>
 
+    <!-- ── Dynamic Weather Watch & Flash Advisory Banner ── -->
+    <div class="weather-flash-banner" style="background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);border-left:4px solid #38bdf8;border-radius:14px;padding:12px 18px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;box-shadow:0 4px 16px rgba(0,0,0,0.18);">
+      <div style="display:flex;align-items:center;gap:10px;min-width:0;">
+        <span style="background:#0284c7;color:#fff;font-size:0.68rem;font-weight:800;text-transform:uppercase;letter-spacing:0.5px;padding:3px 8px;border-radius:6px;flex-shrink:0;"><i class="fas fa-cloud-bolt"></i> Weather Watch</span>
+        <span style="font-size:0.83rem;color:#f1f5f9;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"><strong style="color:#38bdf8;">NCR Advisory:</strong> Heavy rainfall & thunderstorm advisory in effect. Flood risk alert for low-lying areas.</span>
+      </div>
+      <button onclick="openWeatherModal()" style="background:rgba(56,189,248,0.15);border:1px solid rgba(56,189,248,0.35);color:#38bdf8;padding:6px 12px;border-radius:8px;font-size:0.76rem;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:all 0.15s;font-family:'Poppins',sans-serif;" onmouseover="this.style.background='rgba(56,189,248,0.25)'" onmouseout="this.style.background='rgba(56,189,248,0.15)'"><i class="fas fa-circle-info"></i> Advisory Details</button>
+    </div>
+
     <!-- ── Emergency Response Action Bar ── -->
     <div class="emergency-quick-bar" style="background:linear-gradient(135deg,#0a3d62 0%,#1e3a8a 100%);color:#fff;border-radius:14px;padding:14px 18px;margin-bottom:18px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;box-shadow:0 4px 16px rgba(10,61,98,0.18);">
       <div style="display:flex;align-items:center;gap:12px;">
@@ -1257,6 +1266,15 @@ function switchGuideTab(tab, btn){
   }
 }
 
+function openWeatherModal(){
+  const m=document.getElementById('weatherModalOverlay');
+  if(m) m.classList.add('open');
+}
+function closeWeatherModal(){
+  const m=document.getElementById('weatherModalOverlay');
+  if(m) m.classList.remove('open');
+}
+
 /* Helpers */
 function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function ucFirst(s){return s?s.charAt(0).toUpperCase()+s.slice(1):'';}
@@ -1271,6 +1289,31 @@ if(CURRENT_VIEW==='map')setTimeout(()=>renderMainMap(),300);
 if(document.fonts&&document.fonts.ready){document.fonts.ready.then(()=>{if(mainMap)mainMap.invalidateSize();if(inlineMap)inlineMap.invalidateSize();});}
 window.addEventListener('load',()=>{if(mainMap)mainMap.invalidateSize();if(inlineMap)inlineMap.invalidateSize();});
 </script>
+
+<!-- ── Weather Advisory & Flash Warning Modal ── -->
+<div class="modal-overlay" id="weatherModalOverlay" onclick="if(event.target===this)closeWeatherModal()">
+  <div class="modal" style="max-width:600px;">
+    <button class="modal-close" onclick="closeWeatherModal()"><i class="fas fa-xmark"></i></button>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+      <div style="width:40px;height:40px;border-radius:11px;background:#e0f2fe;color:#0284c7;display:flex;align-items:center;justify-content:center;font-size:1.25rem;flex-shrink:0;"><i class="fas fa-cloud-showers-heavy"></i></div>
+      <div>
+        <h2>Severe Weather Bulletin</h2>
+        <div class="subtitle" style="margin-bottom:0;">PAGASA Doppler Radar & NCR DRRMO Flash Warning</div>
+      </div>
+    </div>
+    <div style="background:#f8fafc;border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:14px;display:grid;grid-template-columns:repeat(3,1fr);gap:10px;text-align:center;">
+      <div><div style="font-size:0.7rem;color:var(--muted);font-weight:700;text-transform:uppercase;">Rainfall Rate</div><div style="font-size:1.15rem;font-weight:800;color:#0284c7;">24.5 mm/h</div><div style="font-size:0.68rem;color:#e11d48;font-weight:600;">Heavy / Torrential</div></div>
+      <div><div style="font-size:0.7rem;color:var(--muted);font-weight:700;text-transform:uppercase;">Wind Gusts</div><div style="font-size:1.15rem;font-weight:800;color:var(--text);">38 km/h</div><div style="font-size:0.68rem;color:#059669;font-weight:600;">Moderate Breeze</div></div>
+      <div><div style="font-size:0.7rem;color:var(--muted);font-weight:700;text-transform:uppercase;">Flood Threat</div><div style="font-size:1.15rem;font-weight:800;color:#dc2626;">High Risk</div><div style="font-size:0.68rem;color:var(--muted);font-weight:600;">Low-Lying Zones</div></div>
+    </div>
+    <div style="border-left:3px solid #0284c7;background:#f0f9ff;border-radius:0 10px 10px 0;padding:12px 14px;margin-bottom:14px;font-size:0.83rem;color:#0369a1;line-height:1.6;">
+      <strong>Precautionary Measures:</strong> Residents near Tullahan and Marikina river basins should monitor barangay warning sirens. Keep battery-powered radios tuned to official NDRRMO announcements.
+    </div>
+    <div style="display:flex;justify-content:flex-end;">
+      <button type="button" onclick="closeWeatherModal()" style="padding:8px 18px;border:none;background:var(--blue-accent);color:#fff;border-radius:8px;font-size:0.84rem;font-weight:700;cursor:pointer;font-family:'Poppins',sans-serif;">Acknowledge</button>
+    </div>
+  </div>
+</div>
 
 <!-- ── Safety Guide & Disaster Preparedness Modal ── -->
 <div class="modal-overlay" id="safetyModalOverlay" onclick="if(event.target===this)closeSafetyModal()">
