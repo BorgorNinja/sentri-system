@@ -596,7 +596,10 @@ tr:hover td{background:#fafafa;}
         <div class="page-sub"><?= htmlspecialchars($org) ?><?= $city ? ' &mdash; '.htmlspecialchars($city) : '' ?></div>
       </div>
     </div>
-    <span class="badge-lgu"><i class="fas fa-landmark"></i>&nbsp; LGU Official</span>
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+      <button onclick="openMutualAidModal()" style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;background:#f0fdf4;border:1px solid #86efac;color:#166534;border-radius:20px;font-size:0.72rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;transition:all 0.15s;" onmouseover="this.style.background='#dcfce7'" onmouseout="this.style.background='#f0fdf4'"><i class="fas fa-handshake-angle"></i> ICS Mutual Aid Matrix</button>
+      <span class="badge-lgu"><i class="fas fa-landmark"></i>&nbsp; LGU Official</span>
+    </div>
   </div>
 
   <div class="content">
@@ -1623,6 +1626,103 @@ function searchTableReports(query){
     </div>
   </div>
 </div>
+
+<!-- ── MULTI-AGENCY ICS MUTUAL AID MATRIX MODAL ── -->
+<div class="lgu-modal-bg" id="mutualAidModal">
+  <div class="lgu-modal" style="max-width:720px;">
+    <div class="lgu-modal-header">
+      <h3><i class="fas fa-handshake-angle" style="color:var(--navy);margin-right:6px;"></i>Multi-Agency Incident Command (ICS) Mutual Aid Matrix</h3>
+      <button class="lgu-modal-close" onclick="closeMutualAidModal()"><i class="fas fa-xmark"></i></button>
+    </div>
+    <div class="lgu-modal-body">
+      <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:12px 14px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">
+        <div style="font-size:0.78rem;color:#1e40af;">
+          <strong>Regional Asset Staging:</strong> Inter-agency emergency assets available for immediate mutual aid mobilization across NCR and regional DRRM clusters.
+        </div>
+        <span style="font-size:0.72rem;background:#dbeafe;color:#1d4ed8;padding:3px 9px;border-radius:20px;font-weight:800;border:1px solid #93c5fd;">5 Staged Agencies</span>
+      </div>
+
+      <div class="table-wrap" style="max-height:48vh;overflow-y:auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>Responding Agency</th>
+              <th>Asset Capability & Equipment</th>
+              <th>Personnel</th>
+              <th>Deployment ETA</th>
+              <th>Status / Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                <strong>Philippine Coast Guard (PCG)</strong>
+                <div style="font-size:0.72rem;color:var(--muted);">National Capital Region Dist.</div>
+              </td>
+              <td><span style="background:#e0f2fe;color:#0369a1;padding:2px 7px;border-radius:4px;font-size:0.72rem;font-weight:700;">WASAR Team (3 Rubber Boats)</span></td>
+              <td>12 Operators</td>
+              <td><span style="font-size:0.74rem;font-weight:700;color:#059669;">15-20 mins</span></td>
+              <td><button id="ma_btn_1" onclick="requestMutualAid(1, 'Philippine Coast Guard WASAR', this)" style="padding:4px 10px;background:var(--navy);color:#fff;border:none;border-radius:6px;font-size:0.72rem;font-weight:700;cursor:pointer;">Deploy Asset</button></td>
+            </tr>
+            <tr>
+              <td>
+                <strong>AFP 525th Eng. Combat Bn</strong>
+                <div style="font-size:0.72rem;color:var(--muted);">HADR Special Task Unit</div>
+              </td>
+              <td><span style="background:#fef3c7;color:#92400e;padding:2px 7px;border-radius:4px;font-size:0.72rem;font-weight:700;">2 Amphibious KM450 Trucks</span></td>
+              <td>20 Soldiers</td>
+              <td><span style="font-size:0.74rem;font-weight:700;color:#059669;">25-30 mins</span></td>
+              <td><button id="ma_btn_2" onclick="requestMutualAid(2, 'AFP 525th Engineer Bn', this)" style="padding:4px 10px;background:var(--navy);color:#fff;border:none;border-radius:6px;font-size:0.72rem;font-weight:700;cursor:pointer;">Deploy Asset</button></td>
+            </tr>
+            <tr>
+              <td>
+                <strong>DSWD Regional Relief Hub</strong>
+                <div style="font-size:0.72rem;color:var(--muted);">Disaster Response Management</div>
+              </td>
+              <td><span style="background:#f0fdf4;color:#166534;padding:2px 7px;border-radius:4px;font-size:0.72rem;font-weight:700;">2,500 Family Food Packs (FFPs)</span></td>
+              <td>Logistics Crew</td>
+              <td><span style="font-size:0.74rem;font-weight:700;color:#059669;">40 mins</span></td>
+              <td><button id="ma_btn_3" onclick="requestMutualAid(3, 'DSWD Relief Convoy', this)" style="padding:4px 10px;background:var(--navy);color:#fff;border:none;border-radius:6px;font-size:0.72rem;font-weight:700;cursor:pointer;">Deploy Asset</button></td>
+            </tr>
+            <tr>
+              <td>
+                <strong>MMDA Urban Search & Rescue</strong>
+                <div style="font-size:0.72rem;color:var(--muted);">Road Emergency Group</div>
+              </td>
+              <td><span style="background:#fef2f2;color:#991b1b;padding:2px 7px;border-radius:4px;font-size:0.72rem;font-weight:700;">Heavy Hydraulic Spreaders & Crane</span></td>
+              <td>8 USAR Techs</td>
+              <td><span style="font-size:0.74rem;font-weight:700;color:#059669;">20 mins</span></td>
+              <td><button id="ma_btn_4" onclick="requestMutualAid(4, 'MMDA USAR Heavy Rescue', this)" style="padding:4px 10px;background:var(--navy);color:#fff;border:none;border-radius:6px;font-size:0.72rem;font-weight:700;cursor:pointer;">Deploy Asset</button></td>
+            </tr>
+            <tr>
+              <td>
+                <strong>DOH Mobile Field Hospital</strong>
+                <div style="font-size:0.72rem;color:var(--muted);">HEMB Rapid Deployment</div>
+              </td>
+              <td><span style="background:#fdf4ff;color:#86198f;padding:2px 7px;border-radius:4px;font-size:0.72rem;font-weight:700;">Inflatable 20-Bed Triage Tent</span></td>
+              <td>4 MDs / 8 RNs</td>
+              <td><span style="font-size:0.74rem;font-weight:700;color:#059669;">35 mins</span></td>
+              <td><button id="ma_btn_5" onclick="requestMutualAid(5, 'DOH Mobile Field Hospital', this)" style="padding:4px 10px;background:var(--navy);color:#fff;border:none;border-radius:6px;font-size:0.72rem;font-weight:700;cursor:pointer;">Deploy Asset</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function openMutualAidModal(){ document.getElementById('mutualAidModal').classList.add('show'); }
+function closeMutualAidModal(){ document.getElementById('mutualAidModal').classList.remove('show'); }
+document.getElementById('mutualAidModal').addEventListener('click', function(e){ if(e.target===this) closeMutualAidModal(); });
+
+function requestMutualAid(id, agency, btn){
+  btn.disabled = true;
+  btn.style.background = '#059669';
+  btn.innerHTML = '<i class="fas fa-check"></i> Mobilized';
+  showToast(`Mutual aid request transmitted to ${agency}. Staging unit mobilized.`, 'success');
+}
+</script>
 <?= csrf_script() ?>
 </body>
 </html>

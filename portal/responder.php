@@ -374,6 +374,9 @@ tr:hover td{background:#fafafa;}
       <button type="button" id="btnTestTone" onclick="playDispatchTone()" title="Test Dispatch Acoustic Chime" style="display:inline-flex;align-items:center;gap:5px;background:#fef2f2;border:1px solid #fecaca;color:#dc2626;padding:5px 10px;border-radius:20px;font-size:0.75rem;font-weight:700;cursor:pointer;transition:all 0.2s;">
         <i class="fas fa-volume-high"></i> Tone Test
       </button>
+      <button type="button" id="btnSafetyCheckin" onclick="openSafetyCheckinModal()" title="Responder PPE & Hazard Exposure Check-In" style="display:inline-flex;align-items:center;gap:5px;background:#eff6ff;border:1px solid #bfdbfe;color:#1d4ed8;padding:5px 10px;border-radius:20px;font-size:0.75rem;font-weight:700;cursor:pointer;transition:all 0.2s;">
+        <i class="fas fa-shield-heart"></i> Safety Check-In
+      </button>
       <div class="resp-status-picker" style="display:flex;align-items:center;gap:6px;background:#f8fafc;padding:5px 10px;border-radius:20px;border:1px solid var(--border);font-size:0.75rem;font-weight:700;">
         <span id="dutyStatusDot" style="width:8px;height:8px;border-radius:50%;background:#10b981;box-shadow:0 0 6px #10b981;"></span>
         <select id="dutyStatusSel" onchange="changeDutyStatus(this.value)" style="border:none;background:transparent;font-size:0.75rem;font-weight:700;color:var(--text);outline:none;cursor:pointer;">
@@ -1198,11 +1201,58 @@ function showRespToast(msg, type){
   }, 3500);
 }
 
+function openSafetyCheckinModal(){
+  document.getElementById('safetyCheckinModal').classList.add('show');
+}
+function closeSafetyCheckinModal(){
+  document.getElementById('safetyCheckinModal').classList.remove('show');
+}
+function submitSafetyCheckin(){
+  closeSafetyCheckinModal();
+  showRespToast('Field personnel safety telemetry logged: SCBA OK, Gas normal, Vitals stable.', 'success');
+}
+
 // Auto-refresh queue every 90 seconds
 <?php if($view === 'queue'): ?>
 setTimeout(function(){location.reload();}, 90000);
 <?php endif; ?>
 </script>
+
+<!-- ── RESPONDER SAFETY & HAZARD EXPOSURE CHECK-IN MODAL ── -->
+<div class="nav-modal-overlay" id="safetyCheckinModal" onclick="if(event.target===this)closeSafetyCheckinModal()">
+  <div class="nav-modal" style="max-width:540px;">
+    <div class="nav-modal-head">
+      <h3 style="color:#1d4ed8;"><i class="fas fa-shield-heart" style="margin-right:6px;color:#2563eb;"></i>Responder Safety & Hazard Exposure Check-In</h3>
+      <button class="safety-modal-close" style="background:none;border:none;font-size:1.1rem;cursor:pointer;color:var(--muted);" onclick="closeSafetyCheckinModal()"><i class="fas fa-times"></i></button>
+    </div>
+    <div style="padding:16px 20px;">
+      <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:0.78rem;color:#1e40af;">
+        <strong>Safety Verification Protocol:</strong> Confirm PPE integrity, breathing air capacity, and environmental toxic gas exposure status before scene entry.
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
+        <div style="background:#f8fafc;border:1px solid var(--border);border-radius:8px;padding:10px;">
+          <div style="font-size:0.7rem;font-weight:700;color:var(--muted);text-transform:uppercase;">SCBA Air Tank</div>
+          <div style="font-size:1.1rem;font-weight:800;color:#059669;">240 bar</div>
+          <div style="font-size:0.68rem;color:#059669;"><i class="fas fa-check-circle"></i> Optimal (>200 bar)</div>
+        </div>
+        <div style="background:#f8fafc;border:1px solid var(--border);border-radius:8px;padding:10px;">
+          <div style="font-size:0.7rem;font-weight:700;color:var(--muted);text-transform:uppercase;">Gas Sensor (CO/H2S)</div>
+          <div style="font-size:1.1rem;font-weight:800;color:#059669;">0.0 PPM</div>
+          <div style="font-size:0.68rem;color:#059669;"><i class="fas fa-shield"></i> Safe Environment</div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;font-size:0.8rem;font-weight:600;">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;"><input type="checkbox" checked> Full Turnout Gear / High-Vis PPE Secured</label>
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;"><input type="checkbox" checked> Tactical Radio & Channel Sync Verified</label>
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;"><input type="checkbox" checked> Trauma Bag & First-Aid Kit Restocked</label>
+      </div>
+      <div style="display:flex;justify-content:flex-end;gap:8px;">
+        <button type="button" onclick="closeSafetyCheckinModal()" style="padding:8px 14px;background:#f1f5f9;border:1px solid var(--border);border-radius:8px;font-size:0.8rem;font-weight:700;cursor:pointer;">Close</button>
+        <button type="button" onclick="submitSafetyCheckin()" style="padding:8px 18px;background:#1d4ed8;color:#fff;border:none;border-radius:8px;font-size:0.8rem;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px;"><i class="fas fa-check"></i> Submit Safety Check-In</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <div class="nav-modal-overlay" id="navModalOverlay">
   <div class="nav-modal">

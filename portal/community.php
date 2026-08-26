@@ -548,6 +548,7 @@ body.dark .locate-btn-big{background:#1f3a5f;color:var(--blue-accent);}
         <button onclick="copyEmergencyCoordinates(this)" style="display:inline-flex;align-items:center;gap:6px;padding:7px 12px;background:#f59e0b;color:#111827;border:none;border-radius:8px;font-size:0.78rem;font-weight:700;cursor:pointer;transition:transform 0.15s;" onmouseover="this.style.transform='scale(1.04)'" onmouseout="this.style.transform='scale(1)'"><i class="fas fa-location-crosshairs"></i> Copy My GPS</button>
         <button onclick="openFirstAidModal()" style="display:inline-flex;align-items:center;gap:6px;padding:7px 12px;background:rgba(255,255,255,0.15);color:#fff;border-radius:8px;font-size:0.78rem;font-weight:700;border:1px solid rgba(255,255,255,0.25);cursor:pointer;transition:background 0.15s;" onmouseover="this.style.background='rgba(255,255,255,0.25)'" onmouseout="this.style.background='rgba(255,255,255,0.15)'"><i class="fas fa-heart-pulse"></i> First-Aid Cards</button>
         <button onclick="openSafetyModal()" style="display:inline-flex;align-items:center;gap:6px;padding:7px 12px;background:rgba(255,255,255,0.15);color:#fff;border-radius:8px;font-size:0.78rem;font-weight:700;border:1px solid rgba(255,255,255,0.25);cursor:pointer;transition:background 0.15s;" onmouseover="this.style.background='rgba(255,255,255,0.25)'" onmouseout="this.style.background='rgba(255,255,255,0.15)'"><i class="fas fa-kit-medical"></i> Safety Guide</button>
+        <button onclick="openHotlinesModal()" style="display:inline-flex;align-items:center;gap:6px;padding:7px 12px;background:rgba(255,255,255,0.15);color:#fff;border-radius:8px;font-size:0.78rem;font-weight:700;border:1px solid rgba(255,255,255,0.25);cursor:pointer;transition:background 0.15s;" onmouseover="this.style.background='rgba(255,255,255,0.25)'" onmouseout="this.style.background='rgba(255,255,255,0.15)'"><i class="fas fa-address-book"></i> Hotlines Directory</button>
       </div>
     </div>
     <div class="filters">
@@ -1367,6 +1368,53 @@ function switchFirstAidTab(tab, btn){
   }
 }
 
+function openHotlinesModal(){
+  const m=document.getElementById('hotlinesModalOverlay');
+  if(!m) return;
+  m.classList.add('open');
+}
+
+function closeHotlinesModal(){
+  const m=document.getElementById('hotlinesModalOverlay');
+  if(m) m.classList.remove('open');
+}
+
+function copyHotlineNumber(num, btn){
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(num).then(()=>{
+      const orig = btn.innerHTML;
+      btn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+      btn.style.background = '#16a34a';
+      btn.style.color = '#fff';
+      setTimeout(()=>{
+        btn.innerHTML = orig;
+        btn.style.background = '';
+        btn.style.color = '';
+      }, 1500);
+    });
+  } else {
+    prompt('Copy hotline number:', num);
+  }
+}
+
+function filterHotlineList(cat, btn){
+  document.querySelectorAll('.hotline-tab-btn').forEach(b=>{
+    b.style.background='var(--bg)';
+    b.style.color='var(--muted)';
+  });
+  if(btn){
+    btn.style.background='var(--blue-accent)';
+    btn.style.color='#fff';
+  }
+  document.querySelectorAll('.hotline-item-card').forEach(card=>{
+    if(cat==='all' || card.getAttribute('data-cat')===cat){
+      card.style.display = 'flex';
+    } else {
+      card.style.display = 'none';
+    }
+  });
+}
+
 /* Helpers */
 function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function ucFirst(s){return s?s.charAt(0).toUpperCase()+s.slice(1):'';}
@@ -1446,6 +1494,166 @@ window.addEventListener('load',()=>{if(mainMap)mainMap.invalidateSize();if(inlin
       <button type="button" class="first-aid-tab-btn" onclick="switchFirstAidTab('burns',this)" style="padding:6px 12px;border:none;background:var(--bg);color:var(--muted);border-radius:8px;font-size:0.8rem;font-weight:700;cursor:pointer;font-family:'Poppins',sans-serif;">Burn Care</button>
     </div>
     <div id="firstAidContent" style="font-size:0.85rem;line-height:1.6;color:var(--text);min-height:180px;"></div>
+  </div>
+</div>
+
+<!-- ── Emergency Hotlines & One-Touch Quick-Dial Directory Modal ── -->
+<div class="modal-overlay" id="hotlinesModalOverlay" onclick="if(event.target===this)closeHotlinesModal()">
+  <div class="modal" style="max-width:680px;">
+    <button class="modal-close" onclick="closeHotlinesModal()"><i class="fas fa-xmark"></i></button>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
+      <div style="width:42px;height:42px;border-radius:12px;background:#fef2f2;color:#ef4444;display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0;">
+        <i class="fas fa-phone-volume"></i>
+      </div>
+      <div>
+        <h2>Emergency Hotlines Directory</h2>
+        <div class="subtitle" style="margin-bottom:0;">National & NCR emergency dispatchers, disaster agencies, and lifelines</div>
+      </div>
+    </div>
+
+    <!-- Category Tabs -->
+    <div style="display:flex;gap:6px;border-bottom:1.5px solid var(--border);margin:16px 0 14px;padding-bottom:8px;overflow-x:auto;">
+      <button type="button" class="hotline-tab-btn" onclick="filterHotlineList('all',this)" style="padding:6px 12px;border:none;background:var(--blue-accent);color:#fff;border-radius:8px;font-size:0.8rem;font-weight:700;cursor:pointer;font-family:'Poppins',sans-serif;">All (10)</button>
+      <button type="button" class="hotline-tab-btn" onclick="filterHotlineList('disaster',this)" style="padding:6px 12px;border:none;background:var(--bg);color:var(--muted);border-radius:8px;font-size:0.8rem;font-weight:700;cursor:pointer;font-family:'Poppins',sans-serif;">Disaster / Rescue</button>
+      <button type="button" class="hotline-tab-btn" onclick="filterHotlineList('medical',this)" style="padding:6px 12px;border:none;background:var(--bg);color:var(--muted);border-radius:8px;font-size:0.8rem;font-weight:700;cursor:pointer;font-family:'Poppins',sans-serif;">Medical / EMS</button>
+      <button type="button" class="hotline-tab-btn" onclick="filterHotlineList('security',this)" style="padding:6px 12px;border:none;background:var(--bg);color:var(--muted);border-radius:8px;font-size:0.8rem;font-weight:700;cursor:pointer;font-family:'Poppins',sans-serif;">Police / Security</button>
+      <button type="button" class="hotline-tab-btn" onclick="filterHotlineList('utilities',this)" style="padding:6px 12px;border:none;background:var(--bg);color:var(--muted);border-radius:8px;font-size:0.8rem;font-weight:700;cursor:pointer;font-family:'Poppins',sans-serif;">Lifelines & Utilities</button>
+    </div>
+
+    <!-- Hotlines Grid -->
+    <div id="hotlinesListContainer" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:10px;max-height:55vh;overflow-y:auto;padding-right:4px;">
+      
+      <!-- 911 National -->
+      <div class="hotline-item-card" data-cat="disaster" style="background:#fff;border:1px solid var(--border);border-left:4px solid #ef4444;border-radius:10px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px;">
+        <div style="min-width:0;">
+          <div style="font-size:0.88rem;font-weight:800;color:var(--text);">911 Emergency Command</div>
+          <div style="font-size:0.73rem;color:var(--muted);">National Unified 24/7 Dispatch</div>
+          <span style="font-size:0.68rem;background:#fee2e2;color:#991b1b;padding:2px 6px;border-radius:4px;font-weight:700;">Toll-Free 24/7</span>
+        </div>
+        <div style="display:flex;gap:6px;flex-shrink:0;">
+          <button onclick="copyHotlineNumber('911', this)" style="border:1px solid #cbd5e1;background:#f8fafc;padding:6px 10px;border-radius:8px;font-size:0.75rem;cursor:pointer;"><i class="fas fa-copy"></i></button>
+          <a href="tel:911" style="background:#ef4444;color:#fff;padding:6px 12px;border-radius:8px;font-size:0.75rem;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:5px;"><i class="fas fa-phone"></i> Call</a>
+        </div>
+      </div>
+
+      <!-- Philippine Red Cross -->
+      <div class="hotline-item-card" data-cat="medical" style="background:#fff;border:1px solid var(--border);border-left:4px solid #dc2626;border-radius:10px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px;">
+        <div style="min-width:0;">
+          <div style="font-size:0.88rem;font-weight:800;color:var(--text);">Philippine Red Cross</div>
+          <div style="font-size:0.73rem;color:var(--muted);">Ambulance & Blood Center</div>
+          <span style="font-size:0.68rem;background:#fee2e2;color:#991b1b;padding:2px 6px;border-radius:4px;font-weight:700;">Hotline 143</span>
+        </div>
+        <div style="display:flex;gap:6px;flex-shrink:0;">
+          <button onclick="copyHotlineNumber('143', this)" style="border:1px solid #cbd5e1;background:#f8fafc;padding:6px 10px;border-radius:8px;font-size:0.75rem;cursor:pointer;"><i class="fas fa-copy"></i></button>
+          <a href="tel:143" style="background:#dc2626;color:#fff;padding:6px 12px;border-radius:8px;font-size:0.75rem;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:5px;"><i class="fas fa-phone"></i> Call</a>
+        </div>
+      </div>
+
+      <!-- NDRRMC -->
+      <div class="hotline-item-card" data-cat="disaster" style="background:#fff;border:1px solid var(--border);border-left:4px solid #0284c7;border-radius:10px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px;">
+        <div style="min-width:0;">
+          <div style="font-size:0.88rem;font-weight:800;color:var(--text);">NDRRMC Operations</div>
+          <div style="font-size:0.73rem;color:var(--muted);">(02) 8911-1406</div>
+          <span style="font-size:0.68rem;background:#e0f2fe;color:#0369a1;padding:2px 6px;border-radius:4px;font-weight:700;">National Disaster OpCen</span>
+        </div>
+        <div style="display:flex;gap:6px;flex-shrink:0;">
+          <button onclick="copyHotlineNumber('(02) 8911-1406', this)" style="border:1px solid #cbd5e1;background:#f8fafc;padding:6px 10px;border-radius:8px;font-size:0.75rem;cursor:pointer;"><i class="fas fa-copy"></i></button>
+          <a href="tel:0289111406" style="background:#0284c7;color:#fff;padding:6px 12px;border-radius:8px;font-size:0.75rem;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:5px;"><i class="fas fa-phone"></i> Call</a>
+        </div>
+      </div>
+
+      <!-- BFP Fire -->
+      <div class="hotline-item-card" data-cat="disaster" style="background:#fff;border:1px solid var(--border);border-left:4px solid #ea580c;border-radius:10px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px;">
+        <div style="min-width:0;">
+          <div style="font-size:0.88rem;font-weight:800;color:var(--text);">BFP Fire Suppression</div>
+          <div style="font-size:0.73rem;color:var(--muted);">(02) 8426-0219</div>
+          <span style="font-size:0.68rem;background:#ffedd5;color:#9a3412;padding:2px 6px;border-radius:4px;font-weight:700;">Hotline 160 / NCR BFP</span>
+        </div>
+        <div style="display:flex;gap:6px;flex-shrink:0;">
+          <button onclick="copyHotlineNumber('(02) 8426-0219', this)" style="border:1px solid #cbd5e1;background:#f8fafc;padding:6px 10px;border-radius:8px;font-size:0.75rem;cursor:pointer;"><i class="fas fa-copy"></i></button>
+          <a href="tel:160" style="background:#ea580c;color:#fff;padding:6px 12px;border-radius:8px;font-size:0.75rem;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:5px;"><i class="fas fa-phone"></i> Call</a>
+        </div>
+      </div>
+
+      <!-- PNP Police -->
+      <div class="hotline-item-card" data-cat="security" style="background:#fff;border:1px solid var(--border);border-left:4px solid #2563eb;border-radius:10px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px;">
+        <div style="min-width:0;">
+          <div style="font-size:0.88rem;font-weight:800;color:var(--text);">PNP Emergency Patrol</div>
+          <div style="font-size:0.73rem;color:var(--muted);">117 / (02) 8722-0650</div>
+          <span style="font-size:0.68rem;background:#dbeafe;color:#1e40af;padding:2px 6px;border-radius:4px;font-weight:700;">National Police OpCen</span>
+        </div>
+        <div style="display:flex;gap:6px;flex-shrink:0;">
+          <button onclick="copyHotlineNumber('117', this)" style="border:1px solid #cbd5e1;background:#f8fafc;padding:6px 10px;border-radius:8px;font-size:0.75rem;cursor:pointer;"><i class="fas fa-copy"></i></button>
+          <a href="tel:117" style="background:#2563eb;color:#fff;padding:6px 12px;border-radius:8px;font-size:0.75rem;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:5px;"><i class="fas fa-phone"></i> Call</a>
+        </div>
+      </div>
+
+      <!-- PAGASA Weather -->
+      <div class="hotline-item-card" data-cat="disaster" style="background:#fff;border:1px solid var(--border);border-left:4px solid #0891b2;border-radius:10px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px;">
+        <div style="min-width:0;">
+          <div style="font-size:0.88rem;font-weight:800;color:var(--text);">PAGASA Weather Central</div>
+          <div style="font-size:0.73rem;color:var(--muted);">(02) 8284-0800</div>
+          <span style="font-size:0.68rem;background:#cffafe;color:#155e75;padding:2px 6px;border-radius:4px;font-weight:700;">Hydro-Met Forecasting</span>
+        </div>
+        <div style="display:flex;gap:6px;flex-shrink:0;">
+          <button onclick="copyHotlineNumber('(02) 8284-0800', this)" style="border:1px solid #cbd5e1;background:#f8fafc;padding:6px 10px;border-radius:8px;font-size:0.75rem;cursor:pointer;"><i class="fas fa-copy"></i></button>
+          <a href="tel:0282840800" style="background:#0891b2;color:#fff;padding:6px 12px;border-radius:8px;font-size:0.75rem;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:5px;"><i class="fas fa-phone"></i> Call</a>
+        </div>
+      </div>
+
+      <!-- PHIVOLCS Volcano & Earthquake -->
+      <div class="hotline-item-card" data-cat="disaster" style="background:#fff;border:1px solid var(--border);border-left:4px solid #7c3aed;border-radius:10px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px;">
+        <div style="min-width:0;">
+          <div style="font-size:0.88rem;font-weight:800;color:var(--text);">PHIVOLCS Seismology</div>
+          <div style="font-size:0.73rem;color:var(--muted);">(02) 8426-1468</div>
+          <span style="font-size:0.68rem;background:#ede9fe;color:#5b21b6;padding:2px 6px;border-radius:4px;font-weight:700;">Earthquake & Tsunami Alert</span>
+        </div>
+        <div style="display:flex;gap:6px;flex-shrink:0;">
+          <button onclick="copyHotlineNumber('(02) 8426-1468', this)" style="border:1px solid #cbd5e1;background:#f8fafc;padding:6px 10px;border-radius:8px;font-size:0.75rem;cursor:pointer;"><i class="fas fa-copy"></i></button>
+          <a href="tel:0284261468" style="background:#7c3aed;color:#fff;padding:6px 12px;border-radius:8px;font-size:0.75rem;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:5px;"><i class="fas fa-phone"></i> Call</a>
+        </div>
+      </div>
+
+      <!-- DOH Health Emergency -->
+      <div class="hotline-item-card" data-cat="medical" style="background:#fff;border:1px solid var(--border);border-left:4px solid #059669;border-radius:10px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px;">
+        <div style="min-width:0;">
+          <div style="font-size:0.88rem;font-weight:800;color:var(--text);">DOH Health Emergency (HEMB)</div>
+          <div style="font-size:0.73rem;color:var(--muted);">(02) 8651-7800</div>
+          <span style="font-size:0.68rem;background:#d1fae5;color:#065f46;padding:2px 6px;border-radius:4px;font-weight:700;">National Hospital Referral</span>
+        </div>
+        <div style="display:flex;gap:6px;flex-shrink:0;">
+          <button onclick="copyHotlineNumber('(02) 8651-7800', this)" style="border:1px solid #cbd5e1;background:#f8fafc;padding:6px 10px;border-radius:8px;font-size:0.75rem;cursor:pointer;"><i class="fas fa-copy"></i></button>
+          <a href="tel:0286517800" style="background:#059669;color:#fff;padding:6px 12px;border-radius:8px;font-size:0.75rem;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:5px;"><i class="fas fa-phone"></i> Call</a>
+        </div>
+      </div>
+
+      <!-- Meralco Emergency -->
+      <div class="hotline-item-card" data-cat="utilities" style="background:#fff;border:1px solid var(--border);border-left:4px solid #f59e0b;border-radius:10px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px;">
+        <div style="min-width:0;">
+          <div style="font-size:0.88rem;font-weight:800;color:var(--text);">Meralco 24/7 Power Outage</div>
+          <div style="font-size:0.73rem;color:var(--muted);">16211 / (02) 16211</div>
+          <span style="font-size:0.68rem;background:#fef3c7;color:#92400e;padding:2px 6px;border-radius:4px;font-weight:700;">Downed Line & Transformer Hazard</span>
+        </div>
+        <div style="display:flex;gap:6px;flex-shrink:0;">
+          <button onclick="copyHotlineNumber('16211', this)" style="border:1px solid #cbd5e1;background:#f8fafc;padding:6px 10px;border-radius:8px;font-size:0.75rem;cursor:pointer;"><i class="fas fa-copy"></i></button>
+          <a href="tel:16211" style="background:#f59e0b;color:#111827;padding:6px 12px;border-radius:8px;font-size:0.75rem;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:5px;"><i class="fas fa-phone"></i> Call</a>
+        </div>
+      </div>
+
+      <!-- Maynilad Water -->
+      <div class="hotline-item-card" data-cat="utilities" style="background:#fff;border:1px solid var(--border);border-left:4px solid #0284c7;border-radius:10px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px;">
+        <div style="min-width:0;">
+          <div style="font-size:0.88rem;font-weight:800;color:var(--text);">Maynilad Water Tanker Dispatch</div>
+          <div style="font-size:0.73rem;color:var(--muted);">1626 / 1-800-1000-WATER</div>
+          <span style="font-size:0.68rem;background:#e0f2fe;color:#0369a1;padding:2px 6px;border-radius:4px;font-weight:700;">Emergency Potable Water</span>
+        </div>
+        <div style="display:flex;gap:6px;flex-shrink:0;">
+          <button onclick="copyHotlineNumber('1626', this)" style="border:1px solid #cbd5e1;background:#f8fafc;padding:6px 10px;border-radius:8px;font-size:0.75rem;cursor:pointer;"><i class="fas fa-copy"></i></button>
+          <a href="tel:1626" style="background:#0284c7;color:#fff;padding:6px 12px;border-radius:8px;font-size:0.75rem;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:5px;"><i class="fas fa-phone"></i> Call</a>
+        </div>
+      </div>
+
+    </div>
   </div>
 </div>
 

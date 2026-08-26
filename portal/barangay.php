@@ -353,6 +353,7 @@ tr:hover td{background:#fafafa;}
         <button onclick="openEvacModal()" style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;background:#f0fdf4;border:1px solid #86efac;color:#166534;border-radius:20px;font-size:0.72rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;transition:all 0.15s;" onmouseover="this.style.background='#dcfce7'" onmouseout="this.style.background='#f0fdf4'"><i class="fas fa-person-shelter"></i> Evac Centers (3 Active)</button>
         <button onclick="openReliefModal()" style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;background:#eff6ff;border:1px solid #bfdbfe;color:#1d4ed8;border-radius:20px;font-size:0.72rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;transition:all 0.15s;" onmouseover="this.style.background='#dbeafe'" onmouseout="this.style.background='#eff6ff'"><i class="fas fa-boxes-stacked"></i> Relief Inventory</button>
         <button onclick="openBroadcastModal()" style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;background:#fef2f2;border:1px solid #fecaca;color:#dc2626;border-radius:20px;font-size:0.72rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;transition:all 0.15s;" onmouseover="this.style.background='#fee2e2'" onmouseout="this.style.background='#fef2f2'"><i class="fas fa-bullhorn"></i> Mass Broadcast</button>
+        <button onclick="openVulnerableModal()" style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;background:#fdf4ff;border:1px solid #f0abfc;color:#86198f;border-radius:20px;font-size:0.72rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;transition:all 0.15s;" onmouseover="this.style.background='#fae8ff'" onmouseout="this.style.background='#fdf4ff'"><i class="fas fa-person-cane"></i> Vulnerable Registry</button>
         <span class="badge-brgy"><i class="fas fa-house-flag"></i>&nbsp; Barangay Official</span>
       </div>
   </div>
@@ -1242,6 +1243,76 @@ document.getElementById('contactModal').addEventListener('click',function(e){if(
   </div>
 </div>
 
+<!-- VULNERABLE RESIDENTS & HIGH-RISK HOUSEHOLDS REGISTRY MODAL -->
+<div class="modal-bg" id="vulnerableModal">
+  <div class="modal" style="max-width:680px;">
+    <div class="modal-header">
+      <h3><i class="fas fa-person-cane" style="color:#86198f;margin-right:6px;"></i>Barangay Vulnerable Sector & High-Risk Registry</h3>
+      <button class="modal-close" onclick="closeVulnerableModal()"><i class="fas fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <div style="background:#fdf4ff;border:1px solid #f0abfc;border-radius:10px;padding:10px 14px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">
+        <div style="font-size:0.78rem;color:#701a75;">
+          <strong>Priority Assistance Protocol:</strong> Track residents requiring specialized evacuation assistance (PWDs, non-ambulatory seniors, oxygen-dependent patients, and infants).
+        </div>
+        <span style="font-size:0.72rem;background:#fae8ff;color:#86198f;padding:3px 9px;border-radius:20px;font-weight:800;border:1px solid #e879f9;">4 Registered</span>
+      </div>
+
+      <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
+        <button class="vuln-tab-btn" onclick="filterVulnResidents('all', this)" style="padding:4px 10px;border-radius:6px;border:1px solid var(--border);background:var(--green);color:#fff;font-size:0.74rem;font-weight:700;cursor:pointer;">All Puroks</button>
+        <button class="vuln-tab-btn" onclick="filterVulnResidents('Purok 1', this)" style="padding:4px 10px;border-radius:6px;border:1px solid var(--border);background:#fff;color:var(--muted);font-size:0.74rem;font-weight:700;cursor:pointer;">Purok 1</button>
+        <button class="vuln-tab-btn" onclick="filterVulnResidents('Purok 2', this)" style="padding:4px 10px;border-radius:6px;border:1px solid var(--border);background:#fff;color:var(--muted);font-size:0.74rem;font-weight:700;cursor:pointer;">Purok 2</button>
+        <button class="vuln-tab-btn" onclick="filterVulnResidents('Purok 3', this)" style="padding:4px 10px;border-radius:6px;border:1px solid var(--border);background:#fff;color:var(--muted);font-size:0.74rem;font-weight:700;cursor:pointer;">Purok 3</button>
+        <button class="vuln-tab-btn" onclick="filterVulnResidents('Purok 4', this)" style="padding:4px 10px;border-radius:6px;border:1px solid var(--border);background:#fff;color:var(--muted);font-size:0.74rem;font-weight:700;cursor:pointer;">Purok 4</button>
+      </div>
+
+      <div class="table-wrap" style="max-height:45vh;overflow-y:auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>Resident</th>
+              <th>Purok / Zone</th>
+              <th>Vulnerability / Medical</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="vulnTableBody">
+            <tr class="vuln-row-item" data-purok="Purok 1">
+              <td><strong>Maria Santos</strong><div style="font-size:0.72rem;color:var(--muted);">House #14, Riverside</div></td>
+              <td><span style="background:#f1f5f9;padding:2px 6px;border-radius:4px;font-size:0.72rem;font-weight:600;">Purok 1</span></td>
+              <td><span style="background:#fef2f2;color:#991b1b;padding:2px 6px;border-radius:4px;font-size:0.72rem;font-weight:700;">Elderly (78yo) & Bedridden</span></td>
+              <td><span id="vuln_status_1" style="background:#fef2f2;color:#dc2626;padding:2px 8px;border-radius:12px;font-size:0.7rem;font-weight:700;">Needs Assistance</span></td>
+              <td><button onclick="toggleVulnStatus(1, this)" style="padding:4px 8px;background:#f0fdf4;border:1px solid #86efac;color:#166534;border-radius:6px;font-size:0.72rem;font-weight:700;cursor:pointer;">Mark Safe</button></td>
+            </tr>
+            <tr class="vuln-row-item" data-purok="Purok 3">
+              <td><strong>Danilo Cruz</strong><div style="font-size:0.72rem;color:var(--muted);">Blk 4 Lot 2, Lower Zone</div></td>
+              <td><span style="background:#f1f5f9;padding:2px 6px;border-radius:4px;font-size:0.72rem;font-weight:600;">Purok 3</span></td>
+              <td><span style="background:#eff6ff;color:#1d4ed8;padding:2px 6px;border-radius:4px;font-size:0.72rem;font-weight:700;">Wheelchair / Dialysis</span></td>
+              <td><span id="vuln_status_2" style="background:#f0fdf4;color:#16a34a;padding:2px 8px;border-radius:12px;font-size:0.7rem;font-weight:700;">Evacuated & Safe</span></td>
+              <td><button onclick="toggleVulnStatus(2, this)" style="padding:4px 8px;background:#f8fafc;border:1px solid var(--border);color:var(--text);border-radius:6px;font-size:0.72rem;font-weight:700;cursor:pointer;">Reset</button></td>
+            </tr>
+            <tr class="vuln-row-item" data-purok="Purok 2">
+              <td><strong>Elena Reyes</strong><div style="font-size:0.72rem;color:var(--muted);">House #8, Alley 3</div></td>
+              <td><span style="background:#f1f5f9;padding:2px 6px;border-radius:4px;font-size:0.72rem;font-weight:600;">Purok 2</span></td>
+              <td><span style="background:#fdf4ff;color:#86198f;padding:2px 6px;border-radius:4px;font-size:0.72rem;font-weight:700;">Infant (3 mos) & Mother</span></td>
+              <td><span id="vuln_status_3" style="background:#f0fdf4;color:#16a34a;padding:2px 8px;border-radius:12px;font-size:0.7rem;font-weight:700;">Evacuated & Safe</span></td>
+              <td><button onclick="toggleVulnStatus(3, this)" style="padding:4px 8px;background:#f8fafc;border:1px solid var(--border);color:var(--text);border-radius:6px;font-size:0.72rem;font-weight:700;cursor:pointer;">Reset</button></td>
+            </tr>
+            <tr class="vuln-row-item" data-purok="Purok 4">
+              <td><strong>Ricardo Gomez</strong><div style="font-size:0.72rem;color:var(--muted);">House #31, Creek Side</div></td>
+              <td><span style="background:#f1f5f9;padding:2px 6px;border-radius:4px;font-size:0.72rem;font-weight:600;">Purok 4</span></td>
+              <td><span style="background:#fff7ed;color:#c2410c;padding:2px 6px;border-radius:4px;font-size:0.72rem;font-weight:700;">Oxygen Concentrator Dep.</span></td>
+              <td><span id="vuln_status_4" style="background:#fef2f2;color:#dc2626;padding:2px 8px;border-radius:12px;font-size:0.7rem;font-weight:700;">Needs Assistance</span></td>
+              <td><button onclick="toggleVulnStatus(4, this)" style="padding:4px 8px;background:#f0fdf4;border:1px solid #86efac;color:#166534;border-radius:6px;font-size:0.72rem;font-weight:700;cursor:pointer;">Mark Safe</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
 function openEvacModal(){ document.getElementById('evacModal').classList.add('show'); }
 function closeEvacModal(){ document.getElementById('evacModal').classList.remove('show'); }
@@ -1277,6 +1348,52 @@ function sendMassBroadcast(){
   if(!msg){ showToast('Please enter an announcement message.', 'error'); return; }
   closeBroadcastModal();
   showToast('Emergency Mass Broadcast transmitted across 2,450 registered resident endpoints and PA sirens.', 'success');
+}
+
+function openVulnerableModal(){ document.getElementById('vulnerableModal').classList.add('show'); }
+function closeVulnerableModal(){ document.getElementById('vulnerableModal').classList.remove('show'); }
+document.getElementById('vulnerableModal').addEventListener('click',function(e){if(e.target===this)closeVulnerableModal();});
+
+function filterVulnResidents(purok, btn){
+  document.querySelectorAll('.vuln-tab-btn').forEach(b=>{
+    b.style.background='#fff';
+    b.style.color='var(--muted)';
+  });
+  if(btn){
+    btn.style.background='var(--green)';
+    btn.style.color='#fff';
+  }
+  document.querySelectorAll('.vuln-row-item').forEach(row=>{
+    if(purok==='all' || row.getAttribute('data-purok')===purok){
+      row.style.display='';
+    } else {
+      row.style.display='none';
+    }
+  });
+}
+
+function toggleVulnStatus(id, btn){
+  const el = document.getElementById(`vuln_status_${id}`);
+  if(!el) return;
+  if(el.textContent.includes('Needs')){
+    el.textContent = 'Evacuated & Safe';
+    el.style.background = '#f0fdf4';
+    el.style.color = '#16a34a';
+    btn.textContent = 'Reset';
+    btn.style.background = '#f8fafc';
+    btn.style.borderColor = 'var(--border)';
+    btn.style.color = 'var(--text)';
+    showToast('Resident safety status marked as Evacuated & Safe.', 'success');
+  } else {
+    el.textContent = 'Needs Assistance';
+    el.style.background = '#fef2f2';
+    el.style.color = '#dc2626';
+    btn.textContent = 'Mark Safe';
+    btn.style.background = '#f0fdf4';
+    btn.style.borderColor = '#86efac';
+    btn.style.color = '#166534';
+    showToast('Resident status updated to Needs Assistance.', 'info');
+  }
 }
 </script>
 <?= csrf_script() ?>
