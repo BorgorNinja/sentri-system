@@ -307,6 +307,8 @@ tr:hover td{background:#fafafa;}
  .topbar-actions{display:flex !important;align-items:center !important;gap:6px !important;overflow-x:auto !important;padding-bottom:4px !important;flex-shrink:0 !important;min-height:32px !important;-webkit-overflow-scrolling:touch;scrollbar-width:none;width:100% !important;flex-wrap:nowrap !important;}
  .topbar-actions::-webkit-scrollbar{display:none;}
  .topbar-actions button, .topbar-actions .resp-status-picker{white-space:nowrap !important;flex-shrink:0 !important;font-size:0.72rem !important;padding:5px 10px !important;}
+ .profile-grid-wrap,[style*="grid-template-columns:300px"]{grid-template-columns:1fr !important;}
+ .resp-profile-grid{grid-template-columns:1fr !important;}
 }
 @media(max-width:860px){body.sidebar-open .main{display:none;}body.sidebar-open .overlay{z-index:1190;}}
 @media(max-width:600px){
@@ -728,7 +730,7 @@ tr:hover td{background:#fafafa;}
  .rpf-toast.success{background:#f0fdf4;color:#166534;border:1px solid #bbf7d0;}
  .rpf-toast.error{background:#fef2f2;color:#991b1b;border:1px solid #fecaca;}
  </style>
- <div style="display:grid;grid-template-columns:300px 1fr;gap:18px;align-items:start;">
+ <div class="profile-grid-wrap" style="display:grid;grid-template-columns:300px 1fr;gap:18px;align-items:start;">
  <!-- Identity card -->
  <div class="card" style="padding:22px;text-align:center;">
  <div style="width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,#991b1b,#450a0a);display:flex;align-items:center;justify-content:center;font-size:1.5rem;font-weight:800;color:#fca5a5;margin:0 auto 12px;border:3px solid rgba(239,68,68,0.35);"><?= strtoupper(substr($fname,0,1)) ?></div>
