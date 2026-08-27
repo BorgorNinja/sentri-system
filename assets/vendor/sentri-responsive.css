@@ -6,32 +6,46 @@
   .main { margin-left: 0 !important; width: 100% !important; min-width: 0 !important; }
   .ham-btn { display: inline-flex !important; align-items: center; justify-content: center; }
   .toggle-btn { display: inline-flex !important; align-items: center; justify-content: center; }
-  .content { padding: 16px !important; width: 100% !important; min-width: 0 !important; }
-  .topbar { padding: 12px 16px !important; gap: 10px; }
-  .topbar-right, .right-top { min-width: 0; }
-  .topbar-right > *:not(.topbar-avatar), .right-top > .gps-chip { max-width: 100%; }
+  .content { padding: 14px !important; width: 100% !important; min-width: 0 !important; }
+  .topbar { padding: 10px 14px !important; gap: 8px !important; display: flex !important; align-items: center !important; justify-content: space-between !important; width: 100% !important; box-sizing: border-box !important; }
+  .topbar-left { min-width: 0 !important; flex: 1 1 auto !important; display: flex !important; align-items: center !important; gap: 8px !important; }
+  .topbar h1 { font-size: .92rem !important; display: flex !important; align-items: center !important; gap: 6px !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; min-width: 0 !important; margin: 0 !important; line-height: 1.2 !important; }
+  .topbar h1 i, .topbar h1 svg { flex-shrink: 0 !important; }
+  .topbar h1 span { white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; min-width: 0 !important; }
+  .topbar-right, .right-top { min-width: 0 !important; flex-shrink: 0 !important; display: flex !important; align-items: center !important; gap: 6px !important; }
+  .topbar-name, .user-name { display: none !important; }
+  #gpsLabel { display: none !important; }
+  .gps-chip { padding: 6px !important; border-radius: 50% !important; min-width: 32px !important; height: 32px !important; justify-content: center !important; flex-shrink: 0 !important; box-sizing: border-box !important; }
+  .post-btn span { display: none !important; }
+  .post-btn { padding: 7px 10px !important; border-radius: 8px !important; flex-shrink: 0 !important; min-height: 32px !important; }
+  .avatar { width: 32px !important; height: 32px !important; font-size: .82rem !important; }
+  .user-info { padding: 2px !important; flex-shrink: 0 !important; }
   .stats-row { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 10px !important; }
   .profile-grid { grid-template-columns: 1fr !important; }
   .detail-meta-grid { grid-template-columns: 1fr !important; }
-  #incidentMap { height: 420px !important; }
+  #incidentMap { height: 360px !important; }
   .panel { max-width: 100% !important; min-width: 0 !important; }
   .table-wrap { max-width: 100%; overflow-x: auto !important; -webkit-overflow-scrolling: touch; }
   .filter-bar { align-items: stretch !important; }
   .filter-bar input, .filter-bar select { min-width: 0 !important; width: 100% !important; }
   .modal { max-width: calc(100vw - 24px) !important; width: calc(100vw - 24px) !important; }
+  .weather-flash-banner { flex-direction: column !important; align-items: stretch !important; gap: 10px !important; padding: 12px 14px !important; }
+  .weather-flash-banner > div:first-child { flex-direction: column !important; align-items: flex-start !important; gap: 6px !important; }
+  .weather-flash-banner span[style*="white-space:nowrap"] { white-space: normal !important; word-break: break-word !important; }
+  .weather-flash-banner button { width: 100% !important; justify-content: center !important; padding: 8px 12px !important; }
+  .emergency-quick-bar { padding: 14px 12px !important; flex-direction: column !important; align-items: stretch !important; gap: 12px !important; }
+  .emergency-quick-bar > div:last-child { display: grid !important; grid-template-columns: 1fr 1fr !important; gap: 6px !important; width: 100% !important; }
+  .emergency-quick-bar > div:last-child a, .emergency-quick-bar > div:last-child button { justify-content: center !important; text-align: center !important; width: 100% !important; padding: 8px 6px !important; font-size: 0.72rem !important; box-sizing: border-box !important; }
 }
 
 @media (max-width: 600px) {
-  .topbar { padding: 10px 12px !important; }
-  .topbar h1 { font-size: .95rem !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .topbar-right, .right-top { gap: 5px !important; }
-  .topbar-name, .user-name { display: none !important; }
+  .topbar { padding: 8px 12px !important; }
   .content { padding: 12px !important; }
   .stats-row { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 8px !important; margin-bottom: 16px !important; }
-  .stat-card { padding: 13px !important; gap: 9px !important; min-width: 0 !important; }
-  .stat-icon { width: 40px !important; height: 40px !important; font-size: 1rem !important; }
-  .stat-num { font-size: 1.35rem !important; }
-  .stat-label { font-size: .68rem !important; }
+  .stat-card { padding: 12px 10px !important; gap: 8px !important; min-width: 0 !important; }
+  .stat-icon { width: 36px !important; height: 36px !important; font-size: 1rem !important; border-radius: 9px !important; }
+  .stat-card strong, .stat-num { font-size: 1.15rem !important; }
+  .stat-card span, .stat-label { font-size: .68rem !important; }
   .panel { padding: 14px !important; border-radius: 12px !important; margin-bottom: 14px !important; }
   .panel-header { align-items: flex-start !important; }
   .tab-nav { overflow-x: auto !important; -webkit-overflow-scrolling: touch; }
@@ -39,10 +53,10 @@
   .filter-bar { flex-direction: column !important; }
   .filter-bar input, .filter-bar select { flex: none !important; }
   .severity-row { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 6px !important; }
-  .sev-btn { padding: 12px 4px !important; border-width: 2px !important; }
+  .sev-btn { padding: 10px 4px !important; border-width: 2px !important; }
   .sev-btn i { font-size: 1.3rem !important; }
   .sev-btn span { font-size: .68rem !important; }
-  .cat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 7px !important; }
+  .cat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 6px !important; }
   .cat-opt { min-width: 0 !important; padding: 10px 4px !important; }
   .loc-auto-row { align-items: stretch !important; }
   .locate-btn-big, .map-pick-btn { width: 100% !important; justify-content: center !important; }
@@ -70,5 +84,4 @@
   .stats-row { grid-template-columns: 1fr !important; }
   .severity-row { grid-template-columns: 1fr !important; }
   .sev-btn { flex-direction: row !important; justify-content: center !important; gap: 8px !important; }
-  .topbar h1 { max-width: 145px !important; }
 }
