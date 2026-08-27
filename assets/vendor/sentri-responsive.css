@@ -1,13 +1,17 @@
 /* SenTri mobile safety net. Loaded from fonts.css so every portal gets the same responsive fixes. */
 @media (max-width: 900px) {
   body { overflow-x: hidden !important; }
-  .sidebar { transform: translateX(calc(-1 * var(--sidebar-w))) !important; }
-  .sidebar.mobile-open { transform: translateX(0) !important; }
+  .sidebar { transform: translateX(-100%) !important; }
+  .sidebar.mobile-open, .sidebar.open { transform: translateX(0) !important; }
   .main { margin-left: 0 !important; width: 100% !important; min-width: 0 !important; }
   .ham-btn { display: inline-flex !important; align-items: center; justify-content: center; }
   .toggle-btn { display: inline-flex !important; align-items: center; justify-content: center; }
   .content { padding: 14px !important; width: 100% !important; min-width: 0 !important; }
-  .topbar { padding: 10px 14px !important; gap: 8px !important; display: flex !important; align-items: center !important; justify-content: space-between !important; width: 100% !important; box-sizing: border-box !important; }
+  .topbar { padding: 10px 14px 8px !important; gap: 8px !important; width: 100% !important; height: auto !important; min-height: unset !important; flex-shrink: 0 !important; box-sizing: border-box !important; }
+  .topbar-header-row { display: flex !important; align-items: center !important; justify-content: space-between !important; width: 100% !important; gap: 8px !important; flex-shrink: 0 !important; }
+  .topbar-actions { display: flex !important; align-items: center !important; gap: 6px !important; overflow-x: auto !important; padding-bottom: 2px !important; width: 100% !important; flex-wrap: nowrap !important; flex-shrink: 0 !important; min-height: 32px !important; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+  .topbar-actions::-webkit-scrollbar { display: none; }
+  .topbar-actions > * { white-space: nowrap !important; flex-shrink: 0 !important; }
   .topbar-left { min-width: 0 !important; flex: 1 1 auto !important; display: flex !important; align-items: center !important; gap: 8px !important; }
   .topbar h1 { font-size: .92rem !important; display: flex !important; align-items: center !important; gap: 6px !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; min-width: 0 !important; margin: 0 !important; line-height: 1.2 !important; }
   .topbar h1 i, .topbar h1 svg { flex-shrink: 0 !important; }

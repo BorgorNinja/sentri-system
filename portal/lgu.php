@@ -517,11 +517,11 @@ tr:hover td{background:#fafafa;}
  .main{margin-left:0;}
  .ham-btn{display:flex;}
  .content{padding:14px;}
- .topbar{padding:10px 14px 8px;height:auto;min-height:56px;flex-direction:column;align-items:stretch;gap:8px;}
- .topbar-header-row{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;}
- .topbar-actions{display:flex;align-items:center;gap:6px;overflow-x:auto;padding-bottom:4px;-webkit-overflow-scrolling:touch;scrollbar-width:none;width:100%;flex-wrap:nowrap;}
+ .topbar{padding:10px 14px 8px !important;height:auto !important;min-height:56px !important;display:flex !important;flex-direction:column !important;align-items:stretch !important;gap:8px !important;}
+ .topbar-header-row{display:flex !important;align-items:center !important;justify-content:space-between !important;gap:8px !important;width:100% !important;flex-shrink:0 !important;}
+ .topbar-actions{display:flex !important;align-items:center !important;gap:6px !important;overflow-x:auto !important;padding-bottom:4px !important;flex-shrink:0 !important;min-height:32px !important;-webkit-overflow-scrolling:touch;scrollbar-width:none;width:100% !important;flex-wrap:nowrap !important;}
  .topbar-actions::-webkit-scrollbar{display:none;}
- .topbar-actions button{white-space:nowrap;flex-shrink:0;font-size:0.72rem;padding:5px 10px;}
+ .topbar-actions button{white-space:nowrap !important;flex-shrink:0 !important;font-size:0.72rem !important;padding:5px 10px !important;}
  .stat-grid{grid-template-columns:1fr 1fr;gap:10px;}
  .stat-card{padding:12px 14px;gap:10px;}
  .stat-icon{width:38px;height:38px;font-size:1rem;border-radius:10px;}
