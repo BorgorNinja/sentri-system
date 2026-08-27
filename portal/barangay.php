@@ -163,13 +163,15 @@ body{background:var(--bg);color:var(--text);display:flex;min-height:100vh;overfl
 /* MAIN */
 .main{margin-left:var(--sidebar-w);flex:1;display:flex;flex-direction:column;min-width:0;min-height:100vh;}
 /* TOPBAR */
-.topbar{background:#fff;border-bottom:4px solid var(--green);padding:0 24px;height:64px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 10px rgba(0,0,0,0.07);}
+.topbar{background:#fff;border-bottom:4px solid var(--green);padding:0 24px;min-height:64px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 10px rgba(0,0,0,0.07);gap:10px;}
+.topbar-header-row{display:contents;}
 .topbar-left{display:flex;align-items:center;gap:12px;min-width:0;}
 .ham-btn{background:none;border:none;font-size:1.15rem;color:var(--muted);cursor:pointer;padding:7px;border-radius:8px;display:none;flex-shrink:0;}
 .ham-btn:hover{background:#f3f4f6;}
 .page-title{font-size:1rem;font-weight:800;color:var(--green-dark);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .page-sub{font-size:0.72rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .badge-brgy{background:#f0fdf4;color:var(--green);font-size:0.71rem;font-weight:700;padding:5px 12px;border-radius:20px;border:1px solid #bbf7d0;white-space:nowrap;flex-shrink:0;}
+.topbar-actions{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
 /* CONTENT */
 .content{padding:22px 24px;flex:1;}
 /* STATS */
@@ -286,8 +288,23 @@ tr:hover td{background:#fafafa;}
 .overlay.show{display:block;}
 /* RESPONSIVE */
 @media(max-width:1000px){.stat-grid{grid-template-columns:repeat(2,1fr);}}
-@media(max-width:860px){.sidebar{transform:translateX(-100%);}.sidebar.open{transform:translateX(0);}.sb-close{display:flex;}.main{margin-left:0;}.ham-btn{display:flex;}.content{padding:16px;}.topbar{padding:0 16px;}}
-@media(max-width:480px){.stat-grid{grid-template-columns:1fr 1fr;}.badge-brgy{display:none;}.page-sub{display:none;}}
+@media(max-width:860px){
+ .sidebar{transform:translateX(-100%);}.sidebar.open{transform:translateX(0);}.sb-close{display:flex;}.main{margin-left:0;}.ham-btn{display:flex;}.content{padding:14px;}
+ .topbar{padding:10px 14px 8px;height:auto;min-height:56px;flex-direction:column;align-items:stretch;gap:8px;}
+ .topbar-header-row{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;}
+ .topbar-actions{display:flex;align-items:center;gap:6px;overflow-x:auto;padding-bottom:4px;-webkit-overflow-scrolling:touch;scrollbar-width:none;width:100%;flex-wrap:nowrap;}
+ .topbar-actions::-webkit-scrollbar{display:none;}
+ .topbar-actions button{white-space:nowrap;flex-shrink:0;font-size:0.72rem;padding:5px 10px;}
+ .stat-grid{grid-template-columns:1fr 1fr;gap:10px;}
+ .stat-card{padding:12px 14px;gap:10px;}
+ .stat-icon{width:38px;height:38px;font-size:1rem;border-radius:10px;}
+ .stat-num{font-size:1.3rem;}
+}
+@media(max-width:480px){
+ .stat-grid{grid-template-columns:1fr 1fr;gap:8px;}
+ .page-sub{display:none;}
+ .badge-brgy{font-size:0.65rem;padding:4px 8px;}
+}
 </style>
 </head>
 <body>
@@ -342,21 +359,23 @@ tr:hover td{background:#fafafa;}
 
 <div class="main">
  <div class="topbar">
- <div class="topbar-left">
- <button class="ham-btn" onclick="openSidebar()"><i class="fas fa-bars"></i></button>
- <div style="min-width:0;">
- <div class="page-title"><?= htmlspecialchars($page_titles[$view] ?? 'Barangay Portal') ?></div>
- <div class="page-sub"><?= htmlspecialchars($org) ?><?= $city ? ' - '.htmlspecialchars($city) : '' ?></div>
- </div>
- </div>
- <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
- <button onclick="openEvacModal()" style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;background:#f0fdf4;border:1px solid #86efac;color:#166534;border-radius:20px;font-size:0.72rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;transition:all 0.15s;" onmouseover="this.style.background='#dcfce7'" onmouseout="this.style.background='#f0fdf4'"><i class="fas fa-person-shelter"></i> Evac Centers (3 Active)</button>
- <button onclick="openReliefModal()" style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;background:#eff6ff;border:1px solid #bfdbfe;color:#1d4ed8;border-radius:20px;font-size:0.72rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;transition:all 0.15s;" onmouseover="this.style.background='#dbeafe'" onmouseout="this.style.background='#eff6ff'"><i class="fas fa-boxes-stacked"></i> Relief Inventory</button>
- <button onclick="openReliefClaimsModal()" style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;background:#fefce8;border:1px solid #fde047;color:#854d0e;border-radius:20px;font-size:0.72rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;transition:all 0.15s;" onmouseover="this.style.background='#fef9c3'" onmouseout="this.style.background='#fefce8'"><i class="fas fa-hand-holding-hand"></i> Relief Claims</button>
- <button onclick="openBroadcastModal()" style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;background:#fef2f2;border:1px solid #fecaca;color:#dc2626;border-radius:20px;font-size:0.72rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;transition:all 0.15s;" onmouseover="this.style.background='#fee2e2'" onmouseout="this.style.background='#fef2f2'"><i class="fas fa-bullhorn"></i> Mass Broadcast</button>
- <button onclick="openVulnerableModal()" style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;background:#fdf4ff;border:1px solid #f0abfc;color:#86198f;border-radius:20px;font-size:0.72rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;transition:all 0.15s;" onmouseover="this.style.background='#fae8ff'" onmouseout="this.style.background='#fdf4ff'"><i class="fas fa-person-cane"></i> Vulnerable Registry</button>
- <span class="badge-brgy"><i class="fas fa-house-flag"></i>&nbsp; Barangay Official</span>
- </div>
+  <div class="topbar-header-row">
+   <div class="topbar-left">
+    <button class="ham-btn" onclick="openSidebar()"><i class="fas fa-bars"></i></button>
+    <div style="min-width:0;">
+     <div class="page-title"><?= htmlspecialchars($page_titles[$view] ?? 'Barangay Portal') ?></div>
+     <div class="page-sub"><?= htmlspecialchars($org) ?><?= $city ? ' - '.htmlspecialchars($city) : '' ?></div>
+    </div>
+   </div>
+   <span class="badge-brgy"><i class="fas fa-house-flag"></i>&nbsp; Barangay Official</span>
+  </div>
+  <div class="topbar-actions">
+   <button onclick="openEvacModal()" style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;background:#f0fdf4;border:1px solid #86efac;color:#166534;border-radius:20px;font-size:0.72rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;transition:all 0.15s;" onmouseover="this.style.background='#dcfce7'" onmouseout="this.style.background='#f0fdf4'"><i class="fas fa-person-shelter"></i> Evac Centers (3 Active)</button>
+   <button onclick="openReliefModal()" style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;background:#eff6ff;border:1px solid #bfdbfe;color:#1d4ed8;border-radius:20px;font-size:0.72rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;transition:all 0.15s;" onmouseover="this.style.background='#dbeafe'" onmouseout="this.style.background='#eff6ff'"><i class="fas fa-boxes-stacked"></i> Relief Inventory</button>
+   <button onclick="openReliefClaimsModal()" style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;background:#fefce8;border:1px solid #fde047;color:#854d0e;border-radius:20px;font-size:0.72rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;transition:all 0.15s;" onmouseover="this.style.background='#fef9c3'" onmouseout="this.style.background='#fefce8'"><i class="fas fa-hand-holding-hand"></i> Relief Claims</button>
+   <button onclick="openBroadcastModal()" style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;background:#fef2f2;border:1px solid #fecaca;color:#dc2626;border-radius:20px;font-size:0.72rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;transition:all 0.15s;" onmouseover="this.style.background='#fee2e2'" onmouseout="this.style.background='#fef2f2'"><i class="fas fa-bullhorn"></i> Mass Broadcast</button>
+   <button onclick="openVulnerableModal()" style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;background:#fdf4ff;border:1px solid #f0abfc;color:#86198f;border-radius:20px;font-size:0.72rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;transition:all 0.15s;" onmouseover="this.style.background='#fae8ff'" onmouseout="this.style.background='#fdf4ff'"><i class="fas fa-person-cane"></i> Vulnerable Registry</button>
+  </div>
  </div>
 
  <div class="content">

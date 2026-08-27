@@ -292,9 +292,16 @@ tr:hover td{background:#fafafa;}
 .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:1100;}
 .overlay.show{display:block;}
 /* RESPONSIVE */
-@media(max-width:860px){.sidebar{width:100dvw;max-width:100dvw;transform:translate3d(-100%,0,0);z-index:1200;left:0;right:0;}.sidebar.open{transform:translate3d(0,0,0);}.sb-close{display:flex;}.main{margin-left:0;}.ham-btn{display:flex;}.stat-row{grid-template-columns:1fr 1fr;}.content{padding:16px;}.topbar{padding:0 16px;}}
+@media(max-width:860px){
+ .sidebar{width:100dvw;max-width:100dvw;transform:translate3d(-100%,0,0);z-index:1200;left:0;right:0;}.sidebar.open{transform:translate3d(0,0,0);}.sb-close{display:flex;}.main{margin-left:0;}.ham-btn{display:flex;}.stat-row{grid-template-columns:1fr 1fr;gap:10px;}.content{padding:14px;}
+ .topbar{padding:10px 14px 8px;height:auto;min-height:56px;display:flex;flex-direction:column;align-items:stretch;gap:8px;}
+ .topbar-header-row{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;}
+ .topbar-actions{display:flex;align-items:center;gap:6px;overflow-x:auto;padding-bottom:4px;-webkit-overflow-scrolling:touch;scrollbar-width:none;width:100%;flex-wrap:nowrap;}
+ .topbar-actions::-webkit-scrollbar{display:none;}
+ .topbar-actions button, .topbar-actions .resp-status-picker{white-space:nowrap;flex-shrink:0;font-size:0.72rem;padding:5px 10px;}
+}
 @media(max-width:860px){body.sidebar-open .main{display:none;}body.sidebar-open .overlay{z-index:1190;}}
-@media(max-width:480px){.stat-row{grid-template-columns:1fr;}.badge-resp,.page-sub{display:none;}}
+@media(max-width:480px){.stat-row{grid-template-columns:1fr 1fr;gap:8px;}.badge-resp{font-size:0.65rem;padding:4px 8px;}.page-sub{display:none;}}
 
 /* In-app navigation modal */
 .nav-modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:2000;align-items:center;justify-content:center;}
@@ -362,38 +369,40 @@ tr:hover td{background:#fafafa;}
 </aside>
 
 <div class="main">
- <div class="topbar">
- <div class="topbar-left">
- <button class="ham-btn" onclick="openSidebar()"><i class="fas fa-bars"></i></button>
- <div style="min-width:0;">
- <div class="page-title"><?= htmlspecialchars($page_titles[$view] ?? 'Responder Portal') ?></div>
- <div class="page-sub"><?= htmlspecialchars($unit) ?><?= $area ? ' - '.htmlspecialchars($area) : '' ?></div>
- </div>
- </div>
- <div style="display:flex;align-items:center;gap:8px;margin-left:auto;flex-wrap:wrap;">
- <button type="button" id="btnTestTone" onclick="playDispatchTone()" title="Test Dispatch Acoustic Chime" style="display:inline-flex;align-items:center;gap:5px;background:#fef2f2;border:1px solid #fecaca;color:#dc2626;padding:5px 10px;border-radius:20px;font-size:0.75rem;font-weight:700;cursor:pointer;transition:all 0.2s;">
- <i class="fas fa-volume-high"></i> Tone Test
- </button>
- <button type="button" id="btnHazmat" onclick="openHazmatModal()" title="Tactical HAZMAT & Chemical Emergency Guide" style="display:inline-flex;align-items:center;gap:5px;background:#fffbeb;border:1px solid #fde68a;color:#b45309;padding:5px 10px;border-radius:20px;font-size:0.75rem;font-weight:700;cursor:pointer;transition:all 0.2s;">
- <i class="fas fa-biohazard"></i> HAZMAT ERG
- </button>
- <button type="button" id="btnSafetyCheckin" onclick="openSafetyCheckinModal()" title="Responder PPE & Hazard Exposure Check-In" style="display:inline-flex;align-items:center;gap:5px;background:#eff6ff;border:1px solid #bfdbfe;color:#1d4ed8;padding:5px 10px;border-radius:20px;font-size:0.75rem;font-weight:700;cursor:pointer;transition:all 0.2s;">
- <i class="fas fa-shield-heart"></i> Safety Check-In
- </button>
- <div class="resp-status-picker" style="display:flex;align-items:center;gap:6px;background:#f8fafc;padding:5px 10px;border-radius:20px;border:1px solid var(--border);font-size:0.75rem;font-weight:700;">
- <span id="dutyStatusDot" style="width:8px;height:8px;border-radius:50%;background:#10b981;box-shadow:0 0 6px #10b981;"></span>
- <select id="dutyStatusSel" onchange="changeDutyStatus(this.value)" style="border:none;background:transparent;font-size:0.75rem;font-weight:700;color:var(--text);outline:none;cursor:pointer;">
- <option value="available">On Duty · Ready</option>
- <option value="en_route">Dispatched · En Route</option>
- <option value="on_scene">At Scene · Engaged</option>
- <option value="off_duty">Off Duty</option>
- </select>
- </div>
- <span class="badge-resp" style="color:<?= $unit_color ?>;border-color:<?= $unit_color ?>;background:<?= $unit_color ?>18;">
- <i class="fas fa-truck-medical"></i>&nbsp; <?= htmlspecialchars($rtype) ?>
- </span>
- </div>
- </div>
+  <div class="topbar">
+   <div class="topbar-header-row">
+    <div class="topbar-left">
+     <button class="ham-btn" onclick="openSidebar()"><i class="fas fa-bars"></i></button>
+     <div style="min-width:0;">
+      <div class="page-title"><?= htmlspecialchars($page_titles[$view] ?? 'Responder Portal') ?></div>
+      <div class="page-sub"><?= htmlspecialchars($unit) ?><?= $area ? ' - '.htmlspecialchars($area) : '' ?></div>
+     </div>
+    </div>
+    <span class="badge-resp" style="color:<?= $unit_color ?>;border-color:<?= $unit_color ?>;background:<?= $unit_color ?>18;">
+     <i class="fas fa-truck-medical"></i>&nbsp; <?= htmlspecialchars($rtype) ?>
+    </span>
+   </div>
+   <div class="topbar-actions">
+    <button type="button" id="btnTestTone" onclick="playDispatchTone()" title="Test Dispatch Acoustic Chime" style="display:inline-flex;align-items:center;gap:5px;background:#fef2f2;border:1px solid #fecaca;color:#dc2626;padding:5px 10px;border-radius:20px;font-size:0.72rem;font-weight:700;cursor:pointer;transition:all 0.2s;">
+     <i class="fas fa-volume-high"></i> Tone Test
+    </button>
+    <button type="button" id="btnHazmat" onclick="openHazmatModal()" title="Tactical HAZMAT & Chemical Emergency Guide" style="display:inline-flex;align-items:center;gap:5px;background:#fffbeb;border:1px solid #fde68a;color:#b45309;padding:5px 10px;border-radius:20px;font-size:0.72rem;font-weight:700;cursor:pointer;transition:all 0.2s;">
+     <i class="fas fa-biohazard"></i> HAZMAT ERG
+    </button>
+    <button type="button" id="btnSafetyCheckin" onclick="openSafetyCheckinModal()" title="Responder PPE & Hazard Exposure Check-In" style="display:inline-flex;align-items:center;gap:5px;background:#eff6ff;border:1px solid #bfdbfe;color:#1d4ed8;padding:5px 10px;border-radius:20px;font-size:0.72rem;font-weight:700;cursor:pointer;transition:all 0.2s;">
+     <i class="fas fa-shield-heart"></i> Safety Check-In
+    </button>
+    <div class="resp-status-picker" style="display:flex;align-items:center;gap:6px;background:#f8fafc;padding:4px 8px;border-radius:20px;border:1px solid var(--border);font-size:0.72rem;font-weight:700;">
+     <span id="dutyStatusDot" style="width:8px;height:8px;border-radius:50%;background:#10b981;box-shadow:0 0 6px #10b981;"></span>
+     <select id="dutyStatusSel" onchange="changeDutyStatus(this.value)" style="border:none;background:transparent;font-size:0.72rem;font-weight:700;color:var(--text);outline:none;cursor:pointer;">
+      <option value="available">On Duty · Ready</option>
+      <option value="en_route">Dispatched · En Route</option>
+      <option value="on_scene">At Scene · Engaged</option>
+      <option value="off_duty">Off Duty</option>
+     </select>
+    </div>
+   </div>
+  </div>
 
  <?php if($view === 'queue' && $danger_count > 0): ?>
  <div class="alert-banner">

@@ -358,13 +358,14 @@ body{background:var(--bg);color:var(--text);display:flex;min-height:100vh;overfl
 .topbar{
  background:#fff;
  border-bottom:4px solid var(--navy);
- padding:0 24px;height:64px;
+ padding:0 24px;min-height:64px;
  display:flex;align-items:center;justify-content:space-between;
  position:sticky;top:0;z-index:100;
  box-shadow:0 2px 12px rgba(0,0,0,0.08);
  position:relative; /* needed for gov-strip */
+ gap:10px;
 }
-.topbar{position:sticky;top:0;} /* override to sticky */
+.topbar-header-row{display:contents;}
 .gov-strip{
  position:absolute;top:0;left:0;right:0;height:4px;
  background:linear-gradient(90deg,var(--navy-dark) 0%,var(--navy) 50%,var(--gold) 100%);
@@ -385,6 +386,7 @@ body{background:var(--bg);color:var(--text);display:flex;min-height:100vh;overfl
  padding:5px 12px;border-radius:20px;
  border:1px solid #bfdbfe;white-space:nowrap;flex-shrink:0;
 }
+.topbar-actions{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
 
 /* ── CONTENT ── */
 .content{padding:22px 24px;flex:1;}
@@ -514,9 +516,16 @@ tr:hover td{background:#fafafa;}
  .sb-close{display:flex;}
  .main{margin-left:0;}
  .ham-btn{display:flex;}
- .stat-grid{grid-template-columns:repeat(2,1fr);}
- .content{padding:16px;}
- .topbar{padding:0 16px;}
+ .content{padding:14px;}
+ .topbar{padding:10px 14px 8px;height:auto;min-height:56px;flex-direction:column;align-items:stretch;gap:8px;}
+ .topbar-header-row{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;}
+ .topbar-actions{display:flex;align-items:center;gap:6px;overflow-x:auto;padding-bottom:4px;-webkit-overflow-scrolling:touch;scrollbar-width:none;width:100%;flex-wrap:nowrap;}
+ .topbar-actions::-webkit-scrollbar{display:none;}
+ .topbar-actions button{white-space:nowrap;flex-shrink:0;font-size:0.72rem;padding:5px 10px;}
+ .stat-grid{grid-template-columns:1fr 1fr;gap:10px;}
+ .stat-card{padding:12px 14px;gap:10px;}
+ .stat-icon{width:38px;height:38px;font-size:1rem;border-radius:10px;}
+ .stat-num{font-size:1.3rem;}
 }
 @media(max-width:860px){body.sidebar-open .main{display:none;}body.sidebar-open .overlay{z-index:1190;}}
 @media(max-width:700px){
@@ -526,8 +535,8 @@ tr:hover td{background:#fafafa;}
  #incidentMap{height:340px;}
 }
 @media(max-width:480px){
- .stat-grid{grid-template-columns:1fr 1fr;}
- .badge-lgu{display:none;}
+ .stat-grid{grid-template-columns:1fr 1fr;gap:8px;}
+ .badge-lgu{font-size:0.65rem;padding:4px 8px;}
  .page-sub{display:none;}
  .bar-brgy{width:90px;}
  .map-stats{grid-template-columns:1fr 1fr;}
@@ -586,22 +595,24 @@ tr:hover td{background:#fafafa;}
 
 <div class="main">
 
- <!-- TOPBAR -->
- <div class="topbar">
- <div class="gov-strip"></div>
- <div class="topbar-left">
- <button class="ham-btn" onclick="openSidebar()"><i class="fas fa-bars"></i></button>
- <div style="min-width:0;">
- <div class="page-title"><?= htmlspecialchars($page_titles[$view] ?? 'LGU Portal') ?></div>
- <div class="page-sub"><?= htmlspecialchars($org) ?><?= $city ? ' - '.htmlspecialchars($city) : '' ?></div>
- </div>
- </div>
- <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
- <button onclick="openAlertLevelModal()" style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;background:#fef2f2;border:1px solid #fca5a5;color:#b91c1c;border-radius:20px;font-size:0.72rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;transition:all 0.15s;" onmouseover="this.style.background='#fee2e2'" onmouseout="this.style.background='#fef2f2'"><i class="fas fa-triangle-exclamation"></i> DRRM Alert Level</button>
- <button onclick="openMutualAidModal()" style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;background:#f0fdf4;border:1px solid #86efac;color:#166534;border-radius:20px;font-size:0.72rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;transition:all 0.15s;" onmouseover="this.style.background='#dcfce7'" onmouseout="this.style.background='#f0fdf4'"><i class="fas fa-handshake-angle"></i> ICS Mutual Aid Matrix</button>
- <span class="badge-lgu"><i class="fas fa-landmark"></i>&nbsp; LGU Official</span>
- </div>
- </div>
+  <!-- TOPBAR -->
+  <div class="topbar">
+   <div class="gov-strip"></div>
+   <div class="topbar-header-row">
+    <div class="topbar-left">
+     <button class="ham-btn" onclick="openSidebar()"><i class="fas fa-bars"></i></button>
+     <div style="min-width:0;">
+      <div class="page-title"><?= htmlspecialchars($page_titles[$view] ?? 'LGU Portal') ?></div>
+      <div class="page-sub"><?= htmlspecialchars($org) ?><?= $city ? ' - '.htmlspecialchars($city) : '' ?></div>
+     </div>
+    </div>
+    <span class="badge-lgu"><i class="fas fa-landmark"></i>&nbsp; LGU Official</span>
+   </div>
+   <div class="topbar-actions">
+    <button onclick="openAlertLevelModal()" style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;background:#fef2f2;border:1px solid #fca5a5;color:#b91c1c;border-radius:20px;font-size:0.72rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;transition:all 0.15s;" onmouseover="this.style.background='#fee2e2'" onmouseout="this.style.background='#fef2f2'"><i class="fas fa-triangle-exclamation"></i> DRRM Alert Level</button>
+    <button onclick="openMutualAidModal()" style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;background:#f0fdf4;border:1px solid #86efac;color:#166534;border-radius:20px;font-size:0.72rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;transition:all 0.15s;" onmouseover="this.style.background='#dcfce7'" onmouseout="this.style.background='#f0fdf4'"><i class="fas fa-handshake-angle"></i> ICS Mutual Aid Matrix</button>
+   </div>
+  </div>
 
  <div class="content">
 

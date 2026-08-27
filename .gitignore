@@ -1,16 +1,18 @@
-# SenTri — Git Ignore Rules
+# SenTri - Git Ignore Rules
 
-# Server / Apache logs — never commit these
-access_log
-error_log
+# Server / Apache logs - never commit these
 *.log
+logs/
+error_log
+access_log
 
-# PHP config with credentials — never commit
-config/email.php
+# PHP config with credentials - never commit
+config/db_local.php
+.env
 
-# Uploaded user files — runtime only
-uploads/reports/*
-!uploads/reports/.gitkeep
+# Uploaded user files - runtime only
+uploads/reports/
+uploads/avatars/.gitkeep
 
 # Editor and OS artifacts
 .DS_Store
