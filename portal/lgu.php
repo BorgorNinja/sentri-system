@@ -1263,7 +1263,7 @@ tr:hover td{background:#fafafa;}
  <div class="resp-stats">
  <div class="rs-card"><div class="rs-icon" style="background:#f0f7ff;color:var(--navy);"><i class="fas fa-truck-medical"></i></div><div><div style="font-size:1.3rem;font-weight:800;"><?= $total_resp ?></div><div style="font-size:0.68rem;color:var(--muted);font-weight:600;">Total Units</div></div></div>
  <div class="rs-card"><div class="rs-icon" style="background:#f0fdf4;color:#16a34a;"><i class="fas fa-circle-check"></i></div><div><div style="font-size:1.3rem;font-weight:800;"><?= $active_resp ?></div><div style="font-size:0.68rem;color:var(--muted);font-weight:600;">Approved</div></div></div>
- <div class="rs-card"><div class="rs-icon" style="background:#fef2f2;color:#dc2626;"><i class="fas fa-siren-on"></i></div><div><div style="font-size:1.3rem;font-weight:800;"><?= $on_duty ?></div><div style="font-size:0.68rem;color:var(--muted);font-weight:600;">On Active Duty</div></div></div>
+ <div class="rs-card"><div class="rs-icon" style="background:#fef2f2;color:#dc2626;"><i class="fas fa-tower-broadcast"></i></div><div><div style="font-size:1.3rem;font-weight:800;"><?= $on_duty ?></div><div style="font-size:0.68rem;color:var(--muted);font-weight:600;">On Active Duty</div></div></div>
  <div class="rs-card"><div class="rs-icon" style="background:#fffbeb;color:#d97706;"><i class="fas fa-clock"></i></div><div><div style="font-size:1.3rem;font-weight:800;"><?= $pending_resp ?></div><div style="font-size:0.68rem;color:var(--muted);font-weight:600;">Pending Approval</div></div></div>
  </div>
  <div class="card">
@@ -1297,7 +1297,7 @@ tr:hover td{background:#fafafa;}
  <div class="resp-name"><?= htmlspecialchars($r['first_name'].' '.$r['last_name']) ?></div>
  <span class="rtype-badge rtype-<?= $rtype ?>"><?= $r_labels[$rtype] ?? strtoupper($rtype) ?></span>
  <?php if(!$approved): ?><span class="pending-badge"><i class="fas fa-clock" style="margin-right:3px;"></i>Pending</span><?php endif; ?>
- <?php if($r['active_count']>0): ?><span style="background:#fef2f2;color:#dc2626;border:1px solid #fecaca;padding:3px 9px;border-radius:20px;font-size:0.7rem;font-weight:700;"><i class="fas fa-siren-on" style="margin-right:3px;"></i><?= $r['active_count'] ?> active</span><?php endif; ?>
+ <?php if($r['active_count']>0): ?><span style="background:#fef2f2;color:#dc2626;border:1px solid #fecaca;padding:3px 9px;border-radius:20px;font-size:0.7rem;font-weight:700;"><i class="fas fa-tower-broadcast" style="margin-right:3px;"></i><?= $r['active_count'] ?> active</span><?php endif; ?>
  </div>
  <div class="resp-meta">
  <?php if($r['org_name']): ?><span><i class="fas fa-building" style="margin-right:3px;"></i><?= htmlspecialchars($r['org_name']) ?></span>&ensp;<?php endif; ?>

@@ -54,6 +54,7 @@ function cq($conn,$sql,$t='',$p=[]){
 $total_active = cq($conn,"SELECT COUNT(*) FROM reports WHERE status IN('dangerous','caution') AND is_archived=0");
 $danger_count = cq($conn,"SELECT COUNT(*) FROM reports WHERE status='dangerous' AND is_archived=0");
 $caution_count = cq($conn,"SELECT COUNT(*) FROM reports WHERE status='caution' AND is_archived=0");
+$safe_count = cq($conn,"SELECT COUNT(*) FROM reports WHERE status='safe' AND is_archived=0");
 
 // Per-view data
 $queue = $assigned = $contacts = $resolved = $community_reports = [];
@@ -157,7 +158,7 @@ if ($view === 'profile') {
 }
 
 $nav_items = [
- 'queue' => ['icon'=>'fa-siren-on', 'label'=>'Dispatch Queue'],
+ 'queue' => ['icon'=>'fa-tower-broadcast', 'label'=>'Dispatch Queue'],
  'community' => ['icon'=>'fa-users', 'label'=>'Community Reports'],
  'assigned' => ['icon'=>'fa-clipboard-check', 'label'=>'My Assignments'],
  'map' => ['icon'=>'fa-map-location-dot', 'label'=>'Incident Map'],
@@ -230,7 +231,7 @@ body{background:var(--bg);color:var(--text);display:flex;min-height:100vh;overfl
 /* CONTENT */
 .content{padding:22px 24px;flex:1;}
 /* STATS */
-.stat-row{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:22px;}
+.stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px;}
 .stat-card{background:var(--card);border-radius:14px;padding:18px 16px;box-shadow:0 2px 8px rgba(0,0,0,0.05);border:1px solid var(--border);display:flex;align-items:center;gap:14px;}
 .stat-icon{width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.15rem;flex-shrink:0;}
 .stat-num{font-size:1.6rem;font-weight:800;line-height:1;}
@@ -249,6 +250,13 @@ body{background:var(--bg);color:var(--text);display:flex;min-height:100vh;overfl
 .inc-title{font-size:0.88rem;font-weight:700;margin-bottom:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .inc-meta{font-size:0.74rem;color:var(--muted);display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:4px;}
 .inc-actions{display:flex;flex-direction:column;gap:5px;align-items:flex-end;flex-shrink:0;}
+/* FILTER BUTTONS */
+.filter-btn{padding:5px 13px;border-radius:20px;border:1.5px solid var(--border);background:#fff;font-size:0.76rem;font-weight:700;color:var(--muted);cursor:pointer;transition:all 0.18s;font-family:'Inter',sans-serif;display:inline-flex;align-items:center;gap:5px;}
+.filter-btn:hover{background:#f8fafc;color:var(--text);}
+.filter-btn.active-all{background:var(--red-dark);color:#fff;border-color:var(--red-dark);}
+.filter-btn.active-dangerous{background:#dc2626;color:#fff;border-color:#dc2626;}
+.filter-btn.active-caution{background:#d97706;color:#fff;border-color:#d97706;}
+.filter-btn.active-safe{background:#16a34a;color:#fff;border-color:#16a34a;}
 /* PILLS */
 .pill{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:0.7rem;font-weight:700;white-space:nowrap;}
 .pill-dangerous{background:#fef2f2;color:#991b1b;}
@@ -301,6 +309,14 @@ tr:hover td{background:#fafafa;}
  .topbar-actions button, .topbar-actions .resp-status-picker{white-space:nowrap !important;flex-shrink:0 !important;font-size:0.72rem !important;padding:5px 10px !important;}
 }
 @media(max-width:860px){body.sidebar-open .main{display:none;}body.sidebar-open .overlay{z-index:1190;}}
+@media(max-width:600px){
+ .incident-row{flex-direction:column;gap:10px;padding:12px 14px;}
+ .inc-actions{width:100%;flex-direction:row;justify-content:flex-start;flex-wrap:wrap;gap:6px;padding-top:8px;border-top:1px dashed #f1f5f9;}
+ .inc-actions .btn-dispatch, .inc-actions .btn-resolve-sm{flex:1 1 auto;justify-content:center;padding:7px 12px;}
+ .reports-filter-bar{flex-direction:column;align-items:stretch !important;gap:10px;}
+ .reports-filter-bar > div{width:100%;}
+ .reports-filter-bar input{width:100% !important;}
+}
 @media(max-width:480px){.stat-row{grid-template-columns:1fr 1fr;gap:8px;}.badge-resp{font-size:0.65rem;padding:4px 8px;}.page-sub{display:none;}}
 
 /* In-app navigation modal */
@@ -414,33 +430,34 @@ tr:hover td{background:#fafafa;}
  <div class="content">
 
  <?php if($view === 'queue'): ?>
- <div class="card" style="margin-bottom:14px;">
- <div class="card-header">
- <h3><i class="fas fa-location-crosshairs" style="color:var(--red-light);margin-right:6px;"></i>My GPS Location</h3>
- <span class="card-meta" id="gpsStatus"><?= $saved_gps_lat !== null && $saved_gps_lng !== null ? 'Saved on profile' : 'Not saved yet' ?></span>
- </div>
- <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;justify-content:space-between;">
- <div style="min-width:0;">
- <div id="gpsCoords" style="font-size:0.85rem;font-weight:700;color:var(--text);">
- <?= $saved_gps_lat !== null && $saved_gps_lng !== null ? htmlspecialchars(number_format((float)$saved_gps_lat, 6).', '.number_format((float)$saved_gps_lng, 6)) : 'Tap the button to get and save your current location.' ?>
- </div>
- <div style="font-size:0.76rem;color:var(--muted);margin-top:4px;">Used for navigation to assigned dangerous reports.</div>
- </div>
- <div style="display:flex;gap:8px;flex-wrap:wrap;">
- <button type="button" class="btn-dispatch" onclick="captureMyGps(this)"><i class="fas fa-crosshairs"></i> Get My GPS</button>
- </div>
- </div>
- </div>
- <div class="stat-row">
- <div class="stat-card"><div class="stat-icon" style="background:#fef2f2;color:#dc2626;"><i class="fas fa-triangle-exclamation"></i></div><div><div class="stat-num"><?= $danger_count ?></div><div class="stat-lbl">Dangerous</div></div></div>
- <div class="stat-card"><div class="stat-icon" style="background:#fffbeb;color:#d97706;"><i class="fas fa-circle-exclamation"></i></div><div><div class="stat-num"><?= $caution_count ?></div><div class="stat-lbl">Caution</div></div></div>
- <div class="stat-card"><div class="stat-icon" style="background:#f0fdf4;color:#16a34a;"><i class="fas fa-clipboard-check"></i></div><div><div class="stat-num"><?= $my_count ?></div><div class="stat-lbl">My Assignments</div></div></div>
- </div>
- <div class="card">
- <div class="card-header">
- <h3><i class="fas fa-siren-on" style="color:#dc2626;margin-right:6px;"></i>Active Incidents - Dispatch Queue</h3>
- <span class="card-meta"><?= count($queue) ?> incidents</span>
- </div>
+  <div class="card" style="margin-bottom:14px;">
+  <div class="card-header">
+  <h3><i class="fas fa-tower-broadcast" style="color:var(--red-light);margin-right:6px;"></i>My GPS Location</h3>
+  <span class="card-meta" id="gpsStatus"><?= $saved_gps_lat !== null && $saved_gps_lng !== null ? 'Saved on profile' : 'Not saved yet' ?></span>
+  </div>
+  <div style="padding:16px 18px;display:flex;gap:12px;flex-wrap:wrap;align-items:center;justify-content:space-between;">
+  <div style="min-width:0;">
+  <div id="gpsCoords" style="font-size:0.85rem;font-weight:700;color:var(--text);">
+  <?= $saved_gps_lat !== null && $saved_gps_lng !== null ? htmlspecialchars(number_format((float)$saved_gps_lat, 6).', '.number_format((float)$saved_gps_lng, 6)) : 'Tap the button to get and save your current location.' ?>
+  </div>
+  <div style="font-size:0.76rem;color:var(--muted);margin-top:4px;">Used for navigation to assigned dangerous reports.</div>
+  </div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;">
+  <button type="button" class="btn-dispatch" onclick="captureMyGps(this)"><i class="fas fa-crosshairs"></i> Get My GPS</button>
+  </div>
+  </div>
+  </div>
+  <div class="stat-row">
+  <div class="stat-card"><div class="stat-icon" style="background:#eff6ff;color:#2563eb;"><i class="fas fa-inbox"></i></div><div><div class="stat-num"><?= count($queue) ?></div><div class="stat-lbl">Total in Queue</div></div></div>
+  <div class="stat-card"><div class="stat-icon" style="background:#fef2f2;color:#dc2626;"><i class="fas fa-triangle-exclamation"></i></div><div><div class="stat-num"><?= $danger_count ?></div><div class="stat-lbl">Dangerous</div></div></div>
+  <div class="stat-card"><div class="stat-icon" style="background:#fffbeb;color:#d97706;"><i class="fas fa-circle-exclamation"></i></div><div><div class="stat-num"><?= $caution_count ?></div><div class="stat-lbl">Caution</div></div></div>
+  <div class="stat-card"><div class="stat-icon" style="background:#f0fdf4;color:#16a34a;"><i class="fas fa-clipboard-check"></i></div><div><div class="stat-num"><?= $my_count ?></div><div class="stat-lbl">My Assignments</div></div></div>
+  </div>
+  <div class="card">
+  <div class="card-header">
+  <h3><i class="fas fa-tower-broadcast" style="color:#dc2626;margin-right:6px;"></i>Active Incidents - Dispatch Queue</h3>
+  <span class="card-meta"><?= count($queue) ?> incidents</span>
+  </div>
  <?php if(empty($queue)): ?>
  <div class="empty"><i class="fas fa-shield-check" style="color:#16a34a;opacity:0.4;"></i><p>No active incidents. All clear.</p></div>
  <?php else: ?>
@@ -508,6 +525,7 @@ tr:hover td{background:#fafafa;}
  <div class="stat-card"><div class="stat-icon" style="background:#f0f7ff;color:#0a3d62;"><i class="fas fa-users"></i></div><div><div class="stat-num"><?= $community_count ?></div><div class="stat-lbl">Community Posts</div></div></div>
  <div class="stat-card"><div class="stat-icon" style="background:#fef2f2;color:#dc2626;"><i class="fas fa-triangle-exclamation"></i></div><div><div class="stat-num"><?= $danger_count ?></div><div class="stat-lbl">Dangerous</div></div></div>
  <div class="stat-card"><div class="stat-icon" style="background:#fffbeb;color:#d97706;"><i class="fas fa-circle-exclamation"></i></div><div><div class="stat-num"><?= $caution_count ?></div><div class="stat-lbl">Caution</div></div></div>
+ <div class="stat-card"><div class="stat-icon" style="background:#f0fdf4;color:#16a34a;"><i class="fas fa-circle-check"></i></div><div><div class="stat-num"><?= $safe_count ?></div><div class="stat-lbl">Safe Reports</div></div></div>
  </div>
  <div class="card">
  <div class="card-header">
@@ -1036,7 +1054,7 @@ function openNavigation(lat, lng, reportId){
  onNavPosition(pos);
  if(navOrigMarker) navOrigMarker._destRef = destMarker;
  }, function(){
- document.getElementById('navModalInfo').innerHTML = '<span>Location access denied \u2014 showing static route.</span>';
+ document.getElementById('navModalInfo').innerHTML = '<span>Location access denied - showing static route.</span>';
  if(responderGps.lat!==null && responderGps.lng!==null){
  var origIcon = L.divIcon({className:'',html:'<div style="width:16px;height:16px;border-radius:50%;background:#2563eb;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.4);"></div>',iconSize:[16,16],iconAnchor:[8,8]});
  var origMarker = L.marker([responderGps.lat,responderGps.lng],{icon:origIcon}).addTo(navMap).bindPopup('Your Location');

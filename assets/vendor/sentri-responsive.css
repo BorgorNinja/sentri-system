@@ -24,7 +24,8 @@
   .post-btn { padding: 7px 10px !important; border-radius: 8px !important; flex-shrink: 0 !important; min-height: 32px !important; }
   .avatar { width: 32px !important; height: 32px !important; font-size: .82rem !important; }
   .user-info { padding: 2px !important; flex-shrink: 0 !important; }
-  .stats-row { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 10px !important; }
+  .stats-row, .stat-row { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 10px !important; }
+  .filter-btn { padding: 5px 12px !important; font-size: 0.74rem !important; border-radius: 20px !important; }
   .profile-grid { grid-template-columns: 1fr !important; }
   .detail-meta-grid { grid-template-columns: 1fr !important; }
   #incidentMap { height: 360px !important; }
