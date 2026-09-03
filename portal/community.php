@@ -498,7 +498,7 @@ body.dark .locate-btn-big{background:#1f3a5f;color:var(--blue-accent);}
  <div class="brand-icon-s" style="background:rgba(243,156,18,.2);border-color:rgba(243,156,18,.4);"><i class="fas fa-shield-halved" style="color:#f39c12;"></i></div>
  <div><div class="brand-name-s">SenTri</div><div class="brand-sub">Community Portal</div></div>
  </div>
- <button class="toggle-btn" onclick="closeSidebar()"><i class="fas fa-xmark"></i></button>
+ <button class="toggle-btn" onclick="closeSidebar()" aria-label="Close navigation menu"><i class="fas fa-xmark"></i></button>
  </div>
  <nav class="menu">
  <?php foreach($nav as $key=>$item): ?>
@@ -527,7 +527,7 @@ body.dark .locate-btn-big{background:#1f3a5f;color:var(--blue-accent);}
 <div class="main" id="main">
  <div class="topbar">
  <div class="topbar-left">
- <button class="ham-btn" onclick="openSidebar()"><i class="fas fa-bars"></i></button>
+ <button class="ham-btn" onclick="openSidebar()" aria-label="Open navigation menu"><i class="fas fa-bars"></i></button>
  <h1><i class="fas <?= $nav[$view]['icon']??'fa-house' ?>" style="color:var(--blue-accent);"></i><span><?= htmlspecialchars($page_titles[$view]??'Community Portal') ?></span></h1>
  </div>
  <div class="right-top">
@@ -721,7 +721,7 @@ body.dark .locate-btn-big{background:#1f3a5f;color:var(--blue-accent);}
 <!-- ═══ POST REPORT MODAL ═══ -->
 <div class="modal-overlay" id="modalOverlay" onclick="outsideClose(event)">
  <div class="modal">
- <button class="modal-close" onclick="closeModal()"><i class="fas fa-xmark"></i></button>
+ <button class="modal-close" onclick="closeModal()" aria-label="Close report modal"><i class="fas fa-xmark"></i></button>
  <h2><i class="fas fa-triangle-exclamation" style="color:var(--red);margin-right:8px;"></i>Report an Incident</h2>
  <p class="subtitle">Quick - takes under 30 seconds</p>
  <div id="modalMsg" class="modal-msg"></div>
@@ -838,7 +838,7 @@ body.dark .locate-btn-big{background:#1f3a5f;color:var(--blue-accent);}
 <!-- ═══ MINI MAP ═══ -->
 <div class="mini-map-modal" id="miniMapModal" onclick="closeMiniMap(event)">
  <div class="mini-map-box">
- <div class="mini-map-header"><h4 id="miniMapTitle">Location</h4><button class="mini-map-close" onclick="closeMiniMapDirect()"><i class="fas fa-xmark"></i></button></div>
+ <div class="mini-map-header"><h4 id="miniMapTitle">Location</h4><button class="mini-map-close" onclick="closeMiniMapDirect()" aria-label="Close map preview"><i class="fas fa-xmark"></i></button></div>
  <div id="miniMap"></div>
  <div class="mini-map-footer" id="miniMapFooter"></div>
  </div>

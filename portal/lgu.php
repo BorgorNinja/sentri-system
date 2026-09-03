@@ -557,7 +557,7 @@ tr:hover td{background:#fafafa;}
  <div class="sb-sub">LGU Portal</div>
  </div>
  </div>
- <button class="sb-close" onclick="closeSidebar()"><i class="fas fa-xmark"></i></button>
+ <button class="sb-close" onclick="closeSidebar()" aria-label="Close navigation menu"><i class="fas fa-xmark"></i></button>
  </div>
 
  <div class="sb-office">
@@ -600,7 +600,7 @@ tr:hover td{background:#fafafa;}
    <div class="gov-strip"></div>
    <div class="topbar-header-row">
     <div class="topbar-left">
-     <button class="ham-btn" onclick="openSidebar()"><i class="fas fa-bars"></i></button>
+     <button class="ham-btn" onclick="openSidebar()" aria-label="Open navigation menu"><i class="fas fa-bars"></i></button>
      <div style="min-width:0;">
       <div class="page-title"><?= htmlspecialchars($page_titles[$view] ?? 'LGU Portal') ?></div>
       <div class="page-sub"><?= htmlspecialchars($org) ?><?= $city ? ' - '.htmlspecialchars($city) : '' ?></div>

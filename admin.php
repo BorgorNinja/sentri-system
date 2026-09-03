@@ -255,7 +255,7 @@ tr:hover td{background:#fafbff;transition:background 0.15s;}
  <span class="admin-badge">ADMIN</span>
  </div>
  </div>
- <button class="toggle-btn" onclick="closeSidebar()"><i class="fas fa-xmark"></i></button>
+ <button class="toggle-btn" onclick="closeSidebar()" aria-label="Close navigation menu"><i class="fas fa-xmark"></i></button>
  </div>
 
  <div style="margin-top:12px;">
@@ -315,7 +315,7 @@ tr:hover td{background:#fafbff;transition:background 0.15s;}
 <div class="main" id="main">
  <div class="topbar">
  <div class="topbar-left">
- <button class="ham-btn" onclick="openSidebar()"><i class="fas fa-bars"></i></button>
+ <button class="ham-btn" onclick="openSidebar()" aria-label="Open navigation menu"><i class="fas fa-bars"></i></button>
  <h1 id="pageTitle"><i class="fas fa-gauge" style="color:var(--blue);margin-right:8px;"></i>Admin Dashboard</h1>
  </div>
  <div class="topbar-right">

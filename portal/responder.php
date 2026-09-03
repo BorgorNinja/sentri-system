@@ -359,7 +359,7 @@ tr:hover td{background:#fafafa;}
  <div class="sb-seal"><i class="fas fa-truck-medical"></i></div>
  <div><div class="sb-title">SenTri</div><div class="sb-sub">Responder Portal</div></div>
  </div>
- <button class="sb-close" onclick="closeSidebar()"><i class="fas fa-xmark"></i></button>
+ <button class="sb-close" onclick="closeSidebar()" aria-label="Close navigation menu"><i class="fas fa-xmark"></i></button>
  </div>
  <div class="sb-unit">
  <p>Unit</p>
@@ -390,7 +390,7 @@ tr:hover td{background:#fafafa;}
   <div class="topbar">
    <div class="topbar-header-row">
     <div class="topbar-left">
-     <button class="ham-btn" onclick="openSidebar()"><i class="fas fa-bars"></i></button>
+     <button class="ham-btn" onclick="openSidebar()" aria-label="Open navigation menu"><i class="fas fa-bars"></i></button>
      <div style="min-width:0;">
       <div class="page-title"><?= htmlspecialchars($page_titles[$view] ?? 'Responder Portal') ?></div>
       <div class="page-sub"><?= htmlspecialchars($unit) ?><?= $area ? ' - '.htmlspecialchars($area) : '' ?></div>
@@ -1292,7 +1292,7 @@ setTimeout(function(){location.reload();}, 90000);
  <div class="nav-modal" style="max-width:680px;max-height:86vh;display:flex;flex-direction:column;overflow:hidden;">
  <div class="nav-modal-head" style="flex-shrink:0;">
  <h3 style="color:#b45309;"><i class="fas fa-biohazard" style="margin-right:6px;color:#d97706;"></i>HAZMAT & Tactical Chemical Emergency Guide (ERG 2024)</h3>
- <button class="safety-modal-close" style="background:none;border:none;font-size:1.1rem;cursor:pointer;color:var(--muted);" onclick="closeHazmatModal()"><i class="fas fa-times"></i></button>
+ <button class="safety-modal-close" style="background:none;border:none;font-size:1.1rem;cursor:pointer;color:var(--muted);" onclick="closeHazmatModal()" aria-label="Close Hazmat Guide"><i class="fas fa-times"></i></button>
  </div>
  <div style="padding:16px 20px;flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:12px;">
  <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:10px 14px;font-size:0.78rem;color:#92400e;flex-shrink:0;">
@@ -1385,7 +1385,7 @@ setTimeout(function(){location.reload();}, 90000);
  <div class="nav-modal" style="max-width:540px;">
  <div class="nav-modal-head">
  <h3 style="color:#1d4ed8;"><i class="fas fa-shield-heart" style="margin-right:6px;color:#2563eb;"></i>Responder Safety & Hazard Exposure Check-In</h3>
- <button class="safety-modal-close" style="background:none;border:none;font-size:1.1rem;cursor:pointer;color:var(--muted);" onclick="closeSafetyCheckinModal()"><i class="fas fa-times"></i></button>
+ <button class="safety-modal-close" style="background:none;border:none;font-size:1.1rem;cursor:pointer;color:var(--muted);" onclick="closeSafetyCheckinModal()" aria-label="Close Safety Check-In"><i class="fas fa-times"></i></button>
  </div>
  <div style="padding:16px 20px;">
  <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:0.78rem;color:#1e40af;">
@@ -1420,7 +1420,7 @@ setTimeout(function(){location.reload();}, 90000);
  <div class="nav-modal">
  <div class="nav-modal-head">
  <h3 id="navModalTitle"><i class="fas fa-route" style="margin-right:6px;color:var(--red-light);"></i>Navigation</h3>
- <button class="nav-modal-close" onclick="closeNavModal()"><i class="fas fa-times"></i></button>
+ <button class="nav-modal-close" onclick="closeNavModal()" aria-label="Close Navigation Modal"><i class="fas fa-times"></i></button>
  </div>
  <div id="navModalMap"><div id="navMapInner"></div></div>
  <div class="nav-modal-info" id="navModalInfo"></div>

@@ -333,7 +333,7 @@ tr:hover td{background:#fafafa;}
  <div class="sb-seal"><i class="fas fa-house-flag"></i></div>
  <div><div class="sb-title">SenTri</div><div class="sb-sub">Barangay Portal</div></div>
  </div>
- <button class="sb-close" onclick="closeSidebar()"><i class="fas fa-xmark"></i></button>
+ <button class="sb-close" onclick="closeSidebar()" aria-label="Close navigation menu"><i class="fas fa-xmark"></i></button>
  </div>
  <div class="sb-juri">
  <p>Jurisdiction</p>
@@ -361,7 +361,7 @@ tr:hover td{background:#fafafa;}
  <div class="topbar">
   <div class="topbar-header-row">
    <div class="topbar-left">
-    <button class="ham-btn" onclick="openSidebar()"><i class="fas fa-bars"></i></button>
+    <button class="ham-btn" onclick="openSidebar()" aria-label="Open navigation menu"><i class="fas fa-bars"></i></button>
     <div style="min-width:0;">
      <div class="page-title"><?= htmlspecialchars($page_titles[$view] ?? 'Barangay Portal') ?></div>
      <div class="page-sub"><?= htmlspecialchars($org) ?><?= $city ? ' - '.htmlspecialchars($city) : '' ?></div>
