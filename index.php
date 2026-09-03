@@ -128,10 +128,10 @@ footer{background:var(--navy-dark);color:rgba(255,255,255,0.45);padding:28px 40p
  <a href="login.php" class="btn-outline">Sign In</a>
  <a href="signup.php" class="btn-solid">Register</a>
  </div>
- <button class="ham-nav" onclick="toggleNav()"><i class="fas fa-bars" id="hamIcon"></i></button>
- <div class="mobile-nav" id="mobileNav">
- <a href="login.php">Sign In</a>
- <a href="signup.php" class="solid">Register</a>
+ <button class="ham-nav" onclick="toggleNav()" aria-label="Toggle navigation menu" aria-expanded="false" id="hamNavBtn"><i class="fas fa-bars" id="hamIcon"></i></button>
+ <div class="mobile-nav" id="mobileNav" role="menu">
+ <a href="login.php" role="menuitem">Sign In</a>
+ <a href="signup.php" class="solid" role="menuitem">Register</a>
  </div>
 </nav>
 
@@ -159,31 +159,31 @@ footer{background:var(--navy-dark);color:rgba(255,255,255,0.45);padding:28px 40p
  <p>Each role has its own tailored interface designed for their specific responsibilities.</p>
  </div>
  <div class="portals-grid">
- <div class="portal-card p-community">
+ <a href="login.php?role=community" class="portal-card p-community" style="text-decoration:none;color:inherit;" aria-label="Community Portal: Citizens report incidents and monitor safety">
  <div class="portal-icon"><i class="fas fa-users"></i></div>
  <div class="portal-name">Community</div>
  <div class="portal-desc">Citizens report incidents and monitor safety in their area</div>
- </div>
- <div class="portal-card p-barangay">
+ </a>
+ <a href="login.php?role=barangay" class="portal-card p-barangay" style="text-decoration:none;color:inherit;" aria-label="Barangay Portal: Barangay officials manage and escalate local incidents">
  <div class="portal-icon"><i class="fas fa-house-flag"></i></div>
  <div class="portal-name">Barangay</div>
  <div class="portal-desc">Barangay officials manage and escalate local incidents</div>
- </div>
- <div class="portal-card p-lgu">
+ </a>
+ <a href="login.php?role=lgu" class="portal-card p-lgu" style="text-decoration:none;color:inherit;" aria-label="LGU Portal: City and municipal government incident oversight and analytics">
  <div class="portal-icon"><i class="fas fa-landmark"></i></div>
  <div class="portal-name">LGU</div>
  <div class="portal-desc">City and municipal government incident oversight and analytics</div>
- </div>
- <div class="portal-card p-responder">
+ </a>
+ <a href="login.php?role=first_responder" class="portal-card p-responder" style="text-decoration:none;color:inherit;" aria-label="First Responder Portal: BFP, PNP, EMS dispatch queue and assignment tracking">
  <div class="portal-icon"><i class="fas fa-truck-medical"></i></div>
  <div class="portal-name">First Responder</div>
  <div class="portal-desc">BFP, PNP, EMS dispatch queue and assignment tracking</div>
- </div>
- <div class="portal-card p-admin">
+ </a>
+ <a href="login.php?role=admin" class="portal-card p-admin" style="text-decoration:none;color:inherit;" aria-label="Admin Portal: System administration and official account approvals">
  <div class="portal-icon"><i class="fas fa-gear"></i></div>
  <div class="portal-name">Admin</div>
  <div class="portal-desc">System administration and official account approvals</div>
- </div>
+ </a>
  </div>
 </section>
 
@@ -245,11 +245,22 @@ footer{background:var(--navy-dark);color:rgba(255,255,255,0.45);padding:28px 40p
 function toggleNav(){
  const nav=document.getElementById('mobileNav');
  const icon=document.getElementById('hamIcon');
+ const btn=document.getElementById('hamNavBtn');
  const open=nav.classList.toggle('open');
  icon.className=open?'fas fa-xmark':'fas fa-bars';
+ if(btn) btn.setAttribute('aria-expanded', open ? 'true' : 'false');
 }
 document.addEventListener('click',function(e){
- if(!e.target.closest('#mainNav')) document.getElementById('mobileNav').classList.remove('open');
+ if(!e.target.closest('#mainNav')) {
+  const nav=document.getElementById('mobileNav');
+  const icon=document.getElementById('hamIcon');
+  const btn=document.getElementById('hamNavBtn');
+  if(nav && nav.classList.contains('open')) {
+   nav.classList.remove('open');
+   if(icon) icon.className='fas fa-bars';
+   if(btn) btn.setAttribute('aria-expanded', 'false');
+  }
+ }
 });
 </script>
 </body>

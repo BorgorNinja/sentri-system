@@ -122,14 +122,14 @@ p.sub{font-size:0.9rem;color:var(--muted);line-height:1.7;margin-bottom:24px;}
  <div class="form-group">
  <label for="password">New Password</label>
  <input type="password" id="password" name="password" placeholder="Min. 8 characters" required oninput="checkStrength(this.value)">
- <span class="show-btn" onclick="togglePw('password',this)" role="button" tabindex="0" aria-label="Toggle password visibility">SHOW</span>
+ <button type="button" class="show-btn" onclick="togglePw('password',this)" aria-label="Toggle password visibility" style="background:none;border:none;">SHOW</button>
  <div class="pw-strength"><div class="pw-strength-bar" id="pwBar"></div></div>
  <div class="pw-rules">Use at least 8 characters with letters and numbers.</div>
  </div>
  <div class="form-group">
  <label for="confirm_password">Confirm New Password</label>
  <input type="password" id="confirm_password" name="confirm_password" placeholder="Repeat your password" required>
- <span class="show-btn" onclick="togglePw('confirm_password',this)" role="button" tabindex="0" aria-label="Toggle confirm password visibility">SHOW</span>
+ <button type="button" class="show-btn" onclick="togglePw('confirm_password',this)" aria-label="Toggle confirm password visibility" style="background:none;border:none;">SHOW</button>
  </div>
  <button class="btn-primary" type="submit" id="submitBtn"><i class="fas fa-key"></i> Reset Password</button>
  </form>

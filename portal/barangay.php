@@ -1043,31 +1043,31 @@ function applyRptFilters() {
 </script>
 
 <!-- ADD CONTACT MODAL -->
-<div class="modal-bg" id="contactModal">
+<div class="modal-bg" id="contactModal" role="dialog" aria-modal="true" aria-labelledby="contactModalTitle">
  <div class="modal" style="max-width:480px;">
  <div class="modal-header">
- <h3><i class="fas fa-address-book" style="color:var(--green);margin-right:6px;"></i>Add Emergency Contact</h3>
- <button class="modal-close" onclick="closeContactModal()"><i class="fas fa-xmark"></i></button>
+ <h3 id="contactModalTitle"><i class="fas fa-address-book" style="color:var(--green);margin-right:6px;"></i>Add Emergency Contact</h3>
+ <button class="modal-close" onclick="closeContactModal()" aria-label="Close add contact modal"><i class="fas fa-xmark"></i></button>
  </div>
  <div class="modal-body">
  <div style="display:grid;gap:12px;">
- <div><label style="font-size:0.75rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.8px;display:block;margin-bottom:4px;">Name *</label>
+ <div><label for="cn_name" style="font-size:0.75rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.8px;display:block;margin-bottom:4px;">Name *</label>
  <input id="cn_name" type="text" placeholder="e.g. Barangay Health Center" style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:0.88rem;font-family:'Inter',sans-serif;outline:none;"></div>
  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
- <div><label style="font-size:0.75rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.8px;display:block;margin-bottom:4px;">Type *</label>
+ <div><label for="cn_type" style="font-size:0.75rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.8px;display:block;margin-bottom:4px;">Type *</label>
  <select id="cn_type" style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:0.88rem;font-family:'Inter',sans-serif;outline:none;background:#fff;">
  <option value="barangay">Barangay</option><option value="hospital">Hospital</option>
  <option value="police">Police</option><option value="fire">Fire</option>
  <option value="lgu">LGU</option><option value="traffic">Traffic</option><option value="other">Other</option>
  </select></div>
- <div><label style="font-size:0.75rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.8px;display:block;margin-bottom:4px;">City *</label>
+ <div><label for="cn_city" style="font-size:0.75rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.8px;display:block;margin-bottom:4px;">City *</label>
  <input id="cn_city" type="text" placeholder="City/Municipality" style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:0.88rem;font-family:'Inter',sans-serif;outline:none;"></div>
  </div>
- <div><label style="font-size:0.75rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.8px;display:block;margin-bottom:4px;">Contact Number</label>
+ <div><label for="cn_phone" style="font-size:0.75rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.8px;display:block;margin-bottom:4px;">Contact Number</label>
  <input id="cn_phone" type="tel" placeholder="+63 9XX XXX XXXX" style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:0.88rem;font-family:'Inter',sans-serif;outline:none;"></div>
- <div><label style="font-size:0.75rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.8px;display:block;margin-bottom:4px;">Email</label>
+ <div><label for="cn_email" style="font-size:0.75rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.8px;display:block;margin-bottom:4px;">Email</label>
  <input id="cn_email" type="email" placeholder="contact@example.com" style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:0.88rem;font-family:'Inter',sans-serif;outline:none;"></div>
- <div id="cn_error" style="display:none;background:#fef2f2;color:#991b1b;border:1px solid #fecaca;border-radius:8px;padding:9px 12px;font-size:0.82rem;font-weight:600;"></div>
+ <div id="cn_error" aria-live="polite" style="display:none;background:#fef2f2;color:#991b1b;border:1px solid #fecaca;border-radius:8px;padding:9px 12px;font-size:0.82rem;font-weight:600;"></div>
  </div>
  </div>
  <div class="modal-actions">
@@ -1087,7 +1087,7 @@ async function saveContact(){
  var email=document.getElementById('cn_email').value.trim();
  var err=document.getElementById('cn_error');
  if(!name||!city){ err.textContent='Name and city are required.'; err.style.display='block'; return; }
- var btn=document.getElementById('cn_saveBtn'); btn.disabled=true; btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Saving…';
+ var btn=document.getElementById('cn_saveBtn'); btn.disabled=true; btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Saving...';
  var fd=new FormData(); fd.append('action','create'); fd.append('name',name); fd.append('type',type);
  fd.append('city',city); fd.append('contact_number',phone); fd.append('contact_email',email);
  try {
@@ -1290,11 +1290,11 @@ document.getElementById('contactModal').addEventListener('click',function(e){if(
  <table>
  <thead>
  <tr>
- <th>Resident</th>
- <th>Purok / Zone</th>
- <th>Vulnerability / Medical</th>
- <th>Status</th>
- <th>Action</th>
+ <th scope="col">Resident</th>
+ <th scope="col">Purok / Zone</th>
+ <th scope="col">Vulnerability / Medical</th>
+ <th scope="col">Status</th>
+ <th scope="col">Action</th>
  </tr>
  </thead>
  <tbody id="vulnTableBody">
@@ -1379,11 +1379,11 @@ document.getElementById('contactModal').addEventListener('click',function(e){if(
  <table>
  <thead>
  <tr>
- <th style="white-space:nowrap;">Household Head</th>
- <th style="white-space:nowrap;">Purok</th>
- <th>Allocated Package</th>
- <th style="white-space:nowrap;">Voucher Status</th>
- <th style="white-space:nowrap;">Action</th>
+ <th scope="col" style="white-space:nowrap;">Household Head</th>
+ <th scope="col" style="white-space:nowrap;">Purok</th>
+ <th scope="col">Allocated Package</th>
+ <th scope="col" style="white-space:nowrap;">Voucher Status</th>
+ <th scope="col" style="white-space:nowrap;">Action</th>
  </tr>
  </thead>
  <tbody id="reliefClaimsTableBody">

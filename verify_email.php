@@ -134,8 +134,8 @@ p strong{color:#1a1a2e;}
  <div class="icon-wrap expired"><i class="fas fa-clock"></i></div>
  <h1>Link Expired</h1>
  <p>Your verification link has expired (links are valid for 24 hours). Enter your email below and we'll send a fresh one.</p>
- <div id="resendFeedback" class="feedback"></div>
- <div class="form-group"><label>Email Address</label><input type="email" id="resendEmail" placeholder="you@example.com"></div>
+ <div id="resendFeedback" class="feedback" aria-live="polite"></div>
+ <div class="form-group"><label for="resendEmail">Email Address</label><input type="email" id="resendEmail" placeholder="you@example.com" required autocomplete="email"></div>
  <button class="btn btn-primary" id="resendBtn" onclick="resend()"><i class="fas fa-paper-plane"></i> Resend Verification Email</button>
  <hr class="divider">
  <a href="login.php" class="btn-ghost">Back to Sign In</a>
@@ -144,8 +144,8 @@ p strong{color:#1a1a2e;}
  <div class="icon-wrap invalid"><i class="fas fa-triangle-exclamation"></i></div>
  <h1>Invalid Link</h1>
  <p>This verification link is not valid or has already been used. If you need a new link, enter your email below.</p>
- <div id="resendFeedback" class="feedback"></div>
- <div class="form-group"><label>Email Address</label><input type="email" id="resendEmail" placeholder="you@example.com"></div>
+ <div id="resendFeedback" class="feedback" aria-live="polite"></div>
+ <div class="form-group"><label for="resendEmail">Email Address</label><input type="email" id="resendEmail" placeholder="you@example.com" required autocomplete="email"></div>
  <button class="btn btn-primary" id="resendBtn" onclick="resend()"><i class="fas fa-paper-plane"></i> Request New Verification Email</button>
  <hr class="divider">
  <a href="login.php" class="btn-ghost">Back to Sign In</a>

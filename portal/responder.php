@@ -672,12 +672,12 @@ tr:hover td{background:#fafafa;}
  <?php else: ?>
  <div class="table-wrap">
  <table>
- <thead><tr><th>#</th><th>Title</th><th>Category</th><th>Location</th><th>Reported</th><th>Resolved</th></tr></thead>
+ <thead><tr><th scope="col">#</th><th scope="col">Title</th><th scope="col">Category</th><th scope="col">Location</th><th scope="col">Reported</th><th scope="col">Resolved</th></tr></thead>
  <tbody>
  <?php foreach($resolved as $r): ?>
  <tr>
  <td style="color:var(--muted);font-size:0.74rem;">#<?= $r['id'] ?></td>
- <td style="font-weight:600;max-width:200px;"><?= htmlspecialchars(mb_strimwidth($r['title'],0,50,'…')) ?></td>
+ <td style="font-weight:600;max-width:200px;"><?= htmlspecialchars(mb_strimwidth($r['title'],0,50,'...')) ?></td>
  <td><span class="cat-chip"><i class="fas <?= $cat_icons[$r['category']] ?? 'fa-circle-exclamation' ?>"></i> <?= ucfirst($r['category']) ?></span></td>
  <td style="font-size:0.78rem;"><?= htmlspecialchars($r['barangay'] ?? $r['city'] ?? '') ?></td>
  <td style="font-size:0.74rem;color:var(--muted);"><?= date('M j, Y', strtotime($r['created_at'])) ?></td>

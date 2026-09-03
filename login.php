@@ -481,6 +481,21 @@ function selectPortal(key,el){
  document.getElementById('resendBox').style.display='none';
 }
 
+(function(){
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const req = params.get('portal') || params.get('role');
+    if (req) {
+      const mapped = (req === 'responder' || req === 'first-responder') ? 'first_responder' : req;
+      if (portals[mapped]) {
+        const targetClass = mapped === 'first_responder' ? 'p-responder' : ('p-' + mapped);
+        const targetEl = document.querySelector('.portal-card.' + targetClass);
+        if (targetEl) selectPortal(mapped, targetEl);
+      }
+    }
+  } catch(e) {}
+})();
+
 function togglePw(){const f=document.getElementById('pwField');const b=f.nextElementSibling;const s=f.type==='password';f.type=s?'text':'password';b.textContent=s?'HIDE':'SHOW';}
 
 function showOtpForm(email){

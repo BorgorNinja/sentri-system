@@ -755,7 +755,7 @@ tr:hover td{background:#fafafa;}
  <?php else: ?>
  <div class="table-wrap">
  <table>
- <thead><tr><th>#</th><th>Title</th><th>Category</th><th>Barangay</th><th>Date</th></tr></thead>
+ <thead><tr><th scope="col">#</th><th scope="col">Title</th><th scope="col">Category</th><th scope="col">Barangay</th><th scope="col">Date</th></tr></thead>
  <tbody>
  <?php foreach($danger_reports as $r):
  $r_title_js = htmlspecialchars(json_encode($r['title'] ?? ''), ENT_QUOTES, 'UTF-8');
@@ -827,7 +827,7 @@ tr:hover td{background:#fafafa;}
  </div>
  <div class="table-wrap">
  <table>
- <thead><tr><th>#</th><th>Title</th><th>Category</th><th>Status</th><th>Barangay</th><th>Reported By</th><th>Date</th><th>Actions</th></tr></thead>
+ <thead><tr><th scope="col">#</th><th scope="col">Title</th><th scope="col">Category</th><th scope="col">Status</th><th scope="col">Barangay</th><th scope="col">Reported By</th><th scope="col">Date</th><th scope="col">Actions</th></tr></thead>
  <tbody>
  <?php foreach($all_reports as $r):
  $r_title_js = htmlspecialchars(json_encode($r['title'] ?? ''), ENT_QUOTES, 'UTF-8');
@@ -840,7 +840,7 @@ tr:hover td{background:#fafafa;}
  ?>
  <tr data-status="<?= htmlspecialchars($r['status']) ?>">
  <td style="color:var(--muted);font-size:0.74rem;">#<?= $r['id'] ?></td>
- <td style="font-weight:600;max-width:200px;"><?= htmlspecialchars(mb_strimwidth($r['title'],0,55,'…')) ?></td>
+ <td style="font-weight:600;max-width:200px;"><?= htmlspecialchars(mb_strimwidth($r['title'],0,55,'...')) ?></td>
  <td><span class="cat-chip"><i class="fas <?= $cat_icons[$r['category']] ?? 'fa-circle-exclamation' ?>"></i> <?= ucfirst($r['category']) ?></span></td>
  <td><span class="pill pill-<?= $r['status'] ?>"><?= ucfirst($r['status']) ?></span></td>
  <td style="font-size:0.78rem;"><?= htmlspecialchars($r['barangay'] ?? $r['city']) ?></td>
@@ -1591,7 +1591,7 @@ function searchTableReports(query){
  <div class="lgu-modal-body">
  <input type="hidden" id="lguDispatchRptId">
  <p style="font-size:0.85rem;color:var(--muted);margin-bottom:14px;">Select an approved responder unit to assign to this incident.</p>
- <label class="lgu-cn-label">Responder Unit</label>
+ <label for="lguDispatchResponderSel" class="lgu-cn-label">Responder Unit</label>
  <select id="lguDispatchResponderSel" class="lgu-cn-input" style="background:#fff;">
  <option value="">Select Responder</option>
  <?php
@@ -1601,7 +1601,7 @@ function searchTableReports(query){
  <option value="<?= $ro['id'] ?>"><?= htmlspecialchars(strtoupper($ro['responder_type']??'UNIT').' - '.($ro['org_name']?:$ro['name'])) ?></option>
  <?php endwhile; ?>
  </select>
- <div id="lguDispatchErr" style="display:none;margin-top:10px;background:#fef2f2;color:#991b1b;border:1px solid #fecaca;border-radius:8px;padding:9px 12px;font-size:0.82rem;font-weight:600;"></div>
+ <div id="lguDispatchErr" aria-live="polite" style="display:none;margin-top:10px;background:#fef2f2;color:#991b1b;border:1px solid #fecaca;border-radius:8px;padding:9px 12px;font-size:0.82rem;font-weight:600;"></div>
  </div>
  <div class="lgu-modal-actions">
  <button class="btn-lgu btn-lgu-dispatch" id="lguDispatchBtn" onclick="submitDispatch()"><i class="fas fa-paper-plane"></i> Dispatch</button>
@@ -1618,19 +1618,19 @@ function searchTableReports(query){
  </div>
  <div class="lgu-modal-body">
  <div class="lgu-cn-grid">
- <div><label class="lgu-cn-label">Name *</label><input id="lgu_cn_name" type="text" class="lgu-cn-input" placeholder="e.g. Imus City Police Station"></div>
+ <div><label for="lgu_cn_name" class="lgu-cn-label">Name *</label><input id="lgu_cn_name" type="text" class="lgu-cn-input" placeholder="e.g. Imus City Police Station"></div>
  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
- <div><label class="lgu-cn-label">Type *</label>
+ <div><label for="lgu_cn_type" class="lgu-cn-label">Type *</label>
  <select id="lgu_cn_type" class="lgu-cn-input" style="background:#fff;">
  <option value="lgu">LGU</option><option value="hospital">Hospital</option>
  <option value="police">Police</option><option value="fire">Fire</option>
  <option value="barangay">Barangay</option><option value="traffic">Traffic</option><option value="other">Other</option>
  </select></div>
- <div><label class="lgu-cn-label">City *</label><input id="lgu_cn_city" type="text" class="lgu-cn-input" placeholder="City/Municipality"></div>
+ <div><label for="lgu_cn_city" class="lgu-cn-label">City *</label><input id="lgu_cn_city" type="text" class="lgu-cn-input" placeholder="City/Municipality"></div>
  </div>
- <div><label class="lgu-cn-label">Contact Number</label><input id="lgu_cn_phone" type="tel" class="lgu-cn-input" placeholder="+63 9XX XXX XXXX"></div>
- <div><label class="lgu-cn-label">Email</label><input id="lgu_cn_email" type="email" class="lgu-cn-input" placeholder="contact@example.com"></div>
- <div id="lgu_cn_error" style="display:none;background:#fef2f2;color:#991b1b;border:1px solid #fecaca;border-radius:8px;padding:9px 12px;font-size:0.82rem;font-weight:600;"></div>
+ <div><label for="lgu_cn_phone" class="lgu-cn-label">Contact Number</label><input id="lgu_cn_phone" type="tel" class="lgu-cn-input" placeholder="+63 9XX XXX XXXX"></div>
+ <div><label for="lgu_cn_email" class="lgu-cn-label">Email</label><input id="lgu_cn_email" type="email" class="lgu-cn-input" placeholder="contact@example.com"></div>
+ <div id="lgu_cn_error" aria-live="polite" style="display:none;background:#fef2f2;color:#991b1b;border:1px solid #fecaca;border-radius:8px;padding:9px 12px;font-size:0.82rem;font-weight:600;"></div>
  </div>
  </div>
  <div class="lgu-modal-actions">
@@ -1658,11 +1658,11 @@ function searchTableReports(query){
  <table>
  <thead>
  <tr>
- <th style="white-space:nowrap;">Responding Agency</th>
- <th>Asset Capability & Equipment</th>
- <th style="white-space:nowrap;">Personnel</th>
- <th style="white-space:nowrap;">Deployment ETA</th>
- <th style="white-space:nowrap;">Status / Action</th>
+ <th scope="col" style="white-space:nowrap;">Responding Agency</th>
+ <th scope="col">Asset Capability & Equipment</th>
+ <th scope="col" style="white-space:nowrap;">Personnel</th>
+ <th scope="col" style="white-space:nowrap;">Deployment ETA</th>
+ <th scope="col" style="white-space:nowrap;">Status / Action</th>
  </tr>
  </thead>
  <tbody>

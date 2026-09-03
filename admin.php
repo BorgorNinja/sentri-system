@@ -425,7 +425,7 @@ tr:hover td{background:#fafbff;transition:background 0.15s;}
  <div class="table-wrap">
  <div class="loading" id="overviewLoading"><i class="fas fa-spinner"></i> Loading...</div>
  <table id="overviewTable" style="display:none;">
- <thead><tr><th>#</th><th>Title</th><th>Status</th><th>Category</th><th>Location</th><th>Posted By</th><th>Date</th></tr></thead>
+ <thead><tr><th scope="col">#</th><th scope="col">Title</th><th scope="col">Status</th><th scope="col">Category</th><th scope="col">Location</th><th scope="col">Posted By</th><th scope="col">Date</th></tr></thead>
  <tbody id="overviewBody"></tbody>
  </table>
  </div>
@@ -454,7 +454,7 @@ tr:hover td{background:#fafbff;transition:background 0.15s;}
  <div class="table-wrap">
  <div class="loading" id="usersLoading"><i class="fas fa-spinner"></i> Loading users...</div>
  <table id="usersTable" style="display:none;">
- <thead><tr><th>#</th><th>User</th><th>Email</th><th>Role</th><th>Joined</th><th>Reports</th><th>Actions</th></tr></thead>
+ <thead><tr><th scope="col">#</th><th scope="col">User</th><th scope="col">Email</th><th scope="col">Role</th><th scope="col">Joined</th><th scope="col">Reports</th><th scope="col">Actions</th></tr></thead>
  <tbody id="usersBody"></tbody>
  </table>
  </div>
@@ -487,7 +487,7 @@ tr:hover td{background:#fafbff;transition:background 0.15s;}
  <div class="table-wrap">
  <div class="loading" id="postsLoading"><i class="fas fa-spinner"></i> Loading posts...</div>
  <table id="postsTable" style="display:none;">
- <thead><tr><th>#</th><th>Title</th><th>Status</th><th>Category</th><th>Location</th><th>Posted By</th><th>Votes</th><th>Date</th><th>Actions</th></tr></thead>
+ <thead><tr><th scope="col">#</th><th scope="col">Title</th><th scope="col">Status</th><th scope="col">Category</th><th scope="col">Location</th><th scope="col">Posted By</th><th scope="col">Votes</th><th scope="col">Date</th><th scope="col">Actions</th></tr></thead>
  <tbody id="postsBody"></tbody>
  </table>
  </div>
@@ -504,7 +504,7 @@ tr:hover td{background:#fafbff;transition:background 0.15s;}
  <div class="table-wrap">
  <div class="loading" id="logsLoading"><i class="fas fa-spinner"></i> Loading logs...</div>
  <table id="logsTable" style="display:none;">
- <thead><tr><th>#</th><th>Email</th><th>Status</th><th>IP Address</th><th>Device</th><th>Date / Time</th></tr></thead>
+ <thead><tr><th scope="col">#</th><th scope="col">Email</th><th scope="col">Status</th><th scope="col">IP Address</th><th scope="col">Device</th><th scope="col">Date / Time</th></tr></thead>
  <tbody id="logsBody"></tbody>
  </table>
  <div id="logsPaginationContainer" style="display:none;padding:16px;border-top:1px solid var(--border);background:#fafbfc;"></div>
@@ -566,15 +566,15 @@ tr:hover td{background:#fafbff;transition:background 0.15s;}
  <table id="securityTable" style="display:none;">
  <thead>
  <tr>
- <th style="width:42px;"><input type="checkbox" id="securitySelectAll" onchange="toggleSecuritySelectAll(this)"></th>
- <th>#</th>
- <th>Email</th>
- <th>IP Address</th>
- <th>Failed Attempts (30min)</th>
- <th>Risk Level</th>
- <th>Last Attempt</th>
- <th>Status</th>
- <th>Actions</th>
+ <th scope="col" style="width:42px;"><input type="checkbox" id="securitySelectAll" aria-label="Select all security log entries" onchange="toggleSecuritySelectAll(this)"></th>
+ <th scope="col">#</th>
+ <th scope="col">Email</th>
+ <th scope="col">IP Address</th>
+ <th scope="col">Failed Attempts (30min)</th>
+ <th scope="col">Risk Level</th>
+ <th scope="col">Last Attempt</th>
+ <th scope="col">Status</th>
+ <th scope="col">Actions</th>
  </tr>
  </thead>
  <tbody id="securityBody"></tbody>
@@ -612,7 +612,7 @@ tr:hover td{background:#fafbff;transition:background 0.15s;}
  <div class="table-wrap" style="margin-top:0;padding:0 24px 24px;">
  <table id="vulnHistoryTable" style="display:none; width:100%;">
  <thead>
- <tr><th>#</th><th>Date</th><th>Score</th><th>HTTPS</th><th>Session</th><th>Password</th><th>Headers</th><th>Uploads</th></tr>
+ <tr><th scope="col">#</th><th scope="col">Date</th><th scope="col">Score</th><th scope="col">HTTPS</th><th scope="col">Session</th><th scope="col">Password</th><th scope="col">Headers</th><th scope="col">Uploads</th></tr>
  </thead>
  <tbody id="vulnHistoryBody"></tbody>
  </table>
@@ -644,7 +644,7 @@ tr:hover td{background:#fafbff;transition:background 0.15s;}
  <div class="table-wrap">
  <div class="loading" id="contactsLoading"><i class="fas fa-spinner"></i> Loading contacts...</div>
  <table id="contactsTable" style="display:none;">
- <thead><tr><th>#</th><th>Name</th><th>Type</th><th>Barangay</th><th>City</th><th>Phone</th><th>Email</th><th>Status</th><th>Actions</th></tr></thead>
+ <thead><tr><th scope="col">#</th><th scope="col">Name</th><th scope="col">Type</th><th scope="col">Barangay</th><th scope="col">City</th><th scope="col">Phone</th><th scope="col">Email</th><th scope="col">Status</th><th scope="col">Actions</th></tr></thead>
  <tbody id="contactsBody"></tbody>
  </table>
  </div>
@@ -674,11 +674,11 @@ tr:hover td{background:#fafbff;transition:background 0.15s;}
  <table id="auditTable" style="display:none;">
  <thead>
  <tr>
- <th>#</th>
- <th>Report</th>
- <th>Action</th>
- <th>Performed By</th>
- <th>Date / Time</th>
+ <th scope="col">#</th>
+ <th scope="col">Report</th>
+ <th scope="col">Action</th>
+ <th scope="col">Performed By</th>
+ <th scope="col">Date / Time</th>
  </tr>
  </thead>
  <tbody id="auditBody"></tbody>
@@ -698,7 +698,7 @@ tr:hover td{background:#fafbff;transition:background 0.15s;}
  <div class="loading" id="pendingLoading"><i class="fas fa-spinner"></i> Loading...</div>
  <div id="pendingEmpty" style="display:none;padding:48px;text-align:center;color:var(--muted);"><i class="fas fa-check-circle" style="font-size:2rem;display:block;margin-bottom:10px;color:#16a34a;opacity:0.5;"></i>No pending approvals.</div>
  <table id="pendingTable" style="display:none;">
- <thead><tr><th>#</th><th>Applicant</th><th>Email</th><th>Role</th><th>Office / Unit</th><th>Position</th><th>Jurisdiction</th><th>Applied</th><th>Actions</th></tr></thead>
+ <thead><tr><th scope="col">#</th><th scope="col">Applicant</th><th scope="col">Email</th><th scope="col">Role</th><th scope="col">Office / Unit</th><th scope="col">Position</th><th scope="col">Jurisdiction</th><th scope="col">Applied</th><th scope="col">Actions</th></tr></thead>
  <tbody id="pendingBody"></tbody>
  </table>
  </div>
@@ -1964,11 +1964,11 @@ function unbanIP(ip, btn){
  <table style="width:100%;border-collapse:collapse;">
  <thead>
  <tr>
- <th style="text-align:left;padding:10px 12px;">Snapshot Archive</th>
- <th style="white-space:nowrap;padding:10px 12px;">File Size</th>
- <th style="white-space:nowrap;padding:10px 12px;">SHA-256 Checksum</th>
- <th style="white-space:nowrap;padding:10px 12px;">Created</th>
- <th style="white-space:nowrap;padding:10px 12px;">Actions</th>
+ <th scope="col" style="text-align:left;padding:10px 12px;">Snapshot Archive</th>
+ <th scope="col" style="white-space:nowrap;padding:10px 12px;">File Size</th>
+ <th scope="col" style="white-space:nowrap;padding:10px 12px;">SHA-256 Checksum</th>
+ <th scope="col" style="white-space:nowrap;padding:10px 12px;">Created</th>
+ <th scope="col" style="white-space:nowrap;padding:10px 12px;">Actions</th>
  </tr>
  </thead>
  <tbody id="snapshotTableBody">
@@ -2038,11 +2038,11 @@ function unbanIP(ip, btn){
  <table style="width:100%;border-collapse:collapse;">
  <thead>
  <tr>
- <th style="text-align:left;padding:10px 12px;">Origin IP & Geo</th>
- <th style="padding:10px 12px;">Target Vector</th>
- <th style="white-space:nowrap;padding:10px 12px;">Threat Signature</th>
- <th style="white-space:nowrap;padding:10px 12px;">Timestamp</th>
- <th style="white-space:nowrap;padding:10px 12px;">Status / Action</th>
+ <th scope="col" style="text-align:left;padding:10px 12px;">Origin IP & Geo</th>
+ <th scope="col" style="padding:10px 12px;">Target Vector</th>
+ <th scope="col" style="white-space:nowrap;padding:10px 12px;">Threat Signature</th>
+ <th scope="col" style="white-space:nowrap;padding:10px 12px;">Timestamp</th>
+ <th scope="col" style="white-space:nowrap;padding:10px 12px;">Status / Action</th>
  </tr>
  </thead>
  <tbody>
