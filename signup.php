@@ -293,32 +293,32 @@ body{background:var(--bg);min-height:100vh;display:flex;flex-direction:column;}
 
  <div class="section-title">Personal Information</div>
  <div class="form-row">
- <div class="form-group"><label>First Name</label><input type="text" name="first_name" placeholder="Juan" required></div>
- <div class="form-group"><label>Last Name</label><input type="text" name="last_name" placeholder="dela Cruz" required></div>
+ <div class="form-group"><label for="firstName">First Name</label><input type="text" id="firstName" name="first_name" placeholder="Juan" required autocomplete="given-name"></div>
+ <div class="form-group"><label for="lastName">Last Name</label><input type="text" id="lastName" name="last_name" placeholder="dela Cruz" required autocomplete="family-name"></div>
  </div>
  <div class="form-row">
- <div class="form-group"><label>Email Address</label><input type="email" name="email" placeholder="you@example.com" required></div>
- <div class="form-group"><label>Phone Number <span style="color:var(--muted);font-weight:400;">(optional)</span></label><input type="tel" name="phone" placeholder="+63 9XX XXX XXXX"></div>
+ <div class="form-group"><label for="emailInput">Email Address</label><input type="email" id="emailInput" name="email" placeholder="you@example.com" required autocomplete="email"></div>
+ <div class="form-group"><label for="phoneInput">Phone Number <span style="color:var(--muted);font-weight:400;">(optional)</span></label><input type="tel" id="phoneInput" name="phone" placeholder="+63 9XX XXX XXXX" autocomplete="tel"></div>
  </div>
  <div class="form-row">
- <div class="form-group"><label>Password</label><div class="pw-wrap"><input type="password" name="password" id="pw1" placeholder="Min. 8 characters" required><button type="button" onclick="togglePw('pw1',this)" aria-label="Toggle password visibility">SHOW</button></div></div>
- <div class="form-group"><label>Confirm Password</label><div class="pw-wrap"><input type="password" name="confirm_password" id="pw2" placeholder="Re-enter password" required><button type="button" onclick="togglePw('pw2',this)" aria-label="Toggle confirm password visibility">SHOW</button></div></div>
+ <div class="form-group"><label for="pw1">Password</label><div class="pw-wrap"><input type="password" name="password" id="pw1" placeholder="Min. 8 characters" required><button type="button" onclick="togglePw('pw1',this)" aria-label="Toggle password visibility">SHOW</button></div></div>
+ <div class="form-group"><label for="pw2">Confirm Password</label><div class="pw-wrap"><input type="password" name="confirm_password" id="pw2" placeholder="Re-enter password" required><button type="button" onclick="togglePw('pw2',this)" aria-label="Toggle confirm password visibility">SHOW</button></div></div>
  </div>
 
  <!-- Official fields shown for barangay / lgu / responder -->
  <div class="official-fields card-section" id="officialFields">
  <div class="section-title" id="officialSectionTitle">Official Information</div>
  <div class="form-row">
- <div class="form-group"><label id="orgLabel">Office / Unit Name</label><input type="text" name="org_name" id="orgName" placeholder="e.g. Brgy. Malagasang I-A Hall"></div>
- <div class="form-group"><label>Position / Rank</label><input type="text" name="position" placeholder="e.g. Barangay Captain"></div>
+ <div class="form-group"><label for="orgName" id="orgLabel">Office / Unit Name</label><input type="text" name="org_name" id="orgName" placeholder="e.g. Brgy. Malagasang I-A Hall"></div>
+ <div class="form-group"><label for="positionInput">Position / Rank</label><input type="text" id="positionInput" name="position" placeholder="e.g. Barangay Captain"></div>
  </div>
  <div class="form-row" id="geoFields">
- <div class="form-group"><label id="brgyLabel">Barangay</label><input type="text" name="barangay_name" placeholder="e.g. Malagasang I-A"></div>
- <div class="form-group"><label>City / Municipality</label><input type="text" name="municipality" placeholder="e.g. Imus"></div>
+ <div class="form-group"><label for="brgyName" id="brgyLabel">Barangay</label><input type="text" id="brgyName" name="barangay_name" placeholder="e.g. Malagasang I-A"></div>
+ <div class="form-group"><label for="municipalityInput">City / Municipality</label><input type="text" id="municipalityInput" name="municipality" placeholder="e.g. Imus"></div>
  </div>
  <div class="form-group" id="responderTypeWrap" style="display:none;">
- <label>Responder Type</label>
- <select name="responder_type">
+ <label for="responderTypeSelect">Responder Type</label>
+ <select name="responder_type" id="responderTypeSelect">
  <option value="">Select type...</option>
  <option value="bfp">BFP - Bureau of Fire Protection</option>
  <option value="pnp">PNP - Philippine National Police</option>
@@ -386,6 +386,22 @@ function selectRole(role, el) {
  document.getElementById('orgName').placeholder = 'e.g. Brgy. Malagasang I-A Hall';
  }
 }
+
+(function(){
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const req = params.get('portal') || params.get('role');
+    if (req) {
+      const mapped = (req === 'responder' || req === 'first-responder') ? 'first_responder' : req;
+      if (roleConfig[mapped]) {
+        const targetClass = mapped === 'first_responder' ? 'r-responder' : ('r-' + mapped);
+        const targetEl = document.querySelector('.role-card.' + targetClass);
+        if (targetEl) selectRole(mapped, targetEl);
+      }
+    }
+  } catch(e) {}
+})();
+
 function togglePw(id,btn){const f=document.getElementById(id);const s=f.type==='password';f.type=s?'text':'password';btn.textContent=s?'HIDE':'SHOW';}
 document.getElementById('regForm').addEventListener('submit',async e=>{
  e.preventDefault();

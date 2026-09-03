@@ -1219,7 +1219,19 @@ function closeMiniMapDirect(){document.getElementById('miniMapModal').classList.
 /* Lightbox */
 function openLightbox(url){document.getElementById('lightboxImg').src=url;document.getElementById('lightbox').classList.add('open');}
 function closeLightbox(){document.getElementById('lightbox').classList.remove('open');document.getElementById('lightboxImg').src='';}
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeLightbox();closeDetail();if(typeof closeModal==='function')closeModal();if(typeof closeMiniMapDirect==='function')closeMiniMapDirect();}});
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){
+    closeLightbox();
+    closeDetail();
+    if(typeof closeModal==='function')closeModal();
+    if(typeof closeMiniMapDirect==='function')closeMiniMapDirect();
+    if(typeof closeWeatherModal==='function')closeWeatherModal();
+    if(typeof closeSafetyModal==='function')closeSafetyModal();
+    if(typeof closeFirstAidModal==='function')closeFirstAidModal();
+    if(typeof closeHotlinesModal==='function')closeHotlinesModal();
+    if(typeof closeGoBagModal==='function')closeGoBagModal();
+  }
+});
 
 /* Profile: avatar swatches */
 let selColor=INIT_COLOR;
@@ -1544,9 +1556,9 @@ window.addEventListener('load',()=>{if(mainMap)mainMap.invalidateSize();if(inlin
 </script>
 
 <!-- ── Weather Advisory & Flash Warning Modal ── -->
-<div class="modal-overlay" id="weatherModalOverlay" onclick="if(event.target===this)closeWeatherModal()">
+<div class="modal-overlay" id="weatherModalOverlay" role="dialog" aria-modal="true" aria-label="Severe Weather Bulletin" onclick="if(event.target===this)closeWeatherModal()">
  <div class="modal" style="max-width:600px;">
- <button class="modal-close" onclick="closeWeatherModal()"><i class="fas fa-xmark"></i></button>
+ <button class="modal-close" onclick="closeWeatherModal()" aria-label="Close weather bulletin modal"><i class="fas fa-xmark"></i></button>
  <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
  <div style="width:40px;height:40px;border-radius:11px;background:#e0f2fe;color:#0284c7;display:flex;align-items:center;justify-content:center;font-size:1.25rem;flex-shrink:0;"><i class="fas fa-cloud-showers-heavy"></i></div>
  <div>
@@ -1569,9 +1581,9 @@ window.addEventListener('load',()=>{if(mainMap)mainMap.invalidateSize();if(inlin
 </div>
 
 <!-- ── Safety Guide & Disaster Preparedness Modal ── -->
-<div class="modal-overlay" id="safetyModalOverlay" onclick="if(event.target===this)closeSafetyModal()">
+<div class="modal-overlay" id="safetyModalOverlay" role="dialog" aria-modal="true" aria-label="Emergency Preparedness Guide" onclick="if(event.target===this)closeSafetyModal()">
  <div class="modal" style="max-width:640px;">
- <button class="modal-close" onclick="closeSafetyModal()"><i class="fas fa-xmark"></i></button>
+ <button class="modal-close" onclick="closeSafetyModal()" aria-label="Close emergency preparedness guide"><i class="fas fa-xmark"></i></button>
  <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
  <div style="width:40px;height:40px;border-radius:11px;background:#ebf2ff;color:#2563eb;display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0;"><i class="fas fa-shield-heart"></i></div>
  <div>
@@ -1590,9 +1602,9 @@ window.addEventListener('load',()=>{if(mainMap)mainMap.invalidateSize();if(inlin
 </div>
 
 <!-- ── Emergency First-Aid Quick Cards Modal ── -->
-<div class="modal-overlay" id="firstAidModalOverlay" onclick="if(event.target===this)closeFirstAidModal()">
+<div class="modal-overlay" id="firstAidModalOverlay" role="dialog" aria-modal="true" aria-label="Emergency First-Aid Quick Cards" onclick="if(event.target===this)closeFirstAidModal()">
  <div class="modal" style="max-width:640px;">
- <button class="modal-close" onclick="closeFirstAidModal()"><i class="fas fa-xmark"></i></button>
+ <button class="modal-close" onclick="closeFirstAidModal()" aria-label="Close emergency first aid modal"><i class="fas fa-xmark"></i></button>
  <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
  <div style="width:40px;height:40px;border-radius:11px;background:#fef2f2;color:#dc2626;display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0;"><i class="fas fa-kit-medical"></i></div>
  <div>
@@ -1611,9 +1623,9 @@ window.addEventListener('load',()=>{if(mainMap)mainMap.invalidateSize();if(inlin
 </div>
 
 <!-- ── Emergency Hotlines & One-Touch Quick-Dial Directory Modal ── -->
-<div class="modal-overlay" id="hotlinesModalOverlay" onclick="if(event.target===this)closeHotlinesModal()">
+<div class="modal-overlay" id="hotlinesModalOverlay" role="dialog" aria-modal="true" aria-label="Emergency Hotlines Directory" onclick="if(event.target===this)closeHotlinesModal()">
  <div class="modal" style="max-width:700px;max-height:86vh;display:flex;flex-direction:column;overflow:hidden;">
- <button class="modal-close" onclick="closeHotlinesModal()"><i class="fas fa-xmark"></i></button>
+ <button class="modal-close" onclick="closeHotlinesModal()" aria-label="Close emergency hotlines directory"><i class="fas fa-xmark"></i></button>
  <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;flex-shrink:0;">
  <div style="width:42px;height:42px;border-radius:12px;background:#fef2f2;color:#ef4444;display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0;">
  <i class="fas fa-phone-volume"></i>
@@ -1771,9 +1783,9 @@ window.addEventListener('load',()=>{if(mainMap)mainMap.invalidateSize();if(inlin
 </div>
 
 <!-- ── 72-Hour Calamity Go Bag & Emergency Kit Planner Modal ── -->
-<div class="modal-overlay" id="goBagModalOverlay" onclick="if(event.target===this)closeGoBagModal()">
+<div class="modal-overlay" id="goBagModalOverlay" role="dialog" aria-modal="true" aria-label="72-Hour Calamity Go Bag Planner" onclick="if(event.target===this)closeGoBagModal()">
  <div class="modal" style="max-width:700px;max-height:90vh;display:flex;flex-direction:column;overflow:hidden;">
- <button class="modal-close" onclick="closeGoBagModal()"><i class="fas fa-xmark"></i></button>
+ <button class="modal-close" onclick="closeGoBagModal()" aria-label="Close 72-hour go bag planner modal"><i class="fas fa-xmark"></i></button>
  <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;flex-shrink:0;">
  <div style="width:42px;height:42px;border-radius:12px;background:#fef3c7;color:#d97706;display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0;">
  <i class="fas fa-bag-shopping"></i>
