@@ -19,7 +19,7 @@ require_once __DIR__ . '/../config/email.php';
 //
 // To pin a specific URL, just set APP_URL to something other than "http://localhost"
 // in config/email.php and this entire block is skipped.
-if (!defined('APP_URL') || APP_URL === 'http://localhost' || APP_URL === 'http://localhost/' || APP_URL === '') {
+if (!defined('APP_URL') || APP_URL === 'http://localhost' || APP_URL === 'http://localhost/' || APP_URL === '' || strtolower((string)APP_URL) === 'auto') {
  $sentri_detected = sentri_detect_app_url();
  if (!defined('APP_URL')) {
  define('APP_URL', $sentri_detected);
@@ -39,7 +39,10 @@ function sentri_app_url(): string
  if (!empty($GLOBALS['_sentri_app_url_override'])) {
  return rtrim($GLOBALS['_sentri_app_url_override'], '/');
  }
- return defined('APP_URL') ? rtrim(APP_URL, '/') : 'http://localhost';
+ if (!defined('APP_URL') || APP_URL === 'http://localhost' || APP_URL === 'http://localhost/' || APP_URL === '' || strtolower((string)APP_URL) === 'auto') {
+ return rtrim(sentri_detect_app_url(), '/');
+ }
+ return rtrim(APP_URL, '/');
 }
 
 /**
