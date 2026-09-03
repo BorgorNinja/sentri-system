@@ -1560,11 +1560,11 @@ function searchTableReports(query){
 .lgu-cn-input:focus{border-color:#93c5fd;background:#fff;}
 </style>
 
-<div class="lgu-modal-bg" id="lguReportModal">
+<div class="lgu-modal-bg" id="lguReportModal" role="dialog" aria-modal="true" aria-labelledby="lguModalTitle">
  <div class="lgu-modal">
  <div class="lgu-modal-header">
  <h3 id="lguModalTitle">Incident Report</h3>
- <button class="lgu-modal-close" onclick="closeLguModal()"><i class="fas fa-xmark"></i></button>
+ <button class="lgu-modal-close" onclick="closeLguModal()" aria-label="Close report modal"><i class="fas fa-xmark"></i></button>
  </div>
  <div class="lgu-modal-body" id="lguModalBody"></div>
  <div class="lgu-modal-actions">
@@ -1579,14 +1579,14 @@ function searchTableReports(query){
  <button class="btn-lgu" style="background:#f0f7ff;color:var(--navy);border:1.5px solid #bfdbfe;" id="lguModalStatusBtn"><i class="fas fa-pen"></i> Apply Status</button>
  </div>
  </div>
-</div>
+ </div>
 
 <!-- ── LGU DISPATCH MODAL ── -->
-<div class="lgu-modal-bg" id="lguDispatchModal">
+<div class="lgu-modal-bg" id="lguDispatchModal" role="dialog" aria-modal="true" aria-label="Dispatch Responder">
  <div class="lgu-modal" style="max-width:420px;">
  <div class="lgu-modal-header">
  <h3><i class="fas fa-paper-plane" style="color:var(--navy);margin-right:6px;"></i>Dispatch Responder</h3>
- <button class="lgu-modal-close" onclick="closeLguDispatch()"><i class="fas fa-xmark"></i></button>
+ <button class="lgu-modal-close" onclick="closeLguDispatch()" aria-label="Close dispatch modal"><i class="fas fa-xmark"></i></button>
  </div>
  <div class="lgu-modal-body">
  <input type="hidden" id="lguDispatchRptId">
@@ -1610,11 +1610,11 @@ function searchTableReports(query){
 </div>
 
 <!-- ── LGU ADD CONTACT MODAL ── -->
-<div class="lgu-modal-bg" id="lguContactModal">
+<div class="lgu-modal-bg" id="lguContactModal" role="dialog" aria-modal="true" aria-label="Add Emergency Contact">
  <div class="lgu-modal" style="max-width:460px;">
  <div class="lgu-modal-header">
  <h3><i class="fas fa-address-book" style="color:var(--navy);margin-right:6px;"></i>Add Emergency Contact</h3>
- <button class="lgu-modal-close" onclick="closeLguContactModal()"><i class="fas fa-xmark"></i></button>
+ <button class="lgu-modal-close" onclick="closeLguContactModal()" aria-label="Close add contact modal"><i class="fas fa-xmark"></i></button>
  </div>
  <div class="lgu-modal-body">
  <div class="lgu-cn-grid">
@@ -1640,11 +1640,11 @@ function searchTableReports(query){
 </div>
 
 <!-- ── MULTI-AGENCY ICS MUTUAL AID MATRIX MODAL ── -->
-<div class="lgu-modal-bg" id="mutualAidModal">
+<div class="lgu-modal-bg" id="mutualAidModal" role="dialog" aria-modal="true" aria-label="Incident Command Mutual Aid Matrix">
  <div class="lgu-modal" style="max-width:840px;">
  <div class="lgu-modal-header">
  <h3><i class="fas fa-handshake-angle" style="color:var(--navy);margin-right:6px;"></i>Multi-Agency Incident Command (ICS) Mutual Aid Matrix</h3>
- <button class="lgu-modal-close" onclick="closeMutualAidModal()"><i class="fas fa-xmark"></i></button>
+ <button class="lgu-modal-close" onclick="closeMutualAidModal()" aria-label="Close mutual aid modal"><i class="fas fa-xmark"></i></button>
  </div>
  <div class="lgu-modal-body">
  <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:12px 14px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">
@@ -1724,16 +1724,16 @@ function searchTableReports(query){
 </div>
 
 <!-- ── DRRM ALERT LEVEL & EVACUATION MANDATE CONTROLLER MODAL ── -->
-<div class="lgu-modal-bg" id="alertLevelModal">
+<div class="lgu-modal-bg" id="alertLevelModal" role="dialog" aria-modal="true" aria-label="DRRM Alert Level Controller">
  <div class="lgu-modal" style="max-width:800px;">
  <div class="lgu-modal-header">
  <h3><i class="fas fa-triangle-exclamation" style="color:#dc2626;margin-right:6px;"></i>DRRM Operations Alert Status & Evacuation Mandate Controller</h3>
- <button class="lgu-modal-close" onclick="closeAlertLevelModal()"><i class="fas fa-xmark"></i></button>
+ <button class="lgu-modal-close" onclick="closeAlertLevelModal()" aria-label="Close alert level modal"><i class="fas fa-xmark"></i></button>
  </div>
  <div class="lgu-modal-body">
  <!-- Active Alert Level Card -->
  <div id="activeAlertCard" style="background:linear-gradient(135deg,#991b1b 0%,#b91c1c 100%);color:#fff;border-radius:12px;padding:16px 20px;margin-bottom:14px;box-shadow:0 4px 14px rgba(185,28,28,0.25);">
- <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+ <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:gap:10px;">
  <div>
  <span style="background:rgba(255,255,255,0.2);padding:3px 8px;border-radius:6px;font-size:0.7rem;font-weight:800;letter-spacing:0.5px;text-transform:uppercase;">NDRRMC Charlie Protocol</span>
  <div style="font-size:1.25rem;font-weight:800;margin-top:4px;" id="activeAlertTitle">RED ALERT / EMERGENCY LEVEL 3</div>
@@ -1837,6 +1837,16 @@ function broadcastAlertDirective(){
  closeAlertLevelModal();
  showToast('DRRM Alert Directive broadcasted to all 5 Barangay Operations Centers and community feeds.', 'success');
 }
+
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    closeLguModal();
+    if (typeof closeLguContactModal === 'function') closeLguContactModal();
+    if (typeof closeLguDispatch === 'function') closeLguDispatch();
+    if (typeof closeMutualAidModal === 'function') closeMutualAidModal();
+    if (typeof closeAlertLevelModal === 'function') closeAlertLevelModal();
+  }
+});
 </script>
 <?= csrf_script() ?>
 </body>

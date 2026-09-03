@@ -719,7 +719,7 @@ body.dark .locate-btn-big{background:#1f3a5f;color:var(--blue-accent);}
 </div>
 
 <!-- ═══ POST REPORT MODAL ═══ -->
-<div class="modal-overlay" id="modalOverlay" onclick="outsideClose(event)">
+<div class="modal-overlay" id="modalOverlay" role="dialog" aria-modal="true" aria-label="Report an Incident" onclick="outsideClose(event)">
  <div class="modal">
  <button class="modal-close" onclick="closeModal()" aria-label="Close report modal"><i class="fas fa-xmark"></i></button>
  <h2><i class="fas fa-triangle-exclamation" style="color:var(--red);margin-right:8px;"></i>Report an Incident</h2>
@@ -812,9 +812,9 @@ body.dark .locate-btn-big{background:#1f3a5f;color:var(--blue-accent);}
 </div>
 
 <!-- ═══ REPORT DETAIL ═══ -->
-<div class="detail-overlay" id="detailOverlay" onclick="outsideCloseDetail(event)">
+<div class="detail-overlay" id="detailOverlay" role="dialog" aria-modal="true" aria-label="Incident Details" onclick="outsideCloseDetail(event)">
  <div class="detail-modal" id="detailModal">
- <button class="detail-close" onclick="closeDetail()"><i class="fas fa-xmark"></i></button>
+ <button class="detail-close" onclick="closeDetail()" aria-label="Close incident details"><i class="fas fa-xmark"></i></button>
  <div class="detail-header">
  <div class="detail-status-bar"><span class="detail-badge" id="d_badge"></span><span class="detail-cat-tag" id="d_cat_tag"></span></div>
  <div class="detail-title" id="d_title"></div>
@@ -836,7 +836,7 @@ body.dark .locate-btn-big{background:#1f3a5f;color:var(--blue-accent);}
 </div>
 
 <!-- ═══ MINI MAP ═══ -->
-<div class="mini-map-modal" id="miniMapModal" onclick="closeMiniMap(event)">
+<div class="mini-map-modal" id="miniMapModal" role="dialog" aria-modal="true" aria-label="Incident Location Map" onclick="closeMiniMap(event)">
  <div class="mini-map-box">
  <div class="mini-map-header"><h4 id="miniMapTitle">Location</h4><button class="mini-map-close" onclick="closeMiniMapDirect()" aria-label="Close map preview"><i class="fas fa-xmark"></i></button></div>
  <div id="miniMap"></div>
@@ -845,8 +845,8 @@ body.dark .locate-btn-big{background:#1f3a5f;color:var(--blue-accent);}
 </div>
 
 <!-- ═══ LIGHTBOX ═══ -->
-<div class="lightbox" id="lightbox" onclick="closeLightbox()">
- <button class="lightbox-close" onclick="closeLightbox()"><i class="fas fa-xmark"></i></button>
+<div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="Photo Preview" onclick="closeLightbox()">
+ <button class="lightbox-close" onclick="closeLightbox()" aria-label="Close photo preview"><i class="fas fa-xmark"></i></button>
  <img id="lightboxImg" src="" alt="Photo">
 </div>
 
@@ -1219,7 +1219,7 @@ function closeMiniMapDirect(){document.getElementById('miniMapModal').classList.
 /* Lightbox */
 function openLightbox(url){document.getElementById('lightboxImg').src=url;document.getElementById('lightbox').classList.add('open');}
 function closeLightbox(){document.getElementById('lightbox').classList.remove('open');document.getElementById('lightboxImg').src='';}
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeLightbox();closeDetail();}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeLightbox();closeDetail();if(typeof closeModal==='function')closeModal();if(typeof closeMiniMapDirect==='function')closeMiniMapDirect();}});
 
 /* Profile: avatar swatches */
 let selColor=INIT_COLOR;

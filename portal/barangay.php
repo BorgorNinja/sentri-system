@@ -314,11 +314,11 @@ tr:hover td{background:#fafafa;}
 <div class="toast-container" id="toastContainer"></div>
 
 <!-- REPORT DETAIL MODAL -->
-<div class="modal-bg" id="reportModal">
+<div class="modal-bg" id="reportModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
  <div class="modal">
  <div class="modal-header">
  <h3 id="modalTitle">Incident Report</h3>
- <button class="modal-close" onclick="closeModal()"><i class="fas fa-xmark"></i></button>
+ <button class="modal-close" onclick="closeModal()" aria-label="Close report modal"><i class="fas fa-xmark"></i></button>
  </div>
  <div class="modal-body" id="modalBody"></div>
  <div class="modal-actions" id="modalActions">
@@ -1101,11 +1101,11 @@ document.getElementById('contactModal').addEventListener('click',function(e){if(
 </script>
 
 <!-- EVACUATION CENTERS MODAL -->
-<div class="modal-bg" id="evacModal">
+<div class="modal-bg" id="evacModal" role="dialog" aria-modal="true" aria-label="Evacuation Centers Directory">
  <div class="modal" style="max-width:580px;">
  <div class="modal-header">
  <h3><i class="fas fa-person-shelter" style="color:var(--green);margin-right:6px;"></i>Barangay Evacuation Centers Directory</h3>
- <button class="modal-close" onclick="closeEvacModal()"><i class="fas fa-xmark"></i></button>
+ <button class="modal-close" onclick="closeEvacModal()" aria-label="Close evacuation centers modal"><i class="fas fa-xmark"></i></button>
  </div>
  <div class="modal-body">
  <div style="display:flex;flex-direction:column;gap:12px;">
@@ -1171,11 +1171,11 @@ document.getElementById('contactModal').addEventListener('click',function(e){if(
 </div>
 
 <!-- RELIEF SUPPLIES INVENTORY MODAL -->
-<div class="modal-bg" id="reliefModal">
+<div class="modal-bg" id="reliefModal" role="dialog" aria-modal="true" aria-label="Relief Supplies Inventory">
  <div class="modal" style="max-width:600px;">
  <div class="modal-header">
  <h3><i class="fas fa-boxes-stacked" style="color:var(--navy);margin-right:6px;"></i>Barangay Emergency Relief & Supplies Tracker</h3>
- <button class="modal-close" onclick="closeReliefModal()"><i class="fas fa-xmark"></i></button>
+ <button class="modal-close" onclick="closeReliefModal()" aria-label="Close relief supplies tracker"><i class="fas fa-xmark"></i></button>
  </div>
  <div class="modal-body">
  <div style="display:flex;flex-direction:column;gap:12px;">
@@ -1229,11 +1229,11 @@ document.getElementById('contactModal').addEventListener('click',function(e){if(
 </div>
 
 <!-- MASS BROADCAST MODAL -->
-<div class="modal-bg" id="broadcastModal">
+<div class="modal-bg" id="broadcastModal" role="dialog" aria-modal="true" aria-label="Emergency Mass Broadcast">
  <div class="modal" style="max-width:580px;">
  <div class="modal-header">
  <h3><i class="fas fa-bullhorn" style="color:#dc2626;margin-right:6px;"></i>Barangay Emergency Mass Broadcast</h3>
- <button class="modal-close" onclick="closeBroadcastModal()"><i class="fas fa-xmark"></i></button>
+ <button class="modal-close" onclick="closeBroadcastModal()" aria-label="Close mass broadcast modal"><i class="fas fa-xmark"></i></button>
  </div>
  <div class="modal-body">
  <div style="margin-bottom:12px;">
@@ -1264,11 +1264,11 @@ document.getElementById('contactModal').addEventListener('click',function(e){if(
 </div>
 
 <!-- VULNERABLE RESIDENTS & HIGH-RISK HOUSEHOLDS REGISTRY MODAL -->
-<div class="modal-bg" id="vulnerableModal">
+<div class="modal-bg" id="vulnerableModal" role="dialog" aria-modal="true" aria-label="Vulnerable Sector Registry">
  <div class="modal" style="max-width:680px;">
  <div class="modal-header">
  <h3><i class="fas fa-person-cane" style="color:#86198f;margin-right:6px;"></i>Barangay Vulnerable Sector & High-Risk Registry</h3>
- <button class="modal-close" onclick="closeVulnerableModal()"><i class="fas fa-xmark"></i></button>
+ <button class="modal-close" onclick="closeVulnerableModal()" aria-label="Close vulnerable registry modal"><i class="fas fa-xmark"></i></button>
  </div>
  <div class="modal-body">
  <div style="background:#fdf4ff;border:1px solid #f0abfc;border-radius:10px;padding:10px 14px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">
@@ -1334,11 +1334,11 @@ document.getElementById('contactModal').addEventListener('click',function(e){if(
 </div>
 
 <!-- ── BARANGAY RELIEF DISTRIBUTION & QR VOUCHER CLAIMS MODAL ── -->
-<div class="modal-bg" id="reliefClaimsModal">
+<div class="modal-bg" id="reliefClaimsModal" role="dialog" aria-modal="true" aria-label="Relief Distribution Tracker">
  <div class="modal" style="max-width:760px;">
  <div class="modal-header">
  <h3><i class="fas fa-hand-holding-hand" style="color:#ca8a04;margin-right:6px;"></i>Barangay Calamity Relief & Food Pack Distribution Tracker</h3>
- <button class="modal-close" onclick="closeReliefClaimsModal()"><i class="fas fa-xmark"></i></button>
+ <button class="modal-close" onclick="closeReliefClaimsModal()" aria-label="Close relief claims modal"><i class="fas fa-xmark"></i></button>
  </div>
  <div class="modal-body">
  <div style="background:#fefce8;border:1px solid #fde047;border-radius:10px;padding:10px 14px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">
@@ -1550,8 +1550,19 @@ function toggleVulnStatus(id, btn){
  showToast('Resident status updated to Needs Assistance.', 'info');
  }
 }
+
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    closeModal();
+    if (typeof closeContactModal === 'function') closeContactModal();
+    if (typeof closeEvacModal === 'function') closeEvacModal();
+    if (typeof closeReliefModal === 'function') closeReliefModal();
+    if (typeof closeBroadcastModal === 'function') closeBroadcastModal();
+    if (typeof closeVulnerableModal === 'function') closeVulnerableModal();
+    if (typeof closeReliefClaimsModal === 'function') closeReliefClaimsModal();
+  }
+});
 </script>
 <?= csrf_script() ?>
 </body>
 </html>
-

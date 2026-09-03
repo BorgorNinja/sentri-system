@@ -584,7 +584,7 @@ tr:hover td{background:#fafbff;transition:background 0.15s;}
  </div>
 </div>
 
- <div class="modal-overlay vuln-modal" id="vulnerabilityModalOverlay" onclick="if(event.target===this) closeVulnerabilityModal()">
+ <div class="modal-overlay vuln-modal" id="vulnerabilityModalOverlay" role="dialog" aria-modal="true" aria-label="Vulnerability Assessment" onclick="if(event.target===this) closeVulnerabilityModal()">
  <div class="modal-dialog">
  <div class="panel">
  <div class="panel-header" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
@@ -706,11 +706,11 @@ tr:hover td{background:#fafbff;transition:background 0.15s;}
  </div>
 
  <!-- CONTACT MODAL -->
- <div class="modal-overlay" id="contactModalOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9999;display:none;align-items:center;justify-content:center;padding:20px;">
+ <div class="modal-overlay" id="contactModalOverlay" role="dialog" aria-modal="true" aria-labelledby="contactModalTitle" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9999;display:none;align-items:center;justify-content:center;padding:20px;">
  <div style="background:var(--card);border-radius:16px;padding:28px;width:100%;max-width:520px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
  <h3 id="contactModalTitle" style="font-size:1.05rem;font-weight:700;"><i class="fas fa-address-book" style="color:var(--blue);margin-right:8px;"></i>Add Emergency Contact</h3>
- <button onclick="closeContactModal()" style="background:none;border:none;font-size:1.1rem;cursor:pointer;color:var(--muted);"><i class="fas fa-xmark"></i></button>
+ <button onclick="closeContactModal()" aria-label="Close emergency contact modal" style="background:none;border:none;font-size:1.1rem;cursor:pointer;color:var(--muted);"><i class="fas fa-xmark"></i></button>
  </div>
  <div id="contactModalMsg" style="display:none;padding:10px 14px;border-radius:8px;font-size:0.84rem;margin-bottom:14px;"></div>
  <input type="hidden" id="c_id">
@@ -764,11 +764,11 @@ tr:hover td{background:#fafbff;transition:background 0.15s;}
  </div>
 
  <!-- DELETE CONFIRMATION MODAL -->
- <div class="modal-overlay" id="deleteModalOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9999;align-items:center;justify-content:center;padding:20px;">
+ <div class="modal-overlay" id="deleteModalOverlay" role="dialog" aria-modal="true" aria-label="Confirm Delete" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9999;align-items:center;justify-content:center;padding:20px;">
  <div style="background:var(--card);border-radius:16px;padding:28px;width:100%;max-width:420px;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
  <h3 style="font-size:1.05rem;font-weight:700;"><i class="fas fa-trash" style="color:#dc2626;margin-right:8px;"></i>Confirm Delete</h3>
- <button onclick="closeDeleteModal()" style="background:none;border:none;font-size:1.1rem;cursor:pointer;color:var(--muted);"><i class="fas fa-xmark"></i></button>
+ <button onclick="closeDeleteModal()" aria-label="Close confirm delete modal" style="background:none;border:none;font-size:1.1rem;cursor:pointer;color:var(--muted);"><i class="fas fa-xmark"></i></button>
  </div>
  <div id="deleteModalMessage" style="margin-bottom:18px;color:var(--text);line-height:1.6;">Are you sure you want to delete this flagged account? This action cannot be undone.</div>
  <div style="display:flex;gap:10px;justify-content:flex-end;">
@@ -1398,6 +1398,16 @@ document.getElementById('deleteModalOverlay').addEventListener('click', function
  if(e.target===this) closeDeleteModal();
 });
 
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    closeContactModal();
+    closeDeleteModal();
+    if (typeof closeVulnerabilityModal === 'function') closeVulnerabilityModal();
+    if (typeof closeBackupModal === 'function') closeBackupModal();
+    if (typeof closeIntrusionModal === 'function') closeIntrusionModal();
+  }
+});
+
 // ── INIT ─────────────────────────────────────────────────────
 loadOverview();
 loadPending();
@@ -1936,12 +1946,12 @@ function unbanIP(ip, btn){
 </script>
 
 <!-- ── DATABASE BACKUP & DISASTER RECOVERY (DR) MODAL ── -->
-<div class="modal-overlay vuln-modal" id="backupModalOverlay" onclick="if(event.target===this) closeBackupModal()">
+<div class="modal-overlay vuln-modal" id="backupModalOverlay" role="dialog" aria-modal="true" aria-label="Database Backup Manager" onclick="if(event.target===this) closeBackupModal()">
  <div class="modal-dialog" style="max-width:820px;">
  <div class="panel">
  <div class="panel-header" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
  <div class="panel-title"><i class="fas fa-database" style="color:var(--admin);"></i> System Backup & Disaster Recovery (DR) Snapshot Manager</div>
- <button class="close-modal-btn" onclick="closeBackupModal()" aria-label="Close"><i class="fas fa-xmark"></i></button>
+ <button class="close-modal-btn" onclick="closeBackupModal()" aria-label="Close database backup modal"><i class="fas fa-xmark"></i></button>
  </div>
  <div style="padding:0 24px 18px;">
  <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:12px 14px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">
@@ -1991,12 +2001,12 @@ function unbanIP(ip, btn){
 </div>
 
 <!-- ── SYSTEM INTRUSION SHIELD & THREAT DEFENSE MODAL ── -->
-<div class="modal-overlay vuln-modal" id="intrusionModalOverlay" onclick="if(event.target===this) closeIntrusionModal()">
+<div class="modal-overlay vuln-modal" id="intrusionModalOverlay" role="dialog" aria-modal="true" aria-label="Intrusion Shield Monitor" onclick="if(event.target===this) closeIntrusionModal()">
  <div class="modal-dialog" style="max-width:840px;">
  <div class="panel">
  <div class="panel-header" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
  <div class="panel-title"><i class="fas fa-shield-virus" style="color:#b91c1c;"></i> System Intrusion Shield & Edge Threat Defense Monitor</div>
- <button class="close-modal-btn" onclick="closeIntrusionModal()" aria-label="Close"><i class="fas fa-xmark"></i></button>
+ <button class="close-modal-btn" onclick="closeIntrusionModal()" aria-label="Close intrusion shield modal"><i class="fas fa-xmark"></i></button>
  </div>
  <div style="padding:0 24px 18px;">
  <!-- Telemetry Stats -->

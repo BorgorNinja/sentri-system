@@ -1285,10 +1285,18 @@ function copyHazmatGuide(code, btn){
 <?php if($view === 'queue'): ?>
 setTimeout(function(){location.reload();}, 90000);
 <?php endif; ?>
+
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    if (typeof closeNavModal === 'function') closeNavModal();
+    if (typeof closeHazmatModal === 'function') closeHazmatModal();
+    if (typeof closeSafetyCheckinModal === 'function') closeSafetyCheckinModal();
+  }
+});
 </script>
 
 <!-- ── TACTICAL HAZMAT & CHEMICAL EMERGENCY RESPONSE GUIDE (ERG) MODAL ── -->
-<div class="nav-modal-overlay" id="hazmatModal" onclick="if(event.target===this)closeHazmatModal()">
+<div class="nav-modal-overlay" id="hazmatModal" role="dialog" aria-modal="true" aria-label="HAZMAT Emergency Guide" onclick="if(event.target===this)closeHazmatModal()">
  <div class="nav-modal" style="max-width:680px;max-height:86vh;display:flex;flex-direction:column;overflow:hidden;">
  <div class="nav-modal-head" style="flex-shrink:0;">
  <h3 style="color:#b45309;"><i class="fas fa-biohazard" style="margin-right:6px;color:#d97706;"></i>HAZMAT & Tactical Chemical Emergency Guide (ERG 2024)</h3>
@@ -1381,7 +1389,7 @@ setTimeout(function(){location.reload();}, 90000);
 </div>
 
 <!-- ── RESPONDER SAFETY & HAZARD EXPOSURE CHECK-IN MODAL ── -->
-<div class="nav-modal-overlay" id="safetyCheckinModal" onclick="if(event.target===this)closeSafetyCheckinModal()">
+<div class="nav-modal-overlay" id="safetyCheckinModal" role="dialog" aria-modal="true" aria-label="Responder Safety Check-In" onclick="if(event.target===this)closeSafetyCheckinModal()">
  <div class="nav-modal" style="max-width:540px;">
  <div class="nav-modal-head">
  <h3 style="color:#1d4ed8;"><i class="fas fa-shield-heart" style="margin-right:6px;color:#2563eb;"></i>Responder Safety & Hazard Exposure Check-In</h3>
@@ -1416,7 +1424,7 @@ setTimeout(function(){location.reload();}, 90000);
  </div>
 </div>
 
-<div class="nav-modal-overlay" id="navModalOverlay">
+<div class="nav-modal-overlay" id="navModalOverlay" role="dialog" aria-modal="true" aria-label="Navigation Modal">
  <div class="nav-modal">
  <div class="nav-modal-head">
  <h3 id="navModalTitle"><i class="fas fa-route" style="margin-right:6px;color:var(--red-light);"></i>Navigation</h3>
