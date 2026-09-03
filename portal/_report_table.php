@@ -1,7 +1,7 @@
 <div class="table-wrap">
- <table>
+ <table role="table" aria-label="Incident Reports Table">
  <thead>
- <tr><th>#</th><th>Title</th><th>Category</th><th>Status</th><th>Location</th><th>Reported By</th><th>Date</th><th>Actions</th></tr>
+ <tr><th scope="col">#</th><th scope="col">Title</th><th scope="col">Category</th><th scope="col">Status</th><th scope="col">Location</th><th scope="col">Reported By</th><th scope="col">Date</th><th scope="col">Actions</th></tr>
  </thead>
  <tbody>
  <?php foreach($reports as $r):
@@ -31,22 +31,22 @@
  $r_date_js = htmlspecialchars(json_encode(date('M j, Y', strtotime($r['created_at']))), ENT_QUOTES, 'UTF-8');
  $r_desc_js = htmlspecialchars(json_encode($r['description'] ?? ''), ENT_QUOTES, 'UTF-8');
  ?>
- <button class="btn-icon btn-view" title="View Details"
+ <button class="btn-icon btn-view" title="View Details" aria-label="View details for report #<?= $r['id'] ?>"
  onclick="viewReport(<?= $r['id'] ?>, <?= $r_title_js ?>, <?= $r_cat_js ?>, <?= $r_stat_js ?>, <?= $r_loc_js ?>, <?= $r_user_js ?>, <?= $r_date_js ?>, <?= $r_desc_js ?>, <?= $escalated ?>)">
  <i class="fas fa-eye"></i>
  </button>
  <?php if($r['status'] !== 'safe'): ?>
- <button class="btn-icon btn-resolve" title="Mark Resolved"
+ <button class="btn-icon btn-resolve" title="Mark Resolved" aria-label="Mark report #<?= $r['id'] ?> as resolved"
  onclick="quickResolve(<?= $r['id'] ?>,this)">
  <i class="fas fa-check"></i>
  </button>
  <?php if(!$escalated): ?>
- <button class="btn-icon btn-escalate" title="Escalate to LGU"
+ <button class="btn-icon btn-escalate" title="Escalate to LGU" aria-label="Escalate report #<?= $r['id'] ?> to LGU"
  onclick="quickEscalate(<?= $r['id'] ?>,this)">
  <i class="fas fa-arrow-up-from-bracket"></i>
  </button>
  <?php else: ?>
- <button class="btn-icon" title="Already Escalated to LGU" disabled
+ <button class="btn-icon" title="Already Escalated to LGU" aria-label="Report #<?= $r['id'] ?> already escalated" disabled
  style="background:#fef3c7;color:#92400e;opacity:0.7;cursor:default;">
  <i class="fas fa-check"></i>
  </button>

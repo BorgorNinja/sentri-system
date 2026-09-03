@@ -376,16 +376,16 @@ body{min-height:100vh;background:var(--navy-dark);display:flex;flex-direction:co
  </div>
  <div class="hero-badge"><i class="fas fa-shield-halved"></i><span>Secure<br>Gov Portal</span></div>
  </div>
- <div class="portal-section">
- <p class="portal-lbl">Choose Your Portal</p>
- <div class="portal-grid">
- <div class="portal-card p-community selected" tabindex="0" onclick="selectPortal('community',this)"><div class="portal-icon"><i class="fas fa-users"></i></div><div class="portal-name">Community</div><div class="portal-sub">Citizens</div></div>
- <div class="portal-card p-barangay" tabindex="0" onclick="selectPortal('barangay',this)"><div class="portal-icon"><i class="fas fa-house-flag"></i></div><div class="portal-name">Barangay</div><div class="portal-sub">Officials</div></div>
- <div class="portal-card p-lgu" tabindex="0" onclick="selectPortal('lgu',this)"><div class="portal-icon"><i class="fas fa-landmark"></i></div><div class="portal-name">LGU</div><div class="portal-sub">City / Municipal</div></div>
- <div class="portal-card p-responder" tabindex="0" onclick="selectPortal('first_responder',this)"><div class="portal-icon"><i class="fas fa-truck-medical"></i></div><div class="portal-name">First Responder</div><div class="portal-sub">BFP / PNP / EMS</div></div>
- <div class="portal-card p-admin" tabindex="0" onclick="selectPortal('admin',this)"><div class="portal-icon"><i class="fas fa-gear"></i></div><div class="portal-name">Admin</div><div class="portal-sub">System Access</div></div>
- </div>
- </div>
+  <div class="portal-section">
+  <p class="portal-lbl" id="portalSelectLabel">Choose Your Portal</p>
+  <div class="portal-grid" role="tablist" aria-labelledby="portalSelectLabel">
+  <div class="portal-card p-community selected" role="tab" aria-selected="true" tabindex="0" onclick="selectPortal('community',this)"><div class="portal-icon"><i class="fas fa-users"></i></div><div class="portal-name">Community</div><div class="portal-sub">Citizens</div></div>
+  <div class="portal-card p-barangay" role="tab" aria-selected="false" tabindex="0" onclick="selectPortal('barangay',this)"><div class="portal-icon"><i class="fas fa-house-flag"></i></div><div class="portal-name">Barangay</div><div class="portal-sub">Officials</div></div>
+  <div class="portal-card p-lgu" role="tab" aria-selected="false" tabindex="0" onclick="selectPortal('lgu',this)"><div class="portal-icon"><i class="fas fa-landmark"></i></div><div class="portal-name">LGU</div><div class="portal-sub">City / Municipal</div></div>
+  <div class="portal-card p-responder" role="tab" aria-selected="false" tabindex="0" onclick="selectPortal('first_responder',this)"><div class="portal-icon"><i class="fas fa-truck-medical"></i></div><div class="portal-name">First Responder</div><div class="portal-sub">BFP / PNP / EMS</div></div>
+  <div class="portal-card p-admin" role="tab" aria-selected="false" tabindex="0" onclick="selectPortal('admin',this)"><div class="portal-icon"><i class="fas fa-gear"></i></div><div class="portal-name">Admin</div><div class="portal-sub">System Access</div></div>
+  </div>
+  </div>
 </section>
 
 <?php if(isset($_GET['verify_sent'])): ?><div class="page-notice"><div class="notice info"><i class="fas fa-envelope"></i><span>Verification link sent. Check your inbox and spam folder.</span></div></div>
@@ -394,37 +394,37 @@ body{min-height:100vh;background:var(--navy-dark);display:flex;flex-direction:co
 <?php endif; ?>
 
 <div class="form-wrap">
- <div class="form-card">
- <div class="portal-header">
- <div class="ph-icon" id="phIcon" style="background:#eff6ff;color:#2563eb;"><i class="fas fa-users"></i></div>
- <div><div class="ph-title" id="phTitle">Community Member Sign In</div><div class="ph-sub" id="phSub">Access the citizen incident reporting dashboard</div></div>
- </div>
- <div class="official-notice" id="officialNotice"><i class="fas fa-triangle-exclamation"></i><span>This portal requires an approved official account. No email verification is needed - your account is activated directly by the system administrator. To register, <a href="signup.php" style="color:#92400e;font-weight:700;">create an account</a> and await administrator approval.</span></div>
- <div id="loginMsg" class="msg"></div>
- <form id="loginForm" novalidate>
- <input type="hidden" name="portal" id="portalField" value="community">
- <div class="form-group"><label>Email Address</label><input type="email" name="email" id="emailField" placeholder="you@example.com" required autocomplete="email"></div>
- <div class="form-group"><label>Password</label><div class="pw-wrap"><input type="password" name="password" id="pwField" placeholder="••••••••" required><button type="button" class="toggle-pw" onclick="togglePw()">SHOW</button></div></div>
- <div class="forgot-row"><a href="forgot_password.php">Forgot Password?</a></div>
- <button type="submit" class="btn-login" id="loginBtn" style="background:linear-gradient(135deg,#3b82f6,#2563eb);"><i class="fas fa-right-to-bracket" id="loginBtnIcon"></i> <span id="loginBtnLabel">Sign In to Community Portal</span></button>
- </form>
- <div id="otpSection" style="display:none;">
- <form id="otpForm" novalidate>
- <input type="hidden" name="action" value="verify_otp">
- <input type="hidden" name="email" id="otpEmail" value="">
- <input type="hidden" name="portal" value="community">
- <div class="form-group"><label>One-Time Code</label><input type="text" name="otp" id="otpField" placeholder="123456" maxlength="6" pattern="[0-9]*" inputmode="numeric" required></div>
- <button type="submit" class="btn-login" id="otpSubmitBtn" style="background:linear-gradient(135deg,#3b82f6,#2563eb);"><i class="fas fa-key"></i> Verify OTP</button>
- <button type="button" class="btn-login" id="otpBackBtn" style="background:#f3f4f6;color:#1f2937;margin-top:10px;"><i class="fas fa-arrow-left"></i> Back to Password</button>
- </form>
- </div>
- <div id="resendBox" class="resend-box">
- <p><i class="fas fa-envelope-circle-check" style="color:#d97706;margin-right:5px;"></i>Your email is not verified. Enter your email to resend the verification link.</p>
- <input type="email" id="resendEmail" placeholder="you@example.com">
- <button class="btn-resend" id="resendBtn" onclick="resend()"><i class="fas fa-paper-plane"></i> Resend Verification Email</button>
- </div>
- <div class="signup-row" id="signupRow">Don't have an account? <a href="signup.php">Register here</a></div>
- </div>
+  <div class="form-card">
+  <div class="portal-header">
+  <div class="ph-icon" id="phIcon" style="background:#eff6ff;color:#2563eb;"><i class="fas fa-users"></i></div>
+  <div><div class="ph-title" id="phTitle">Community Member Sign In</div><div class="ph-sub" id="phSub">Access the citizen incident reporting dashboard</div></div>
+  </div>
+  <div class="official-notice" id="officialNotice"><i class="fas fa-triangle-exclamation"></i><span>This portal requires an approved official account. No email verification is needed - your account is activated directly by the system administrator. To register, <a href="signup.php" style="color:#92400e;font-weight:700;">create an account</a> and await administrator approval.</span></div>
+  <div id="loginMsg" class="msg" aria-live="polite"></div>
+  <form id="loginForm" novalidate>
+  <input type="hidden" name="portal" id="portalField" value="community">
+  <div class="form-group"><label for="emailField">Email Address</label><input type="email" name="email" id="emailField" placeholder="you@example.com" required autocomplete="email"></div>
+  <div class="form-group"><label for="pwField">Password</label><div class="pw-wrap"><input type="password" name="password" id="pwField" placeholder="••••••••" required><button type="button" class="toggle-pw" onclick="togglePw()" aria-label="Toggle password visibility">SHOW</button></div></div>
+  <div class="forgot-row"><a href="forgot_password.php">Forgot Password?</a></div>
+  <button type="submit" class="btn-login" id="loginBtn" style="background:linear-gradient(135deg,#3b82f6,#2563eb);"><i class="fas fa-right-to-bracket" id="loginBtnIcon"></i> <span id="loginBtnLabel">Sign In to Community Portal</span></button>
+  </form>
+  <div id="otpSection" style="display:none;">
+  <form id="otpForm" novalidate>
+  <input type="hidden" name="action" value="verify_otp">
+  <input type="hidden" name="email" id="otpEmail" value="">
+  <input type="hidden" name="portal" value="community">
+  <div class="form-group"><label for="otpField">One-Time Code</label><input type="text" name="otp" id="otpField" placeholder="123456" maxlength="6" pattern="[0-9]*" inputmode="numeric" required></div>
+  <button type="submit" class="btn-login" id="otpSubmitBtn" style="background:linear-gradient(135deg,#3b82f6,#2563eb);"><i class="fas fa-key"></i> Verify OTP</button>
+  <button type="button" class="btn-login" id="otpBackBtn" style="background:#f3f4f6;color:#1f2937;margin-top:10px;"><i class="fas fa-arrow-left"></i> Back to Password</button>
+  </form>
+  </div>
+  <div id="resendBox" class="resend-box">
+  <p><i class="fas fa-envelope-circle-check" style="color:#d97706;margin-right:5px;"></i>Your email is not verified. Enter your email to resend the verification link.</p>
+  <input type="email" id="resendEmail" placeholder="you@example.com" aria-label="Email for verification resend">
+  <button class="btn-resend" id="resendBtn" onclick="resend()"><i class="fas fa-paper-plane"></i> Resend Verification Email</button>
+  </div>
+  <div class="signup-row" id="signupRow">Don't have an account? <a href="signup.php">Register here</a></div>
+  </div>
 </div>
 <footer class="site-footer"><p>SenTri Community Safety Incident Reporting System - For official and community use only.</p></footer>
 <script>
@@ -444,8 +444,14 @@ document.querySelectorAll('.portal-card').forEach(c=>{
 
 function selectPortal(key,el){
  current=key;
- document.querySelectorAll('.portal-card').forEach(c=>c.classList.remove('selected','justSelected'));
- if(el) el.classList.add('selected','justSelected');
+ document.querySelectorAll('.portal-card').forEach(c=>{
+    c.classList.remove('selected','justSelected');
+    c.setAttribute('aria-selected', 'false');
+  });
+  if(el) {
+    el.classList.add('selected','justSelected');
+    el.setAttribute('aria-selected', 'true');
+  }
  setTimeout(()=>{ if(el) el.classList.remove('justSelected'); }, 250);
  const p=portals[key];
  const pi=document.getElementById('phIcon');

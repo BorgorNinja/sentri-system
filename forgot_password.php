@@ -99,10 +99,10 @@ p.sub{font-size:0.9rem;color:var(--muted);line-height:1.7;margin-bottom:24px;}
  <h1>Forgot Your Password?</h1>
  <p class="sub">Enter your account email and we'll send you a secure link to reset your password. The link expires in 1 hour.</p>
 
- <div id="msg" class="msg"></div>
+ <div id="msg" class="msg" aria-live="polite"></div>
  <form id="forgotForm" novalidate>
  <div class="form-group">
- <label>Email Address</label>
+ <label for="email">Email Address</label>
  <input type="email" id="email" name="email" placeholder="you@example.com" required autocomplete="email">
  </div>
  <button class="btn-primary" type="submit" id="submitBtn"><i class="fas fa-paper-plane"></i> Send Reset Link</button>

@@ -258,23 +258,23 @@ body{background:var(--bg);min-height:100vh;display:flex;flex-direction:column;}
  </div>
 
  <!-- Role selector -->
- <div class="role-grid" id="roleGrid">
- <div class="role-card r-community selected" onclick="selectRole('community',this)">
+ <div class="role-grid" id="roleGrid" role="tablist" aria-label="Account Role Selection">
+ <div class="role-card r-community selected" role="tab" aria-selected="true" tabindex="0" onclick="selectRole('community',this)">
  <div class="role-icon"><i class="fas fa-users"></i></div>
  <div class="role-name">Community</div>
  <div class="role-sub">Citizen / Resident</div>
  </div>
- <div class="role-card r-barangay" onclick="selectRole('barangay',this)">
+ <div class="role-card r-barangay" role="tab" aria-selected="false" tabindex="0" onclick="selectRole('barangay',this)">
  <div class="role-icon"><i class="fas fa-house-flag"></i></div>
  <div class="role-name">Barangay</div>
  <div class="role-sub">Barangay Official</div>
  </div>
- <div class="role-card r-lgu" onclick="selectRole('lgu',this)">
+ <div class="role-card r-lgu" role="tab" aria-selected="false" tabindex="0" onclick="selectRole('lgu',this)">
  <div class="role-icon"><i class="fas fa-landmark"></i></div>
  <div class="role-name">LGU</div>
  <div class="role-sub">City / Municipal</div>
  </div>
- <div class="role-card r-responder" onclick="selectRole('first_responder',this)">
+ <div class="role-card r-responder" role="tab" aria-selected="false" tabindex="0" onclick="selectRole('first_responder',this)">
  <div class="role-icon"><i class="fas fa-truck-medical"></i></div>
  <div class="role-name">First Responder</div>
  <div class="role-sub">BFP / PNP / EMS</div>
@@ -282,7 +282,7 @@ body{background:var(--bg);min-height:100vh;display:flex;flex-direction:column;}
  </div>
 
  <div class="form-card">
- <div id="regMsg" class="msg"></div>
+ <div id="regMsg" class="msg" aria-live="polite"></div>
  <div class="approval-notice" id="approvalNotice">
  <i class="fas fa-clock"></i>
  <span>Official accounts do not require email verification. Your account will be reviewed and activated by the system administrator. You will be notified once your account is approved.</span>
@@ -301,8 +301,8 @@ body{background:var(--bg);min-height:100vh;display:flex;flex-direction:column;}
  <div class="form-group"><label>Phone Number <span style="color:var(--muted);font-weight:400;">(optional)</span></label><input type="tel" name="phone" placeholder="+63 9XX XXX XXXX"></div>
  </div>
  <div class="form-row">
- <div class="form-group"><label>Password</label><div class="pw-wrap"><input type="password" name="password" id="pw1" placeholder="Min. 8 characters" required><button type="button" onclick="togglePw('pw1',this)">SHOW</button></div></div>
- <div class="form-group"><label>Confirm Password</label><div class="pw-wrap"><input type="password" name="confirm_password" id="pw2" placeholder="Re-enter password" required><button type="button" onclick="togglePw('pw2',this)">SHOW</button></div></div>
+ <div class="form-group"><label>Password</label><div class="pw-wrap"><input type="password" name="password" id="pw1" placeholder="Min. 8 characters" required><button type="button" onclick="togglePw('pw1',this)" aria-label="Toggle password visibility">SHOW</button></div></div>
+ <div class="form-group"><label>Confirm Password</label><div class="pw-wrap"><input type="password" name="confirm_password" id="pw2" placeholder="Re-enter password" required><button type="button" onclick="togglePw('pw2',this)" aria-label="Toggle confirm password visibility">SHOW</button></div></div>
  </div>
 
  <!-- Official fields shown for barangay / lgu / responder -->
@@ -349,10 +349,21 @@ const roleConfig = {
  first_responder:{ label:'Create Responder Account', btn:'linear-gradient(135deg,#ef4444,#b91c1c)', official:true },
 };
 let currentRole = 'community';
+
+document.querySelectorAll('.role-card').forEach(c=>{
+  c.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();c.click();}});
+});
+
 function selectRole(role, el) {
  currentRole = role;
- document.querySelectorAll('.role-card').forEach(c=>c.classList.remove('selected'));
- el.classList.add('selected');
+ document.querySelectorAll('.role-card').forEach(c=>{
+    c.classList.remove('selected');
+    c.setAttribute('aria-selected', 'false');
+ });
+ if(el) {
+    el.classList.add('selected');
+    el.setAttribute('aria-selected', 'true');
+ }
  const cfg = roleConfig[role];
  document.getElementById('roleField').value = role;
  document.getElementById('regBtnLabel').textContent = cfg.label;

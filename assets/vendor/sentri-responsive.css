@@ -22,7 +22,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 
 /* Coarse Pointer Touch Target Accessibility */
 @media (pointer: coarse) {
-  .ham-btn, .toggle-btn, .sb-close, .filter-btn, .tab-nav-btn, .post-btn, .btn, .modal-close, .lgu-modal-close, .close-modal-btn, .safety-modal-close, .nav-modal-close {
+  .ham-btn, .toggle-btn, .sb-close, .filter-btn, .tab-nav-btn, .post-btn, .btn, .modal-close, .lgu-modal-close, .close-modal-btn, .safety-modal-close, .nav-modal-close, .btn-icon, .act-btn, .btn-view, .btn-resolve, .btn-escalate, .portal-card, .role-card {
     min-height: 38px;
     min-width: 38px;
   }

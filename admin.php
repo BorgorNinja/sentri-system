@@ -306,7 +306,7 @@ tr:hover td{background:#fafbff;transition:background 0.15s;}
  <div class="name"><?= htmlspecialchars($first_name) ?></div>
  <div class="role"><i class="fas fa-circle" style="font-size:0.5rem;color:#a78bfa;margin-right:4px;"></i>Administrator</div>
  </div>
- <a href="logout.php" class="logout-btn" title="Log Out"><i class="fas fa-right-from-bracket"></i></a>
+ <a href="logout.php" class="logout-btn" title="Log Out" aria-label="Log Out"><i class="fas fa-right-from-bracket"></i></a>
  </div>
  </div>
 </aside>

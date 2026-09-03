@@ -116,20 +116,20 @@ p.sub{font-size:0.9rem;color:var(--muted);line-height:1.7;margin-bottom:24px;}
  <div class="icon-wrap ok"><i class="fas fa-lock-open"></i></div>
  <h1>Set New Password</h1>
  <p class="sub">Hi <strong><?= htmlspecialchars($tokenUser['first_name']) ?></strong>, enter and confirm your new password below.</p>
- <div id="msg" class="msg"></div>
+ <div id="msg" class="msg" aria-live="polite"></div>
  <form id="resetForm" novalidate>
  <input type="hidden" name="token" value="<?= htmlspecialchars($token) ?>">
  <div class="form-group">
- <label>New Password</label>
+ <label for="password">New Password</label>
  <input type="password" id="password" name="password" placeholder="Min. 8 characters" required oninput="checkStrength(this.value)">
- <span class="show-btn" onclick="togglePw('password',this)">SHOW</span>
+ <span class="show-btn" onclick="togglePw('password',this)" role="button" tabindex="0" aria-label="Toggle password visibility">SHOW</span>
  <div class="pw-strength"><div class="pw-strength-bar" id="pwBar"></div></div>
  <div class="pw-rules">Use at least 8 characters with letters and numbers.</div>
  </div>
  <div class="form-group">
- <label>Confirm New Password</label>
+ <label for="confirm_password">Confirm New Password</label>
  <input type="password" id="confirm_password" name="confirm_password" placeholder="Repeat your password" required>
- <span class="show-btn" onclick="togglePw('confirm_password',this)">SHOW</span>
+ <span class="show-btn" onclick="togglePw('confirm_password',this)" role="button" tabindex="0" aria-label="Toggle confirm password visibility">SHOW</span>
  </div>
  <button class="btn-primary" type="submit" id="submitBtn"><i class="fas fa-key"></i> Reset Password</button>
  </form>
