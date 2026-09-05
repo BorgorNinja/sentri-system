@@ -61,11 +61,12 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 }
 
 /* Modal Responsiveness & Accessible Scrolling */
-.modal, .lgu-modal, .nav-modal, .modal-dialog {
+.modal, .lgu-modal, .nav-modal, .modal-dialog, .detail-modal {
   max-height: 90vh !important;
   display: flex !important;
   flex-direction: column !important;
-  overflow: hidden !important;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch;
 }
 .modal-body, .lgu-modal-body, .panel-body {
   overflow-y: auto !important;
