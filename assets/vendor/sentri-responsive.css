@@ -61,16 +61,22 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 }
 
 /* Modal Responsiveness & Accessible Scrolling */
+.modal-overlay, .modal-bg, .lgu-modal-bg, .detail-overlay, .mini-map-modal {
+  -webkit-overflow-scrolling: touch;
+}
 .modal, .lgu-modal, .nav-modal, .modal-dialog, .detail-modal {
   max-height: 90vh !important;
-  display: flex !important;
-  flex-direction: column !important;
+  max-height: calc(100dvh - 24px) !important;
   overflow-y: auto !important;
-  -webkit-overflow-scrolling: touch;
+  -webkit-overflow-scrolling: touch !important;
+  overscroll-behavior: contain !important;
+  touch-action: pan-y !important;
 }
 .modal-body, .lgu-modal-body, .panel-body {
   overflow-y: auto !important;
-  -webkit-overflow-scrolling: touch;
+  -webkit-overflow-scrolling: touch !important;
+  overscroll-behavior: contain !important;
+  touch-action: pan-y !important;
 }
 
 @media (max-width: 900px) {

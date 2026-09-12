@@ -66,7 +66,8 @@ $page_titles=['overview'=>'Community Feed','my_reports'=>'My Reports','map'=>'In
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title><?= htmlspecialchars($page_titles[$view]??'Community Portal') ?> | SenTri</title>
 <?= csrf_meta_tag() ?>
-<link rel="stylesheet" href="../assets/vendor/fonts/fonts.css">
+<link rel="stylesheet" href="../assets/vendor/fonts/fonts.css?v=2.3">
+<link rel="stylesheet" href="../assets/vendor/sentri-responsive.css?v=2.3">
 <link rel="stylesheet" href="../assets/vendor/fontawesome/css/all.min.css">
 <link rel="stylesheet" href="../assets/vendor/leaflet/leaflet.css">
 <style>

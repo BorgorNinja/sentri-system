@@ -1,5 +1,5 @@
 /* Shared responsive overrides. Must be imported before all other CSS rules. */
-@import url('../sentri-responsive.css');
+@import url('../sentri-responsive.css?v=2.3');
 
 /* Self-hosted Poppins (latin subset) */
 @font-face{font-family:'Poppins';font-style:normal;font-weight:400;font-display:swap;src:url('poppins/poppins-latin-400-normal.woff2') format('woff2');}

@@ -8,6 +8,7 @@ access_log
 
 # PHP config with credentials - never commit
 config/db_local.php
+config/install.lock
 .env
 
 # Uploaded user files - runtime only
