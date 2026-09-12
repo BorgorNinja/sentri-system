@@ -958,14 +958,14 @@ function bearingToCardinal(deg){
  return dirs[ix];
 }
 
-function updateCompassHud(deg, label){
+function updateCompassHud(deg){
  var hud=document.getElementById('navCompassHud');
  var needle=document.getElementById('navCompassNeedle');
  var text=document.getElementById('navCompassText');
  if(!hud || !text) return;
  var normDeg=((deg % 360)+360)%360;
  var card=bearingToCardinal(normDeg);
- text.textContent = String(normDeg).padStart(3,'0')+'° '+card+(label?' ('+label+')':'');
+ text.textContent = String(normDeg).padStart(3,'0')+'° '+card;
  if(needle) needle.style.transform='rotate('+normDeg+'deg)';
 }
 
@@ -1049,12 +1049,12 @@ function drawBearingFallback(origLat, origLng, origLabel, destMarker){
  var bearing = calculateBearing(origLat, origLng, navDest.lat, navDest.lng);
  var estMins = Math.max(1, Math.round(distM/500));
  
- updateCompassHud(bearing, 'Bearing');
+ updateCompassHud(bearing);
  
  document.getElementById('navModalInfo').innerHTML =
   '<span><b>Bearing:</b> '+bearing+'° '+bearingToCardinal(bearing)+'</span>' +
   '<span><b>Direct Distance:</b> '+distKm+' km</span>' +
-  '<span><b>Est. Transit:</b> ~'+estMins+' min</span>' +
+  '<span><b>Est. Transit:</b> ~'+estMins+' min by vehicle</span>' +
   '<span style="color:#2563eb;"><i class="fas fa-building-shield"></i> '+origLabel+'</span>' +
   '<span style="color:#b45309;font-size:0.75rem;"><i class="fas fa-location-crosshairs"></i> Direct bearing fallback active (GPS offline or denied)</span>';
 }
@@ -1075,7 +1075,7 @@ function drawNavRoute(group){
     var km = (route.distance/1000).toFixed(1);
     var mins = Math.round(route.duration/60);
     var bearing = calculateBearing(origLat, origLng, navDest.lat, navDest.lng);
-    updateCompassHud(bearing, 'Bearing');
+    updateCompassHud(bearing);
     document.getElementById('navModalInfo').innerHTML = '<span><b>Bearing:</b> '+bearing+'° '+bearingToCardinal(bearing)+'</span><span><b>Distance:</b> '+km+' km</span><span><b>ETA:</b> '+mins+' min</span><span style="color:#16a34a;"><i class="fas fa-route"></i> Live OSRM Route</span>';
   } else {
     drawBearingFallback(origLat, origLng, origLabel, group[0]);
