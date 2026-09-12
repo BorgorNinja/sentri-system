@@ -248,8 +248,7 @@ body{background:var(--bg);color:var(--text);display:flex;min-height:100vh;overfl
 .inc-icon{width:42px;height:42px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;}
 .inc-body{flex:1;min-width:0;}
 .inc-title{font-size:0.88rem;font-weight:700;margin-bottom:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.inc-meta{font-size:0.74rem;color:var(--muted);display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:4px;}
-.inc-actions{display:flex;flex-direction:column;gap:5px;align-items:flex-end;flex-shrink:0;}
+.inc-actions{display:flex;flex-direction:row;gap:6px;align-items:center;flex-wrap:wrap;justify-content:flex-end;max-width:380px;flex-shrink:0;}
 /* FILTER BUTTONS */
 .filter-btn{padding:5px 13px;border-radius:20px;border:1.5px solid var(--border);background:#fff;font-size:0.76rem;font-weight:700;color:var(--muted);cursor:pointer;transition:all 0.18s;font-family:'Inter',sans-serif;display:inline-flex;align-items:center;gap:5px;}
 .filter-btn:hover{background:#f8fafc;color:var(--text);}
@@ -498,24 +497,26 @@ tr:hover td{background:#fafafa;}
  </div>
  <?php if($r['description']): ?><div style="font-size:0.76rem;color:var(--muted);margin-top:2px;"><?= htmlspecialchars(mb_strimwidth($r['description'],0,100,'…')) ?></div><?php endif; ?>
  </div>
- <div class="inc-actions">
- <?php if($is_mine): ?>
- <span class="btn-assigned"><i class="fas fa-check"></i> LGU Assigned</span>
- <?php if(empty($r['accepted_at'])): ?>
- <button class="btn-dispatch" onclick="acceptAssignment(<?= $r['id'] ?>,this)"><i class="fas fa-hand-pointer"></i> Accept Assignment</button>
- <?php endif; ?>
- <?php if(!empty($r['latitude']) && !empty($r['longitude'])): ?>
- <button class="btn-dispatch" onclick="openNavigation(<?= (float)$r['latitude'] ?>, <?= (float)$r['longitude'] ?>, <?= $r['id'] ?>)"><i class="fas fa-route"></i> Navigate</button>
- <?php endif; ?>
- <?php if(empty($r['responded_at'])): ?>
- <button class="btn-resolve-sm" onclick="markResponded(<?= $r['id'] ?>,this)"><i class="fas fa-bell"></i> Responded to LGU</button>
- <?php endif; ?>
- <?php elseif($is_assigned): ?>
- <span style="font-size:0.72rem;color:var(--muted);font-weight:600;">Assigned by LGU</span>
- <?php else: ?>
- <span style="font-size:0.72rem;color:var(--muted);font-weight:600;">Awaiting LGU dispatch</span>
- <?php endif; ?>
- </div>
+  <div class="inc-actions">
+  <?php if($is_mine): ?>
+    <?php if(empty($r['accepted_at'])): ?>
+      <span class="btn-assigned" style="background:#fef3c7;color:#92400e;border:1px solid #fde68a;"><i class="fas fa-clock"></i> Assigned to You</span>
+      <button class="btn-dispatch" onclick="acceptAssignment(<?= $r['id'] ?>,this)"><i class="fas fa-hand-pointer"></i> Accept Assignment</button>
+    <?php else: ?>
+      <span class="btn-assigned" style="background:#f0fdf4;color:#166534;border:1px solid #86efac;"><i class="fas fa-check"></i> Accepted &amp; Active</span>
+    <?php endif; ?>
+    <?php if(!empty($r['latitude']) && !empty($r['longitude'])): ?>
+      <button class="btn-dispatch" onclick="openNavigation(<?= (float)$r['latitude'] ?>, <?= (float)$r['longitude'] ?>, <?= $r['id'] ?>)"><i class="fas fa-route"></i> Navigate</button>
+    <?php endif; ?>
+    <?php if(!empty($r['accepted_at']) && empty($r['responded_at'])): ?>
+      <button class="btn-resolve-sm" onclick="markResponded(<?= $r['id'] ?>,this)"><i class="fas fa-bell"></i> Responded to LGU</button>
+    <?php endif; ?>
+  <?php elseif($is_assigned): ?>
+    <span style="font-size:0.72rem;color:#64748b;font-weight:600;background:#f1f5f9;padding:4px 9px;border-radius:6px;border:1px solid #e2e8f0;display:inline-flex;align-items:center;gap:4px;"><i class="fas fa-user-shield"></i> Other Unit Assigned</span>
+  <?php else: ?>
+    <span style="font-size:0.72rem;color:var(--muted);font-weight:600;display:inline-flex;align-items:center;gap:4px;"><i class="fas fa-clock"></i> Awaiting LGU Dispatch</span>
+  <?php endif; ?>
+  </div>
  </div>
  <?php endforeach; ?>
  </div>
@@ -1056,13 +1057,15 @@ function openNavigation(lat, lng, reportId){
  onNavPosition(pos);
  if(navOrigMarker) navOrigMarker._destRef = destMarker;
  }, function(){
- document.getElementById('navModalInfo').innerHTML = '<span>Location access denied - showing static route.</span>';
- if(responderGps.lat!==null && responderGps.lng!==null){
- var origIcon = L.divIcon({className:'',html:'<div style="width:16px;height:16px;border-radius:50%;background:#2563eb;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.4);"></div>',iconSize:[16,16],iconAnchor:[8,8]});
- var origMarker = L.marker([responderGps.lat,responderGps.lng],{icon:origIcon}).addTo(navMap).bindPopup('Your Location');
- drawNavRoute([destMarker, origMarker]);
- }
- }, {enableHighAccuracy:true, timeout:15000, maximumAge:5000});
+  if(responderGps.lat!==null && responderGps.lng!==null){
+    document.getElementById('navModalInfo').innerHTML = '<span>Using saved profile location for route.</span>';
+    var origIcon = L.divIcon({className:'',html:'<div style="width:16px;height:16px;border-radius:50%;background:#2563eb;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.4);"></div>',iconSize:[16,16],iconAnchor:[8,8]});
+    var origMarker = L.marker([responderGps.lat,responderGps.lng],{icon:origIcon}).addTo(navMap).bindPopup('Your Saved Location');
+    drawNavRoute([destMarker, origMarker]);
+  } else {
+    document.getElementById('navModalInfo').innerHTML = '<span>GPS coordinates unavailable. Tap "Get My GPS" above to enable live navigation.</span>';
+  }
+  }, {enableHighAccuracy:true, timeout:15000, maximumAge:5000});
  },50);
 }
 
