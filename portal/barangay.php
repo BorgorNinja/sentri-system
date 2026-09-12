@@ -329,6 +329,7 @@ tr:hover td{background:#fafafa;}
  .topbar-actions{
    -webkit-mask-image:linear-gradient(to right, #000 80%, rgba(0,0,0,0) 100%);
    mask-image:linear-gradient(to right, #000 80%, rgba(0,0,0,0) 100%);
+   padding-right:28px;
  }
  th.col-title, td.col-title{font-size:0.77rem;}
 }
