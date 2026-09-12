@@ -31,6 +31,19 @@ $pos = $prof['position'] ?? 'First Responder';
 $rtype = strtoupper($prof['responder_type'] ?? 'UNIT');
 $area = $prof['municipality'] ?? $prof['barangay_name'] ?? '';
 
+$station_coords = [
+    'bfp' => [14.6492, 121.0450, 'BFP Fire Station 4 (Base)'],
+    'pnp' => [14.6385, 121.0360, 'PNP Substation 2 (Base)'],
+    'medical' => [14.6330, 121.0410, 'Red Cross QC Base'],
+    'ems' => [14.6330, 121.0410, 'Red Cross QC Base'],
+    'coast guard' => [14.6250, 121.0250, 'PCG Water Rescue Base'],
+];
+$rkey = strtolower($prof['responder_type'] ?? '');
+$default_station = $station_coords[$rkey] ?? [14.6465, 121.0370, $unit ?: 'Station Base'];
+$station_lat = $default_station[0];
+$station_lng = $default_station[1];
+$station_name = !empty($prof['org_name']) ? $prof['org_name'] : $default_station[2];
+
 $type_colors = ['bfp'=>'#dc2626','pnp'=>'#1d4ed8','ems'=>'#15803d','drrmo'=>'#d97706','mdrrmo'=>'#d97706','hospital'=>'#0e7490','other'=>'#6b7280'];
 $unit_color = $type_colors[strtolower($prof['responder_type']??'')] ?? '#dc2626';
 
@@ -873,6 +886,7 @@ function openSidebar(){document.getElementById('sidebar').classList.add('open');
 function closeSidebar(){document.getElementById('sidebar').classList.remove('open');document.getElementById('overlay').classList.remove('show');document.body.classList.remove('sidebar-open');document.body.style.overflow='';}
 
 var responderGps = { lat: <?= $saved_gps_lat !== null ? json_encode((float)$saved_gps_lat) : 'null' ?>, lng: <?= $saved_gps_lng !== null ? json_encode((float)$saved_gps_lng) : 'null' ?> };
+var stationGps = { lat: <?= json_encode((float)$station_lat) ?>, lng: <?= json_encode((float)$station_lng) ?>, name: <?= json_encode($station_name) ?> };
 
 function setGpsText(lat, lng, saved){
  var coords = document.getElementById('gpsCoords');
@@ -912,6 +926,7 @@ async function captureMyGps(btn){
 
 var navMap=null, navLayer=null, navWatchId=null, navHeading=0, navOrigMarker=null, navArrived=false, navDest=null, navReportId=null;
 var ARRIVAL_RADIUS_M = 40;
+
 function ensureNavMap(){
  if(!navMap){
  navMap = L.map('navMapInner',{zoomControl:false,attributionControl:true});
@@ -920,12 +935,40 @@ function ensureNavMap(){
  if(navLayer){ navMap.removeLayer(navLayer); navLayer=null; }
  document.getElementById('navMapInner').style.transform='translate(-50%,-50%) rotate(0deg)';
 }
+
 function haversine(lat1,lon1,lat2,lon2){
  var R=6371000, toRad=function(d){return d*Math.PI/180;};
  var dLat=toRad(lat2-lat1), dLon=toRad(lon2-lon1);
  var a=Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLon/2)*Math.sin(dLon/2);
  return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
 }
+
+function calculateBearing(lat1,lon1,lat2,lon2){
+ var toRad=function(d){return d*Math.PI/180;};
+ var toDeg=function(r){return (r*180/Math.PI+360)%360;};
+ var dLon=toRad(lon2-lon1);
+ var y=Math.sin(dLon)*Math.cos(toRad(lat2));
+ var x=Math.cos(toRad(lat1))*Math.sin(toRad(lat2))-Math.sin(toRad(lat1))*Math.cos(toRad(lat2))*Math.cos(dLon);
+ return Math.round(toDeg(Math.atan2(y,x)));
+}
+
+function bearingToCardinal(deg){
+ var dirs=['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
+ var ix=Math.round(deg/22.5)%16;
+ return dirs[ix];
+}
+
+function updateCompassHud(deg, label){
+ var hud=document.getElementById('navCompassHud');
+ var needle=document.getElementById('navCompassNeedle');
+ var text=document.getElementById('navCompassText');
+ if(!hud || !text) return;
+ var normDeg=((deg % 360)+360)%360;
+ var card=bearingToCardinal(normDeg);
+ text.textContent = String(normDeg).padStart(3,'0')+'° '+card+(label?' ('+label+')':'');
+ if(needle) needle.style.transform='rotate('+normDeg+'deg)';
+}
+
 function stopNavTracking(){
  if(navWatchId!==null){ navigator.geolocation.clearWatch(navWatchId); navWatchId=null; }
  window.removeEventListener('deviceorientationabsolute',onNavOrientation);
@@ -933,16 +976,21 @@ function stopNavTracking(){
  if(navOrigMarker && navMap){ navMap.removeLayer(navOrigMarker); }
  navDest=null; navReportId=null; navArrived=false; navOrigMarker=null;
 }
+
 function closeNavModal(){
  document.getElementById('navModalOverlay').classList.remove('show');
  stopNavTracking();
+ updateCompassHud(0, '');
 }
+
 function onNavOrientation(e){
  var heading = (typeof e.webkitCompassHeading !== 'undefined') ? e.webkitCompassHeading : (e.alpha!==null ? (360-e.alpha) : null);
  if(heading===null) return;
  navHeading = heading;
  applyNavRotation();
+ updateCompassHud(Math.round(heading), 'Heading');
 }
+
 function applyNavRotation(){
  document.getElementById('navMapInner').style.transform='translate(-50%,-50%) rotate('+(-navHeading)+'deg)';
  if(navOrigMarker){
@@ -950,12 +998,15 @@ function applyNavRotation(){
  if(el){ var arrow=el.querySelector('.nav-arrow-icon'); if(arrow) arrow.style.transform='rotate('+navHeading+'deg)'; }
  }
 }
+
 function viewOnMap(lat, lng, title){
  if(lat===null||lng===null||typeof lat==='undefined'||typeof lng==='undefined'||lat===''||lng===''){
  alert('This report has no GPS coordinates.'); return;
  }
  document.getElementById('navModalTitle').textContent = title || 'Incident Location';
  document.getElementById('navModalInfo').innerHTML = '';
+ var hud = document.getElementById('navCompassHud');
+ if(hud) hud.style.display = 'none';
  document.getElementById('navModalOverlay').classList.add('show');
  setTimeout(function(){
  ensureNavMap();
@@ -964,108 +1015,152 @@ function viewOnMap(lat, lng, title){
  navMap.invalidateSize();
  },50);
 }
+
 async function markArrivedSilently(reportId){
  try{
  var fd=new FormData(); fd.append('action','resolve_report'); fd.append('report_id',reportId);
  await fetch('../api/reports.php',{method:'POST',body:fd});
  }catch(e){}
 }
+
+function drawBearingFallback(origLat, origLng, origLabel, destMarker){
+ if(navLayer && navMap){ navMap.removeLayer(navLayer); }
+ var origIcon = L.divIcon({
+  className:'',
+  html:'<div style="width:22px;height:22px;border-radius:50%;background:#2563eb;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center;color:#fff;font-size:10px;"><i class="fas fa-location-arrow"></i></div>',
+  iconSize:[22,22],
+  iconAnchor:[11,11]
+ });
+ var origMarker = L.marker([origLat,origLng],{icon:origIcon}).addTo(navMap).bindPopup('<b>'+origLabel+'</b><br>Origin Point');
+ 
+ var bearingLine = L.polyline([[origLat,origLng],[navDest.lat,navDest.lng]],{
+  color:'#2563eb',
+  weight:5,
+  opacity:0.9,
+  dashArray:'8, 6',
+  lineCap:'round'
+ }).addTo(navMap);
+ 
+ navLayer = L.featureGroup([destMarker, origMarker, bearingLine]);
+ navMap.fitBounds(navLayer.getBounds().pad(0.25));
+ 
+ var distM = haversine(origLat, origLng, navDest.lat, navDest.lng);
+ var distKm = (distM/1000).toFixed(2);
+ var bearing = calculateBearing(origLat, origLng, navDest.lat, navDest.lng);
+ var estMins = Math.max(1, Math.round(distM/500));
+ 
+ updateCompassHud(bearing, 'Bearing');
+ 
+ document.getElementById('navModalInfo').innerHTML =
+  '<span><b>Bearing:</b> '+bearing+'° '+bearingToCardinal(bearing)+'</span>' +
+  '<span><b>Direct Distance:</b> '+distKm+' km</span>' +
+  '<span><b>Est. Transit:</b> ~'+estMins+' min</span>' +
+  '<span style="color:#2563eb;"><i class="fas fa-building-shield"></i> '+origLabel+'</span>' +
+  '<span style="color:#b45309;font-size:0.75rem;"><i class="fas fa-location-crosshairs"></i> Direct bearing fallback active (GPS offline or denied)</span>';
+}
+
 function drawNavRoute(group){
- var url = 'https://router.project-osrm.org/route/v1/driving/'+responderGps.lng+','+responderGps.lat+';'+navDest.lng+','+navDest.lat+'?overview=full&geometries=geojson';
+ var origLat = responderGps.lat !== null ? responderGps.lat : stationGps.lat;
+ var origLng = responderGps.lng !== null ? responderGps.lng : stationGps.lng;
+ var origLabel = responderGps.lat !== null ? 'Your Location' : stationGps.name;
+ var url = 'https://router.project-osrm.org/route/v1/driving/'+origLng+','+origLat+';'+navDest.lng+','+navDest.lat+'?overview=full&geometries=geojson';
  fetch(url).then(function(r){return r.json();}).then(function(data){
- if(navLayer) navMap.removeLayer(navLayer);
- if(data.routes && data.routes[0]){
- var route = data.routes[0];
- var coords = route.geometry.coordinates.map(function(c){return [c[1],c[0]];});
- var line = L.polyline(coords,{color:'#2563eb',weight:5,opacity:0.8}).addTo(navMap);
- navLayer = L.featureGroup(group.concat([line]));
- var km = (route.distance/1000).toFixed(1);
- var mins = Math.round(route.duration/60);
- document.getElementById('navModalInfo').innerHTML = '<span><b>Distance:</b> '+km+' km</span><span><b>ETA:</b> '+mins+' min</span>';
- } else {
- navLayer = L.featureGroup(group);
- document.getElementById('navModalInfo').innerHTML = '<span>Route unavailable.</span>';
- }
+  if(data.routes && data.routes[0]){
+    if(navLayer) navMap.removeLayer(navLayer);
+    var route = data.routes[0];
+    var coords = route.geometry.coordinates.map(function(c){return [c[1],c[0]];});
+    var line = L.polyline(coords,{color:'#2563eb',weight:5,opacity:0.85}).addTo(navMap);
+    navLayer = L.featureGroup(group.concat([line]));
+    navMap.fitBounds(navLayer.getBounds().pad(0.25));
+    var km = (route.distance/1000).toFixed(1);
+    var mins = Math.round(route.duration/60);
+    var bearing = calculateBearing(origLat, origLng, navDest.lat, navDest.lng);
+    updateCompassHud(bearing, 'Bearing');
+    document.getElementById('navModalInfo').innerHTML = '<span><b>Bearing:</b> '+bearing+'° '+bearingToCardinal(bearing)+'</span><span><b>Distance:</b> '+km+' km</span><span><b>ETA:</b> '+mins+' min</span><span style="color:#16a34a;"><i class="fas fa-route"></i> Live OSRM Route</span>';
+  } else {
+    drawBearingFallback(origLat, origLng, origLabel, group[0]);
+  }
  }).catch(function(){
- navLayer = L.featureGroup(group);
- document.getElementById('navModalInfo').innerHTML = '<span>Route unavailable.</span>';
+  drawBearingFallback(origLat, origLng, origLabel, group[0]);
  });
 }
+
 function onNavPosition(pos){
  var lat=pos.coords.latitude, lng=pos.coords.longitude;
  responderGps.lat=lat; responderGps.lng=lng;
  if(pos.coords.heading!==null && !isNaN(pos.coords.heading)){
- navHeading = pos.coords.heading;
- applyNavRotation();
+  navHeading = pos.coords.heading;
+  applyNavRotation();
+  updateCompassHud(Math.round(navHeading), 'Heading');
  }
  var arrowIcon = L.divIcon({className:'',html:'<div class="nav-arrow-icon" style="transform:rotate('+navHeading+'deg);"></div>',iconSize:[18,22],iconAnchor:[9,16]});
  if(!navOrigMarker){
- navOrigMarker = L.marker([lat,lng],{icon:arrowIcon}).addTo(navMap).bindPopup('Your Location');
+  navOrigMarker = L.marker([lat,lng],{icon:arrowIcon}).addTo(navMap).bindPopup('Your Location');
  } else {
- navOrigMarker.setLatLng([lat,lng]);
- navOrigMarker.setIcon(arrowIcon);
+  navOrigMarker.setLatLng([lat,lng]);
+  navOrigMarker.setIcon(arrowIcon);
  }
  navMap.setView([lat,lng], navMap.getZoom() < 15 ? 16 : navMap.getZoom());
  if(navDest){
- var destMarker = navOrigMarker._destRef;
- var group=[navOrigMarker]; if(destMarker) group.push(destMarker);
- drawNavRoute(group);
- var dist = haversine(lat,lng,navDest.lat,navDest.lng);
- if(dist <= ARRIVAL_RADIUS_M && !navArrived){
- navArrived = true;
- document.getElementById('navModalInfo').innerHTML = '<span class="nav-arrived"><i class="fas fa-flag-checkered"></i> You have arrived! Marking as responded\u2026</span>';
- var rid = navReportId;
- stopNavTracking();
- markArrivedSilently(rid).then(function(){
- setTimeout(function(){ closeNavModal(); location.reload(); }, 1200);
- });
- }
+  var destMarker = navOrigMarker._destRef;
+  var group=[navOrigMarker]; if(destMarker) group.push(destMarker);
+  drawNavRoute(group);
+  var dist = haversine(lat,lng,navDest.lat,navDest.lng);
+  if(dist <= ARRIVAL_RADIUS_M && !navArrived){
+  navArrived = true;
+  document.getElementById('navModalInfo').innerHTML = '<span class="nav-arrived"><i class="fas fa-flag-checkered"></i> You have arrived! Marking as responded\u2026</span>';
+  var rid = navReportId;
+  stopNavTracking();
+  markArrivedSilently(rid).then(function(){
+   setTimeout(function(){ closeNavModal(); location.reload(); }, 1200);
+  });
+  }
  }
 }
+
 function openNavigation(lat, lng, reportId){
  if(lat === null || lng === null || typeof lat === 'undefined' || typeof lng === 'undefined' || lat === '' || lng === ''){
  alert('This report has no GPS coordinates.');
  return;
  }
  document.getElementById('navModalTitle').textContent = 'Navigate to Incident';
- document.getElementById('navModalInfo').innerHTML = '<span>Loading route\u2026</span>';
+ var hud = document.getElementById('navCompassHud');
+ if(hud) hud.style.display = 'inline-flex';
  document.getElementById('navModalOverlay').classList.add('show');
  navDest = {lat:lat,lng:lng}; navReportId = reportId; navArrived=false;
+
+ var origLat = responderGps.lat !== null ? responderGps.lat : stationGps.lat;
+ var origLng = responderGps.lng !== null ? responderGps.lng : stationGps.lng;
+ var origLabel = responderGps.lat !== null ? 'Your Saved Location' : stationGps.name;
+
  setTimeout(function(){
  ensureNavMap();
  navMap.setView([lat,lng],15);
- var destIcon = L.divIcon({className:'',html:'<div style="width:16px;height:16px;border-radius:50%;background:#dc2626;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.4);"></div>',iconSize:[16,16],iconAnchor:[8,8]});
- var destMarker = L.marker([lat,lng],{icon:destIcon}).addTo(navMap).bindPopup('Incident Location');
- var group = [destMarker];
- navLayer = L.featureGroup(group);
- navMap.fitBounds(navLayer.getBounds().pad(0.25));
+ var destIcon = L.divIcon({className:'',html:'<div style="width:18px;height:18px;border-radius:50%;background:#dc2626;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.45);"></div>',iconSize:[18,18],iconAnchor:[9,9]});
+ var destMarker = L.marker([lat,lng],{icon:destIcon}).addTo(navMap).bindPopup('<b>Incident Location</b>');
+
+ // Immediately draw straight bearing fallback with origin, polyline, haversine distance, and header compass
+ drawBearingFallback(origLat, origLng, origLabel, destMarker);
  navMap.invalidateSize();
 
  if(!navigator.geolocation){
- document.getElementById('navModalInfo').innerHTML = '<span>Geolocation not supported on this device.</span>';
- return;
+  return;
  }
  if(window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission === 'function'){
- DeviceOrientationEvent.requestPermission().then(function(state){
- if(state==='granted') window.addEventListener('deviceorientation', onNavOrientation, true);
- }).catch(function(){});
+  DeviceOrientationEvent.requestPermission().then(function(state){
+  if(state==='granted') window.addEventListener('deviceorientation', onNavOrientation, true);
+  }).catch(function(){});
  } else {
- window.addEventListener('deviceorientationabsolute', onNavOrientation, true);
- window.addEventListener('deviceorientation', onNavOrientation, true);
+  window.addEventListener('deviceorientationabsolute', onNavOrientation, true);
+  window.addEventListener('deviceorientation', onNavOrientation, true);
  }
  navWatchId = navigator.geolocation.watchPosition(function(pos){
- onNavPosition(pos);
- if(navOrigMarker) navOrigMarker._destRef = destMarker;
+  onNavPosition(pos);
+  if(navOrigMarker) navOrigMarker._destRef = destMarker;
  }, function(){
-  if(responderGps.lat!==null && responderGps.lng!==null){
-    document.getElementById('navModalInfo').innerHTML = '<span>Using saved profile location for route.</span>';
-    var origIcon = L.divIcon({className:'',html:'<div style="width:16px;height:16px;border-radius:50%;background:#2563eb;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.4);"></div>',iconSize:[16,16],iconAnchor:[8,8]});
-    var origMarker = L.marker([responderGps.lat,responderGps.lng],{icon:origIcon}).addTo(navMap).bindPopup('Your Saved Location');
-    drawNavRoute([destMarker, origMarker]);
-  } else {
-    document.getElementById('navModalInfo').innerHTML = '<span>GPS coordinates unavailable. Tap "Get My GPS" above to enable live navigation.</span>';
-  }
-  }, {enableHighAccuracy:true, timeout:15000, maximumAge:5000});
+  // GPS denied/offline: fallback remains active with bearing, haversine distance, and header compass
+  drawBearingFallback(origLat, origLng, origLabel, destMarker);
+ }, {enableHighAccuracy:true, timeout:15000, maximumAge:5000});
  },50);
 }
 
@@ -1428,14 +1523,20 @@ document.addEventListener('keydown', function(e) {
 </div>
 
 <div class="nav-modal-overlay" id="navModalOverlay" role="dialog" aria-modal="true" aria-label="Navigation Modal">
- <div class="nav-modal">
- <div class="nav-modal-head">
- <h3 id="navModalTitle"><i class="fas fa-route" style="margin-right:6px;color:var(--red-light);"></i>Navigation</h3>
- <button class="nav-modal-close" onclick="closeNavModal()" aria-label="Close Navigation Modal"><i class="fas fa-times"></i></button>
- </div>
- <div id="navModalMap"><div id="navMapInner"></div></div>
- <div class="nav-modal-info" id="navModalInfo"></div>
- </div>
+  <div class="nav-modal">
+  <div class="nav-modal-head">
+  <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+    <h3 id="navModalTitle" style="margin:0;font-size:0.94rem;font-weight:800;"><i class="fas fa-route" style="margin-right:6px;color:var(--red-light);"></i>Navigation</h3>
+    <div id="navCompassHud" style="display:inline-flex;align-items:center;gap:6px;background:#f8fafc;border:1px solid #cbd5e1;padding:3px 10px;border-radius:20px;font-size:0.75rem;font-weight:700;color:#1e293b;">
+      <i class="fas fa-compass" id="navCompassNeedle" style="color:#2563eb;font-size:0.95rem;transition:transform 0.2s linear;display:inline-block;"></i>
+      <span id="navCompassText">---</span>
+    </div>
+  </div>
+  <button class="nav-modal-close" onclick="closeNavModal()" aria-label="Close Navigation Modal"><i class="fas fa-times"></i></button>
+  </div>
+  <div id="navModalMap"><div id="navMapInner"></div></div>
+  <div class="nav-modal-info" id="navModalInfo"></div>
+  </div>
 </div>
 <?= csrf_script() ?>
 </body>
