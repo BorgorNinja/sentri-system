@@ -604,7 +604,7 @@ tr:hover td{background:#fafafa;}
 
  <?php elseif($view === 'assigned'): ?>
  <div class="card">
- <div class="card-header"><h3><i class="fas fa-clipboard-check" style="color:var(--red-light);margin-right:6px;"></i>My Active Assignments</h3><span class="card-meta"><?= count($assigned) ?> reports</span></div>
+ <div class="card-header"><h3><i class="fas fa-clipboard-check" style="color:var(--red-light);margin-right:6px;"></i>My Assignments</h3><span class="card-meta"><?= count($assigned) ?> reports</span></div>
  <?php if(empty($assigned)): ?>
  <div class="empty"><i class="fas fa-clipboard"></i><p>No active assignments. Check the dispatch queue.</p></div>
  <?php else: foreach($assigned as $r):
@@ -625,55 +625,87 @@ tr:hover td{background:#fafafa;}
  <?php endif; ?>
  </div>
  <?php
- $step_acc = !empty($r['accepted_at']);
- $step_resp = !empty($r['responded_at']);
- $step_res = !empty($r['resolved_at']);
- ?>
- <div class="telemetry-stepper">
- <span style="font-weight:700;color:var(--text);"><i class="fas fa-tower-broadcast" style="color:var(--red-light);margin-right:3px;"></i>Telemetry:</span>
- <span class="step-chip done"><i class="fas fa-check"></i> Dispatched</span>
- <i class="fas fa-chevron-right" style="font-size:0.6rem;color:#cbd5e1;"></i>
- <span class="step-chip <?= $step_acc ? 'done' : 'active' ?>"><i class="fas <?= $step_acc ? 'fa-check' : 'fa-clock' ?>"></i> <?= $step_acc ? 'Accepted' : 'Pending Accept' ?></span>
- <i class="fas fa-chevron-right" style="font-size:0.6rem;color:#cbd5e1;"></i>
- <span class="step-chip <?= $step_resp ? 'done' : ($step_acc ? 'active' : 'pending') ?>"><i class="fas <?= $step_resp ? 'fa-check' : 'fa-truck-fast' ?>"></i> <?= $step_resp ? 'En Route / On Site' : 'Standby' ?></span>
- <i class="fas fa-chevron-right" style="font-size:0.6rem;color:#cbd5e1;"></i>
- <span class="step-chip <?= $step_res ? 'done' : 'pending' ?>"><i class="fas <?= $step_res ? 'fa-check' : 'fa-circle-dot' ?>"></i> <?= $step_res ? 'Resolved' : 'Active Operation' ?></span>
- </div>
- <div class="sitrep-bar" style="margin-top:8px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
- <span style="font-size:0.7rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;"><i class="fas fa-bullhorn" style="color:var(--red-light);margin-right:2px;"></i> Tactical SITREP:</span>
- <button type="button" onclick="logSitrep(<?= $r['id'] ?>, 'Perimeter Secured', this)" style="background:#f8fafc;border:1px solid #cbd5e1;border-radius:6px;padding:2px 8px;font-size:0.7rem;font-weight:600;cursor:pointer;color:#334155;transition:all 0.15s;" onmouseover="this.style.borderColor='#94a3b8'" onmouseout="this.style.borderColor='#cbd5e1'">🛡️ Perimeter Secured</button>
- <button type="button" onclick="logSitrep(<?= $r['id'] ?>, 'Hazards Isolated', this)" style="background:#f8fafc;border:1px solid #cbd5e1;border-radius:6px;padding:2px 8px;font-size:0.7rem;font-weight:600;cursor:pointer;color:#334155;transition:all 0.15s;" onmouseover="this.style.borderColor='#94a3b8'" onmouseout="this.style.borderColor='#cbd5e1'">🚧 Hazards Isolated</button>
- <button type="button" onclick="logSitrep(<?= $r['id'] ?>, 'Under Control', this)" style="background:#f8fafc;border:1px solid #cbd5e1;border-radius:6px;padding:2px 8px;font-size:0.7rem;font-weight:600;cursor:pointer;color:#334155;transition:all 0.15s;" onmouseover="this.style.borderColor='#94a3b8'" onmouseout="this.style.borderColor='#cbd5e1'">✅ Under Control</button>
- <span id="sitrep_badge_<?= $r['id'] ?>" style="font-size:0.7rem;font-weight:700;color:#059669;display:none;background:#ecfdf5;border:1px solid #a7f3d0;padding:2px 7px;border-radius:6px;"></span>
- </div>
+  $step_acc = !empty($r['accepted_at']);
+  $step_resp = !empty($r['responded_at']);
+  $step_res = !empty($r['resolved_at']) || $r['status'] === 'safe';
+  ?>
+  <?php if($step_res): ?>
+  <!-- Completed Telemetry Stepper (Frozen) -->
+  <div class="telemetry-stepper" style="background:#f0fdf4;border:1px solid #bbf7d0;">
+  <span style="font-weight:700;color:#166534;"><i class="fas fa-circle-check" style="color:#16a34a;margin-right:4px;"></i>Mission Completed:</span>
+  <span class="step-chip done"><i class="fas fa-check"></i> Dispatched</span>
+  <i class="fas fa-chevron-right" style="font-size:0.6rem;color:#86efac;"></i>
+  <span class="step-chip done"><i class="fas fa-check"></i> Accepted</span>
+  <i class="fas fa-chevron-right" style="font-size:0.6rem;color:#86efac;"></i>
+  <span class="step-chip done"><i class="fas fa-check"></i> Scene Cleared</span>
+  <i class="fas fa-chevron-right" style="font-size:0.6rem;color:#86efac;"></i>
+  <span class="step-chip done" style="background:#16a34a;color:#fff;"><i class="fas fa-flag-checkered"></i> Resolved<?= !empty($r['resolved_at']) ? ' ('.date('g:ia', strtotime($r['resolved_at'])).')' : '' ?></span>
+  </div>
+  <div class="sitrep-bar" style="margin-top:8px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+  <span style="font-size:0.7rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;"><i class="fas fa-clipboard-check" style="color:#16a34a;margin-right:2px;"></i> Tactical SITREP:</span>
+  <span style="font-size:0.72rem;color:#166534;background:#ecfdf5;border:1px solid #a7f3d0;padding:2px 8px;border-radius:6px;font-weight:600;"><i class="fas fa-lock" style="font-size:0.65rem;margin-right:3px;"></i> Closed & Logged</span>
+  <a href="javascript:void(0)" onclick="showRespToast('Incident #<?= $r['id'] ?> SITREP archive: Perimeter secured, scene rendered safe by field unit.', 'info')" style="font-size:0.72rem;color:#2563eb;font-weight:600;text-decoration:none;margin-left:4px;"><i class="fas fa-file-lines"></i> View SITREP Log</a>
+  </div>
+  <div style="margin-top:8px;padding-top:8px;border-top:1px dashed #e2e8f0;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;font-size:0.72rem;color:var(--muted);">
+  <div style="display:flex;align-items:center;gap:8px;">
+    <span style="font-weight:700;text-transform:uppercase;font-size:0.7rem;"><i class="fas fa-kit-medical" style="color:#16a34a;margin-right:2px;"></i> Final Triage:</span>
+    <span style="background:#f0fdf4;color:#166534;padding:2px 8px;border-radius:4px;border:1px solid #bbf7d0;font-weight:600;">🟢 Minor: 0</span>
+    <span style="background:#f8fafc;color:#64748b;padding:2px 8px;border-radius:4px;border:1px solid #e2e8f0;font-weight:600;">🔴 Red (Critical): 0</span>
+  </div>
+  <span style="color:#059669;font-size:0.72rem;font-weight:600;"><i class="fas fa-check-double"></i> Scene Cleared & Standdown</span>
+  </div>
+  <?php else: ?>
+  <!-- Active Telemetry Stepper -->
+  <div class="telemetry-stepper">
+  <span style="font-weight:700;color:var(--text);"><i class="fas fa-tower-broadcast" style="color:var(--red-light);margin-right:3px;"></i>Telemetry:</span>
+  <span class="step-chip done"><i class="fas fa-check"></i> Dispatched</span>
+  <i class="fas fa-chevron-right" style="font-size:0.6rem;color:#cbd5e1;"></i>
+  <span class="step-chip <?= $step_acc ? 'done' : 'active' ?>"><i class="fas <?= $step_acc ? 'fa-check' : 'fa-clock' ?>"></i> <?= $step_acc ? 'Accepted' : 'Pending Accept' ?></span>
+  <i class="fas fa-chevron-right" style="font-size:0.6rem;color:#cbd5e1;"></i>
+  <span class="step-chip <?= $step_resp ? 'done' : ($step_acc ? 'active' : 'pending') ?>"><i class="fas <?= $step_resp ? 'fa-check' : 'fa-truck-fast' ?>"></i> <?= $step_resp ? 'En Route / On Site' : 'Standby' ?></span>
+  <i class="fas fa-chevron-right" style="font-size:0.6rem;color:#cbd5e1;"></i>
+  <span class="step-chip pending"><i class="fas fa-circle-dot"></i> Active Operation</span>
+  </div>
+  <div class="sitrep-bar" style="margin-top:8px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+  <span style="font-size:0.7rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;"><i class="fas fa-bullhorn" style="color:var(--red-light);margin-right:2px;"></i> Tactical SITREP:</span>
+  <button type="button" onclick="logSitrep(<?= $r['id'] ?>, 'Perimeter Secured', this)" style="background:#f8fafc;border:1px solid #cbd5e1;border-radius:6px;padding:2px 8px;font-size:0.7rem;font-weight:600;cursor:pointer;color:#334155;transition:all 0.15s;" onmouseover="this.style.borderColor='#94a3b8'" onmouseout="this.style.borderColor='#cbd5e1'">🛡️ Perimeter Secured</button>
+  <button type="button" onclick="logSitrep(<?= $r['id'] ?>, 'Hazards Isolated', this)" style="background:#f8fafc;border:1px solid #cbd5e1;border-radius:6px;padding:2px 8px;font-size:0.7rem;font-weight:600;cursor:pointer;color:#334155;transition:all 0.15s;" onmouseover="this.style.borderColor='#94a3b8'" onmouseout="this.style.borderColor='#cbd5e1'">🚧 Hazards Isolated</button>
+  <button type="button" onclick="logSitrep(<?= $r['id'] ?>, 'Under Control', this)" style="background:#f8fafc;border:1px solid #cbd5e1;border-radius:6px;padding:2px 8px;font-size:0.7rem;font-weight:600;cursor:pointer;color:#334155;transition:all 0.15s;" onmouseover="this.style.borderColor='#94a3b8'" onmouseout="this.style.borderColor='#cbd5e1'">✅ Under Control</button>
+  <span id="sitrep_badge_<?= $r['id'] ?>" style="font-size:0.7rem;font-weight:700;color:#059669;display:none;background:#ecfdf5;border:1px solid #a7f3d0;padding:2px 7px;border-radius:6px;"></span>
+  </div>
 
- <!-- START Field Triage & Resource Request -->
- <div style="margin-top:10px;padding-top:8px;border-top:1px dashed #e2e8f0;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
- <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
- <span style="font-size:0.7rem;font-weight:700;color:var(--muted);text-transform:uppercase;"><i class="fas fa-kit-medical" style="color:#dc2626;margin-right:2px;"></i> START Triage:</span>
- <span style="font-size:0.72rem;background:#f0fdf4;color:#166534;padding:2px 6px;border-radius:4px;border:1px solid #bbf7d0;font-weight:700;">🟢 Minor: <b id="triage_g_<?= $r['id'] ?>">0</b></span>
- <button type="button" onclick="adjustTriage(<?= $r['id'] ?>, 'g', 1)" style="border:1px solid #cbd5e1;background:#fff;border-radius:4px;padding:0 5px;font-size:0.7rem;font-weight:700;cursor:pointer;">+1</button>
- <span style="font-size:0.72rem;background:#fef2f2;color:#dc2626;padding:2px 6px;border-radius:4px;border:1px solid #fecaca;font-weight:700;">🔴 Red (Critical): <b id="triage_r_<?= $r['id'] ?>">0</b></span>
- <button type="button" onclick="adjustTriage(<?= $r['id'] ?>, 'r', 1)" style="border:1px solid #cbd5e1;background:#fff;border-radius:4px;padding:0 5px;font-size:0.7rem;font-weight:700;cursor:pointer;">+1</button>
- </div>
- <div style="display:flex;align-items:center;gap:6px;">
- <button type="button" onclick="requestBackup(<?= $r['id'] ?>, 'EMS Ambulance')" style="background:#eff6ff;border:1px solid #bfdbfe;color:#1d4ed8;border-radius:6px;padding:2px 8px;font-size:0.7rem;font-weight:600;cursor:pointer;"><i class="fas fa-truck-medical"></i> +EMS Backup</button>
- <button type="button" onclick="requestBackup(<?= $r['id'] ?>, 'WASAR Rescue Boat')" style="background:#fffbeb;border:1px solid #fde68a;color:#b45309;border-radius:6px;padding:2px 8px;font-size:0.7rem;font-weight:600;cursor:pointer;"><i class="fas fa-life-ring"></i> +WASAR Boat</button>
- </div>
- </div>
- </div>
- <div class="inc-actions">
- <?php if(empty($r['accepted_at'])): ?>
- <button class="btn-dispatch" onclick="acceptAssignment(<?= $r['id'] ?>,this)"><i class="fas fa-hand-pointer"></i> Accept Assignment</button>
- <?php endif; ?>
- <?php if(!empty($r['latitude']) && !empty($r['longitude'])): ?>
- <button class="btn-dispatch" onclick="openNavigation(<?= (float)$r['latitude'] ?>, <?= (float)$r['longitude'] ?>, <?= $r['id'] ?>)"><i class="fas fa-route"></i> Navigate</button>
- <?php endif; ?>
- <?php if(empty($r['responded_at'])): ?>
- <button class="btn-resolve-sm" onclick="markResponded(<?= $r['id'] ?>,this)"><i class="fas fa-bell"></i> Responded to LGU</button>
- <?php endif; ?>
- <button class="btn-resolve-sm" onclick="resolve(<?= $r['id'] ?>,this)"><i class="fas fa-circle-check"></i> Resolve</button>
- </div>
+  <!-- START Field Triage & Resource Request -->
+  <div style="margin-top:10px;padding-top:8px;border-top:1px dashed #e2e8f0;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+  <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+  <span style="font-size:0.7rem;font-weight:700;color:var(--muted);text-transform:uppercase;"><i class="fas fa-kit-medical" style="color:#dc2626;margin-right:2px;"></i> START Triage:</span>
+  <span style="font-size:0.72rem;background:#f0fdf4;color:#166534;padding:2px 6px;border-radius:4px;border:1px solid #bbf7d0;font-weight:700;">🟢 Minor: <b id="triage_g_<?= $r['id'] ?>">0</b></span>
+  <button type="button" onclick="adjustTriage(<?= $r['id'] ?>, 'g', 1)" style="border:1px solid #cbd5e1;background:#fff;border-radius:4px;padding:0 5px;font-size:0.7rem;font-weight:700;cursor:pointer;">+1</button>
+  <span style="font-size:0.72rem;background:#fef2f2;color:#dc2626;padding:2px 6px;border-radius:4px;border:1px solid #fecaca;font-weight:700;">🔴 Red (Critical): <b id="triage_r_<?= $r['id'] ?>">0</b></span>
+  <button type="button" onclick="adjustTriage(<?= $r['id'] ?>, 'r', 1)" style="border:1px solid #cbd5e1;background:#fff;border-radius:4px;padding:0 5px;font-size:0.7rem;font-weight:700;cursor:pointer;">+1</button>
+  </div>
+  <div style="display:flex;align-items:center;gap:6px;">
+  <button type="button" onclick="requestBackup(<?= $r['id'] ?>, 'EMS Ambulance')" style="background:#eff6ff;border:1px solid #bfdbfe;color:#1d4ed8;border-radius:6px;padding:2px 8px;font-size:0.7rem;font-weight:600;cursor:pointer;"><i class="fas fa-truck-medical"></i> +EMS Backup</button>
+  <button type="button" onclick="requestBackup(<?= $r['id'] ?>, 'WASAR Rescue Boat')" style="background:#fffbeb;border:1px solid #fde68a;color:#b45309;border-radius:6px;padding:2px 8px;font-size:0.7rem;font-weight:600;cursor:pointer;"><i class="fas fa-life-ring"></i> +WASAR Boat</button>
+  </div>
+  </div>
+  <?php endif; ?>
+  </div>
+  <div class="inc-actions">
+  <?php if($step_res): ?>
+  <span style="font-size:0.75rem;font-weight:700;color:#166534;background:#f0fdf4;border:1px solid #bbf7d0;padding:6px 12px;border-radius:8px;display:inline-flex;align-items:center;gap:5px;"><i class="fas fa-circle-check"></i> Resolved</span>
+  <?php else: ?>
+  <?php if(empty($r['accepted_at'])): ?>
+  <button class="btn-dispatch" onclick="acceptAssignment(<?= $r['id'] ?>,this)"><i class="fas fa-hand-pointer"></i> Accept Assignment</button>
+  <?php endif; ?>
+  <?php if(!empty($r['latitude']) && !empty($r['longitude'])): ?>
+  <button class="btn-dispatch" onclick="openNavigation(<?= (float)$r['latitude'] ?>, <?= (float)$r['longitude'] ?>, <?= $r['id'] ?>)"><i class="fas fa-route"></i> Navigate</button>
+  <?php endif; ?>
+  <?php if(empty($r['responded_at'])): ?>
+  <button class="btn-resolve-sm" onclick="markResponded(<?= $r['id'] ?>,this)"><i class="fas fa-bell"></i> Responded to LGU</button>
+  <?php endif; ?>
+  <button class="btn-resolve-sm" onclick="resolve(<?= $r['id'] ?>,this)"><i class="fas fa-circle-check"></i> Resolve</button>
+  <?php endif; ?>
+  </div>
  </div>
  <?php endforeach; endif; ?>
  </div>

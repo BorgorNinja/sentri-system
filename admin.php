@@ -99,23 +99,26 @@ body{background:var(--bg);display:flex;min-height:100vh;color:var(--text);}
 .content{padding:28px;animation:fadeIn 0.4s ease;}
 
 /* ── STATS ── */
-.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;margin-bottom:28px;}
-.stat-card{background:#fff;border-radius:16px;padding:20px 22px;box-shadow:0 2px 12px rgba(0,0,0,0.06);display:flex;align-items:center;gap:16px;animation:fadeInUp 0.5s both;transition:transform 0.2s,box-shadow 0.2s;position:relative;overflow:hidden;}
+.stats-row{display:grid;grid-template-columns:repeat(5,1fr);gap:16px;margin-bottom:28px;}
+.stat-card{background:#fff;border-radius:16px;padding:18px 20px;box-shadow:0 2px 12px rgba(0,0,0,0.06);display:flex;align-items:center;gap:14px;animation:fadeInUp 0.5s both;transition:transform 0.2s,box-shadow 0.2s;position:relative;overflow:hidden;}
 .stat-card:nth-child(1){animation-delay:0.05s;}
 .stat-card:nth-child(2){animation-delay:0.1s;}
 .stat-card:nth-child(3){animation-delay:0.15s;}
 .stat-card:nth-child(4){animation-delay:0.2s;}
+.stat-card:nth-child(5){animation-delay:0.25s;}
 .stat-card:hover{transform:translateY(-3px);box-shadow:0 8px 28px rgba(0,0,0,0.1);}
 .stat-card::after{content:'';position:absolute;top:0;left:0;right:0;height:3px;}
 .stat-card.blue::after{background:linear-gradient(90deg,var(--blue-light),var(--blue));}
 .stat-card.red::after{background:linear-gradient(90deg,#ff6b6b,var(--red));}
 .stat-card.green::after{background:linear-gradient(90deg,#68d391,var(--green));}
 .stat-card.purple::after{background:linear-gradient(90deg,var(--admin-light),var(--admin));}
+.stat-card.amber::after{background:linear-gradient(90deg,#fbbf24,#d97706);}
 .stat-icon{width:50px;height:50px;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0;}
 .stat-icon.blue{background:#ebf2ff;color:var(--blue);}
 .stat-icon.red{background:#fff0f0;color:var(--red);}
 .stat-icon.green{background:#f0fff4;color:var(--green);}
 .stat-icon.purple{background:#f5f3ff;color:var(--admin);}
+.stat-icon.amber{background:rgba(251,191,36,0.15);color:#d97706;}
 .stat-num{font-size:1.8rem;font-weight:800;color:var(--text);animation:countUp 0.6s both;}
 .stat-label{font-size:0.78rem;color:var(--muted);}
 
@@ -142,9 +145,10 @@ body{background:var(--bg);display:flex;min-height:100vh;color:var(--text);}
 .filter-bar select{min-width:140px;}
 
 /* ── TABLES ── */
-.table-wrap{overflow-x:auto;border-radius:10px;border:1px solid var(--border);}
-table{width:100%;border-collapse:collapse;font-size:0.83rem;}
+.table-wrap{overflow-x:auto;border-radius:10px;border:1px solid var(--border);-webkit-overflow-scrolling:touch;}
+table{width:100%;min-width:1040px;border-collapse:collapse;font-size:0.83rem;}
 th{text-align:left;padding:11px 14px;background:#f8f9fc;color:#555;font-weight:600;border-bottom:2px solid var(--border);font-size:0.76rem;text-transform:uppercase;letter-spacing:0.5px;white-space:nowrap;}
+th:last-child,td:last-child{min-width:110px;text-align:right;padding-right:16px;}
 td{padding:12px 14px;border-bottom:1px solid #f5f5f5;vertical-align:middle;}
 tr:last-child td{border-bottom:none;}
 tr:hover td{background:#fafbff;transition:background 0.15s;}
@@ -282,13 +286,13 @@ tr:hover td{background:#fafbff;transition:background 0.15s;}
  <i class="fas fa-scroll"></i> Login Logs
  </button>
  <button class="menu-item" id="navSecurity" onclick="showTab('security')">
- <i class="fas fa-shield-exclamation"></i> Security Monitor
+ <i class="fas fa-user-shield"></i> Security Monitor
  </button>
  <button class="menu-item" id="navContacts" onclick="showTab('contacts')">
  <i class="fas fa-address-book"></i> Emergency Contacts
  </button>
  <button class="menu-item" id="navVulnerabilities" onclick="openVulnerabilityModal()">
- <i class="fas fa-shield-exclamation"></i> Vulnerability Assessment
+ <i class="fas fa-shield-virus"></i> Vulnerability Assessment
  </button>
  </nav>
  <div class="nav-section" style="margin-top:16px;">Quick Links</div>
@@ -357,8 +361,8 @@ tr:hover td{background:#fafbff;transition:background 0.15s;}
  <div class="stat-label">Archived Posts</div>
  </div>
  </div>
- <div class="stat-card" style="border-left:4px solid #d97706;">
- <div class="stat-icon" style="background:rgba(251,191,36,0.15);color:#d97706;"><i class="fas fa-clock"></i></div>
+ <div class="stat-card amber">
+ <div class="stat-icon amber"><i class="fas fa-clock"></i></div>
  <div>
  <div class="stat-num" id="pendingStatNum"><?= $pending_count ?></div>
  <div class="stat-label">Pending Approvals</div>
@@ -847,7 +851,7 @@ async function loadOverview(){
  const date=new Date(r.created_at).toLocaleDateString('en-PH',{year:'numeric',month:'short',day:'numeric'});
  return `<tr>
  <td style="color:#aaa;">${r.id}</td>
- <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${esc(r.title)}">${esc(r.title)}</td>
+ <td style="font-weight:600;min-width:160px;max-width:280px;line-height:1.35;" title="${esc(r.title)}">${esc(r.title)}</td>
  <td><span class="badge ${r.status}">${r.status}</span></td>
  <td style="color:var(--muted);">${r.category}</td>
  <td>${esc(r.location_name)}<br><small style="color:#aaa;">${esc(r.city)}</small></td>
@@ -1055,7 +1059,7 @@ function renderPosts(){
  const date=new Date(r.created_at).toLocaleDateString('en-PH',{year:'numeric',month:'short',day:'numeric'});
  return `<tr>
  <td style="color:#aaa;">${r.id}</td>
- <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${esc(r.title)}">${esc(r.title)}</td>
+ <td style="font-weight:600;min-width:160px;max-width:280px;line-height:1.35;" title="${esc(r.title)}">${esc(r.title)}</td>
  <td><span class="badge ${arc?'archived':r.status}">${arc?'archived':r.status}</span></td>
  <td style="color:var(--muted);">${r.category}</td>
  <td>${esc(r.location_name)}<br><small style="color:#aaa;">${esc(r.city)}</small></td>
