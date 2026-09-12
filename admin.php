@@ -146,10 +146,10 @@ body{background:var(--bg);display:flex;min-height:100vh;color:var(--text);}
 
 /* ── TABLES ── */
 .table-wrap{overflow-x:auto;border-radius:10px;border:1px solid var(--border);-webkit-overflow-scrolling:touch;}
-table{width:100%;min-width:1040px;border-collapse:collapse;font-size:0.83rem;}
-th{text-align:left;padding:11px 14px;background:#f8f9fc;color:#555;font-weight:600;border-bottom:2px solid var(--border);font-size:0.76rem;text-transform:uppercase;letter-spacing:0.5px;white-space:nowrap;}
-th:last-child,td:last-child{min-width:110px;text-align:right;padding-right:16px;}
-td{padding:12px 14px;border-bottom:1px solid #f5f5f5;vertical-align:middle;}
+table{width:100%;border-collapse:collapse;font-size:0.82rem;}
+th{text-align:left;padding:10px 10px;background:#f8f9fc;color:#555;font-weight:600;border-bottom:2px solid var(--border);font-size:0.75rem;text-transform:uppercase;letter-spacing:0.5px;white-space:nowrap;}
+th:last-child,td:last-child{text-align:right;white-space:nowrap;padding-right:14px;}
+td{padding:10px 10px;border-bottom:1px solid #f5f5f5;vertical-align:middle;}
 tr:last-child td{border-bottom:none;}
 tr:hover td{background:#fafbff;transition:background 0.15s;}
 
@@ -490,8 +490,8 @@ tr:hover td{background:#fafbff;transition:background 0.15s;}
  </div>
  <div class="table-wrap">
  <div class="loading" id="postsLoading"><i class="fas fa-spinner"></i> Loading posts...</div>
- <table id="postsTable" style="display:none;">
- <thead><tr><th scope="col">#</th><th scope="col">Title</th><th scope="col">Status</th><th scope="col">Category</th><th scope="col">Location</th><th scope="col">Posted By</th><th scope="col">Votes</th><th scope="col">Date</th><th scope="col">Actions</th></tr></thead>
+ <table id="postsTable" style="display:none;width:100%;table-layout:auto;">
+ <thead><tr><th scope="col" style="width:36px;">#</th><th scope="col" style="min-width:140px;">Title</th><th scope="col" style="width:80px;">Status</th><th scope="col" style="width:85px;">Category</th><th scope="col" style="min-width:130px;">Location</th><th scope="col" style="width:110px;">Posted By</th><th scope="col" style="width:70px;">Votes</th><th scope="col" style="width:85px;">Date</th><th scope="col" style="width:95px;text-align:right;">Actions</th></tr></thead>
  <tbody id="postsBody"></tbody>
  </table>
  </div>
@@ -1066,7 +1066,7 @@ function renderPosts(){
  <td>${esc(r.poster_name)}</td>
  <td><span style="color:var(--green);">▲${r.upvotes}</span> <span style="color:var(--red);">▼${r.downvotes}</span></td>
  <td style="color:#888;font-size:0.78rem;white-space:nowrap;">${date}</td>
- <td style="white-space:nowrap;">
+ <td style="white-space:nowrap;text-align:right;">
  ${arc
  ? `<button class="act-btn restore" onclick="postAction(${r.id},'restore')"><i class="fas fa-rotate-left"></i> Restore</button>`
  : `<button class="act-btn del" onclick="postAction(${r.id},'delete')"><i class="fas fa-archive"></i> Archive</button>`
