@@ -186,7 +186,10 @@ body{background:var(--bg);color:var(--text);display:flex;min-height:100vh;overfl
 .card-header h3{font-size:0.88rem;font-weight:700;min-width:0;}
 .card-meta{font-size:0.72rem;color:var(--muted);white-space:nowrap;}
 /* TABLE */
-.table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+.table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;position:relative;scrollbar-width:thin;scrollbar-color:#cbd5e1 transparent;}
+.table-wrap::-webkit-scrollbar{height:5px;}
+.table-wrap::-webkit-scrollbar-track{background:transparent;}
+.table-wrap::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:3px;}
 table{width:100%;border-collapse:collapse;min-width:520px;}
 thead tr{background:#f8fafc;}
 th{padding:10px 14px;font-size:0.68rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.8px;border-bottom:1px solid var(--border);text-align:left;white-space:nowrap;}
@@ -299,11 +302,35 @@ tr:hover td{background:#fafafa;}
  .stat-card{padding:12px 14px;gap:10px;}
  .stat-icon{width:38px;height:38px;font-size:1rem;border-radius:10px;}
  .stat-num{font-size:1.3rem;}
+ table.report-table{min-width:unset;width:100%;}
+ .col-loc, .col-user, .col-date{display:none;}
+ th.col-title, td.col-title{font-size:0.79rem;line-height:1.3;overflow-wrap:break-word;word-break:normal;}
+ th.col-id, td.col-id{width:1%;white-space:nowrap;padding-left:10px;padding-right:4px;}
+ th.col-cat, td.col-cat{width:1%;white-space:nowrap;padding:8px 5px;}
+ th.col-status, td.col-status{width:1%;white-space:nowrap;padding:8px 5px;}
+ th.col-actions, td.col-actions{width:1%;white-space:nowrap;padding-right:10px;padding-left:4px;text-align:right;}
+ .col-actions .btn-icon{width:28px;height:28px;font-size:0.75rem;}
+}
+@media(max-width:600px){
+ .col-cat{display:none !important;}
+ .desktop-lgu{display:none !important;}
+ .mobile-sub-meta{display:flex !important;}
+ th.col-title, td.col-title{font-size:0.77rem;line-height:1.25;}
+ th.col-status, td.col-status{padding:8px 4px;}
+ th.col-actions, td.col-actions{padding-right:8px;padding-left:2px;text-align:right;}
+ .col-actions div{gap:3px !important;}
+ .col-actions .btn-icon{width:24px;height:24px;font-size:0.7rem;border-radius:5px;}
+ th.col-actions{font-size:0.64rem;}
 }
 @media(max-width:480px){
  .stat-grid{grid-template-columns:1fr 1fr;gap:8px;}
  .page-sub{display:none;}
- .badge-brgy{font-size:0.65rem;padding:4px 8px;}
+ .badge-brgy{font-size:0.64rem;padding:3px 7px;margin-right:2px;}
+ .topbar-actions{
+   -webkit-mask-image:linear-gradient(to right, #000 80%, rgba(0,0,0,0) 100%);
+   mask-image:linear-gradient(to right, #000 80%, rgba(0,0,0,0) 100%);
+ }
+ th.col-title, td.col-title{font-size:0.77rem;}
 }
 </style>
 </head>
