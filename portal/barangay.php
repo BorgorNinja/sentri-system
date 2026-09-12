@@ -165,13 +165,13 @@ body{background:var(--bg);color:var(--text);display:flex;min-height:100vh;overfl
 /* TOPBAR */
 .topbar{background:#fff;border-bottom:4px solid var(--green);padding:0 24px;min-height:64px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 10px rgba(0,0,0,0.07);gap:10px;}
 .topbar-header-row{display:contents;}
-.topbar-left{display:flex;align-items:center;gap:12px;min-width:0;}
+.topbar-left{display:flex;align-items:center;gap:12px;min-width:max-content;flex-shrink:0;}
 .ham-btn{background:none;border:none;font-size:1.15rem;color:var(--muted);cursor:pointer;padding:7px;border-radius:8px;display:none;flex-shrink:0;}
 .ham-btn:hover{background:#f3f4f6;}
-.page-title{font-size:1rem;font-weight:800;color:var(--green-dark);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.page-sub{font-size:0.72rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.page-title{font-size:1rem;font-weight:800;color:var(--green-dark);white-space:nowrap;}
+.page-sub{font-size:0.72rem;color:var(--muted);white-space:nowrap;}
 .badge-brgy{background:#f0fdf4;color:var(--green);font-size:0.71rem;font-weight:700;padding:5px 12px;border-radius:20px;border:1px solid #bbf7d0;white-space:nowrap;flex-shrink:0;}
-.topbar-actions{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.topbar-actions{display:flex;align-items:center;gap:6px;flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
 /* CONTENT */
 .content{padding:22px 24px;flex:1;}
 /* STATS */
@@ -487,45 +487,47 @@ tr:hover td{background:#fafafa;}
  <button class="filter-btn" id="toggleHazardRings" onclick="toggleHazardBuffer(this)" title="Toggle 250m/150m safety hazard buffer rings"><i class="fas fa-bullseye" style="color:#ef4444;font-size:0.7rem;"></i> Hazard Buffers</button>
  <button class="filter-btn" id="toggleHeatmap" onclick="toggleHeatmapDensity(this)" title="Toggle incident intensity cluster overlay"><i class="fas fa-fire-flame-curved" style="color:#f59e0b;font-size:0.7rem;"></i> Density Heatmap</button>
  <div style="position:relative;margin-left:auto;">
- <input type="text" id="mapSearchInput" placeholder="Filter map pins..." oninput="filterMapBySearch(this.value)" style="padding:4px 8px 4px 22px;border:1.5px solid var(--border);border-radius:6px;font-size:0.74rem;outline:none;background:#fff;width:140px;">
- <i class="fas fa-magnifying-glass" style="position:absolute;left:7px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:0.7rem;"></i>
- </div>
- <div style="font-size:0.74rem;color:var(--muted);">© OpenStreetMap</div>
- </div>
- <div style="position:relative;">
- <div id="incidentMap"></div>
- <div class="map-legend">
- <div class="legend-row"><div class="legend-dot" style="background:#dc2626;"></div>Dangerous</div>
- <div class="legend-row"><div class="legend-dot" style="background:#d97706;"></div>Caution</div>
- <div class="legend-row"><div class="legend-dot" style="background:#16a34a;"></div>Safe</div>
- <div class="legend-row" style="margin-top:4px;padding-top:4px;border-top:1px dashed #e2e8f0;font-size:0.7rem;color:#64748b;"><i class="fas fa-circle-dot" style="color:#dc2626;margin-right:4px;"></i>Buffer: 250m / 150m</div>
- </div>
- </div>
- </div>
- <script>
- var mapReports = <?= json_encode(array_map(function($r){
- return ['id'=>(int)$r['id'],'title'=>htmlspecialchars($r['title'],ENT_QUOTES),'category'=>$r['category'],
- 'status'=>$r['status'],'barangay'=>htmlspecialchars($r['barangay']??$r['city']??'',ENT_QUOTES),
- 'lat'=>(float)$r['latitude'],'lng'=>(float)$r['longitude'],
- 'reporter'=>htmlspecialchars(trim($r['first_name'].' '.$r['last_name']),ENT_QUOTES),
- 'date'=>date('M j, Y g:i A',strtotime($r['created_at'])),'desc'=>htmlspecialchars($r['description']??'',ENT_QUOTES)];
- }, $map_reports)) ?>;
- var markerColors = {dangerous:'#dc2626',caution:'#d97706',safe:'#16a34a'};
- var catLabels = {crime:'Crime',accident:'Accident',flooding:'Flooding',fire:'Fire',health:'Health',infrastructure:'Infrastructure',other:'Other'};
- function makeMapIcon(color){
- return L.divIcon({className:'',html:'<div style="width:14px;height:14px;border-radius:50%;background:'+color+';border:2.5px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.35);"></div>',iconSize:[14,14],iconAnchor:[7,7]});
- }
- var lmap = L.map('incidentMap');
- L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(lmap);
- var allMapMarkers = [];
- var hazardCircles = [];
- var showHazardRings = false;
- var currentMapStatus = 'all';
- var currentMapQuery = '';
+  <input type="text" id="mapSearchInput" placeholder="Filter map pins..." oninput="filterMapBySearch(this.value)" style="padding:4px 8px 4px 22px;border:1.5px solid var(--border);border-radius:6px;font-size:0.74rem;outline:none;background:#fff;width:160px;">
+  <i class="fas fa-magnifying-glass" style="position:absolute;left:7px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:0.7rem;"></i>
+  </div>
+  </div>
+  <div style="position:relative;">
+  <div id="incidentMap"></div>
+  <div class="map-legend">
+  <div class="legend-row"><div class="legend-dot" style="background:#dc2626;"></div>Dangerous</div>
+  <div class="legend-row"><div class="legend-dot" style="background:#d97706;"></div>Caution</div>
+  <div class="legend-row"><div class="legend-dot" style="background:#16a34a;"></div>Safe</div>
+  <div class="legend-row" style="margin-top:4px;padding-top:4px;border-top:1px dashed #e2e8f0;font-size:0.7rem;color:#64748b;"><i class="fas fa-circle-dot" style="color:#dc2626;margin-right:4px;"></i>Buffer: 250m Danger / 150m Caution</div>
+  </div>
+  </div>
+  </div>
+  <script>
+  var mapReports = <?= json_encode(array_map(function($r){
+  return ['id'=>(int)$r['id'],'title'=>htmlspecialchars($r['title'],ENT_QUOTES),'category'=>$r['category'],
+  'status'=>$r['status'],'barangay'=>htmlspecialchars($r['barangay']??$r['city']??'',ENT_QUOTES),
+  'lat'=>(float)$r['latitude'],'lng'=>(float)$r['longitude'],
+  'reporter'=>htmlspecialchars(trim($r['first_name'].' '.$r['last_name']),ENT_QUOTES),
+  'date'=>date('M j, Y g:i A',strtotime($r['created_at'])),'desc'=>htmlspecialchars($r['description']??'',ENT_QUOTES)];
+  }, $map_reports)) ?>;
+  var markerColors = {dangerous:'#dc2626',caution:'#d97706',safe:'#16a34a'};
+  var catLabels = {crime:'Crime',accident:'Accident',flooding:'Flooding',fire:'Fire',health:'Health',infrastructure:'Infrastructure',other:'Other'};
+  function makeMapIcon(color, status){
+    var isSafe = (status === 'safe' || color === '#16a34a');
+    var sz = isSafe ? 16 : 14;
+    var shadow = isSafe ? 'box-shadow:0 0 0 2px rgba(22,163,74,0.35),0 2px 6px rgba(0,0,0,0.35);' : 'box-shadow:0 2px 6px rgba(0,0,0,0.35);';
+    return L.divIcon({className:'',html:'<div style="width:'+sz+'px;height:'+sz+'px;border-radius:50%;background:'+color+';border:2.5px solid #fff;'+shadow+'"></div>',iconSize:[sz,sz],iconAnchor:[sz/2,sz/2]});
+  }
+  var lmap = L.map('incidentMap');
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(lmap);
+  var allMapMarkers = [];
+  var hazardCircles = [];
+  var showHazardRings = false;
+  var currentMapStatus = 'all';
+  var currentMapQuery = '';
 
- mapReports.forEach(function(r){
- var color = markerColors[r.status]||'#888';
- var m = L.marker([r.lat,r.lng],{icon:makeMapIcon(color)});
+  mapReports.forEach(function(r){
+  var color = markerColors[r.status]||'#888';
+  var m = L.marker([r.lat,r.lng],{icon:makeMapIcon(color, r.status)});
  m.reportData = r;
  m.bindPopup(
  '<div style="min-width:200px;font-family:Inter,sans-serif;">'+
@@ -733,13 +735,23 @@ async function viewReport(id, title, category, status, barangay, reporter, date,
  fetch('../api/reports.php?action=get_lifecycle&report_id=' + id).then(r=>r.json()).then(data=>{
  if (data.status === 'success' && data.report) {
  var rep = data.report;
- var steps = [
- { title: 'Citizen Reported', icon: 'fa-bullhorn', color: '#3b82f6', done: true, time: rep.created_at ? new Date(rep.created_at).toLocaleString('en-PH') : date, desc: 'Reported by ' + (rep.reporter_name || reporter) },
- { title: 'Barangay / LGU Escalation', icon: 'fa-building-shield', color: '#f59e0b', done: !!rep.escalated_to_lgu || rep.status === 'dangerous' || !!escalated, time: (rep.escalated_to_lgu || escalated) ? 'Escalated to LGU' : 'Monitored locally', desc: (rep.escalated_to_lgu || escalated) ? 'Prioritized for municipal response' : 'Barangay tier monitoring' },
- { title: 'LGU Dispatch to Unit', icon: 'fa-truck-fast', color: '#8b5cf6', done: !!rep.assigned_to, time: rep.assigned_to ? ('Unit: ' + (rep.responder_name || 'Unit') + (rep.responder_agency ? ' (' + rep.responder_agency.toUpperCase() + ')' : '')) : 'Pending assignment', desc: rep.assigned_to ? 'Emergency unit assigned' : 'Awaiting LGU dispatch' },
- { title: 'Unit Response & En Route', icon: 'fa-person-running', color: '#06b6d4', done: !!rep.responded_at || !!rep.accepted_at, time: rep.responded_at ? new Date(rep.responded_at).toLocaleTimeString('en-PH') : (rep.accepted_at ? 'Accepted' : 'Standby'), desc: rep.responded_at ? 'Responders arrived on scene' : 'Dispatched unit in transit' },
- { title: 'Scene Cleared & Resolved', icon: 'fa-circle-check', color: '#10b981', done: (rep.status === 'safe' || !!rep.resolved_at || isResolved), time: rep.resolved_at ? new Date(rep.resolved_at).toLocaleString('en-PH') : (rep.status === 'safe' ? 'Resolved' : 'Active'), desc: (rep.status === 'safe' || !!rep.resolved_at || isResolved) ? 'Hazard safely resolved' : 'Active emergency resolution in progress' }
- ];
+    function formatStepTime(dtStr, fallback) {
+      if (!dtStr) return fallback || 'Pending';
+      var d = new Date(dtStr);
+      if (isNaN(d.getTime())) return fallback || 'Pending';
+      return d.toLocaleString('en-PH', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true });
+    }
+    var isResolved = (rep.status === 'safe' || !!rep.resolved_at);
+    var isDispatched = !!rep.assigned_to;
+    var isEnRoute = !!rep.responded_at || !!rep.accepted_at;
+
+    var steps = [
+      { title: 'Citizen Reported', icon: 'fa-bullhorn', color: '#3b82f6', done: true, time: formatStepTime(rep.created_at, date), desc: 'Reported by ' + (rep.reporter_name || reporter) },
+      { title: 'Barangay / LGU Escalation', icon: 'fa-building-shield', color: '#f59e0b', done: !!rep.escalated_to_lgu || rep.status === 'dangerous' || !!escalated, time: (rep.escalated_to_lgu || escalated) ? 'Escalated to LGU' : (rep.status === 'dangerous' ? 'High Priority' : 'Monitored locally'), desc: (rep.escalated_to_lgu || escalated) ? 'Prioritized for municipal response' : 'Barangay tier monitoring' },
+      { title: 'LGU Dispatch to Unit', icon: 'fa-truck-fast', color: '#8b5cf6', done: isDispatched, time: rep.accepted_at ? formatStepTime(rep.accepted_at, 'Dispatched') : (isDispatched ? 'Dispatched' : 'Pending assignment'), desc: isDispatched ? ('Unit: ' + (rep.responder_name || 'Unit') + (rep.responder_agency ? ' (' + rep.responder_agency.toUpperCase() + ')' : '')) : 'Awaiting LGU dispatch' },
+      { title: 'Unit Response & En Route', icon: 'fa-person-running', color: '#06b6d4', done: isEnRoute, time: rep.responded_at ? formatStepTime(rep.responded_at, 'On Scene') : (rep.accepted_at ? formatStepTime(rep.accepted_at, 'In Transit') : 'Standby'), desc: rep.responded_at ? 'Responders arrived on scene' : (rep.accepted_at ? 'Unit accepted and en route' : 'Standby for unit mobilization') },
+      { title: 'Scene Cleared & Resolved', icon: 'fa-circle-check', color: '#10b981', done: isResolved, time: rep.resolved_at ? formatStepTime(rep.resolved_at, 'Resolved') : (isResolved ? 'Resolved' : 'Pending resolution'), desc: isResolved ? 'Hazard safely resolved' : 'Active emergency resolution in progress' }
+    ];
 
  var tlHtml = '<div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border);">' +
  '<div style="font-size:0.75rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:12px;display:flex;align-items:center;gap:6px;">' +

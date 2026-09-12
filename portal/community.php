@@ -381,9 +381,9 @@ body.dark .detail-map-btn{background:#1f3a5f;color:var(--blue-accent);border-col
 #toastContainer{position:fixed;bottom:24px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:10px;pointer-events:none;max-width:340px;}
 .toast{background:var(--card);border-radius:14px;padding:14px 16px;box-shadow:0 8px 32px rgba(0,0,0,.15);border-left:5px solid #ccc;display:flex;gap:12px;align-items:flex-start;animation:toastSlide .4s cubic-bezier(.34,1.56,.64,1) both;pointer-events:auto;position:relative;overflow:hidden;}
 .toast.fade-out{animation:toastFade .4s ease both;}
-.toast.dangerous{border-left-color:var(--red);}.toast.caution{border-left-color:var(--orange);}.toast.safe{border-left-color:var(--green);}
+.toast.dangerous,.toast.error{border-left-color:var(--red);}.toast.caution,.toast.warning{border-left-color:var(--orange);}.toast.safe,.toast.success{border-left-color:var(--green);}.toast.info{border-left-color:var(--blue);}
 .toast-icon{font-size:1.3rem;flex-shrink:0;margin-top:2px;}
-.toast.dangerous .toast-icon{color:var(--red);}.toast.caution .toast-icon{color:var(--orange);}.toast.safe .toast-icon{color:var(--green);}
+.toast.dangerous .toast-icon,.toast.error .toast-icon{color:var(--red);}.toast.caution .toast-icon,.toast.warning .toast-icon{color:var(--orange);}.toast.safe .toast-icon,.toast.success .toast-icon{color:var(--green);}.toast.info .toast-icon{color:var(--blue);}
 .toast-title{font-size:.83rem;font-weight:700;color:var(--text);margin-bottom:3px;}
 .toast-body{font-size:.76rem;color:var(--muted);line-height:1.55;}
 .toast-close{position:absolute;top:8px;right:8px;background:none;border:none;cursor:pointer;color:var(--muted);font-size:.78rem;padding:2px 5px;border-radius:5px;}
@@ -886,7 +886,30 @@ function updateChip(){const chip=document.getElementById('gpsChip');const lbl=do
 function startGPS(){if(!navigator.geolocation||!document.getElementById('gpsChip'))return;navigator.geolocation.watchPosition(pos=>{userLat=pos.coords.latitude;userLng=pos.coords.longitude;if(!hasGPS){hasGPS=true;updateChip();}checkProximity();},()=>updateChip(),{enableHighAccuracy:true,maximumAge:15000,timeout:20000});}
 function haversine(a,b,c,d){const R=6371000,dL=(c-a)*Math.PI/180,dN=(d-b)*Math.PI/180,x=Math.sin(dL/2)**2+Math.cos(a*Math.PI/180)*Math.cos(c*Math.PI/180)*Math.sin(dN/2)**2;return R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x));}
 function checkProximity(){if(!hasGPS||userLat===null)return;const now=Date.now();allReports.forEach(r=>{if(!r.latitude||!r.longitude)return;const d=haversine(userLat,userLng,r.latitude,r.longitude);if(d<=(r.radius_m||200)){if(now-(alertTimes[r.id]||0)<300000)return;alertTimes[r.id]=now;showToast(r,Math.round(d));}});}
-function showToast(r,dm){const d=dm<1000?dm+'m':(dm/1000).toFixed(1)+'km';const icons={dangerous:'fa-circle-exclamation',caution:'fa-triangle-exclamation',safe:'fa-circle-check'};const t=document.createElement('div');t.className=`toast ${r.status}`;t.innerHTML=`<div class="toast-icon"><i class="fas ${icons[r.status]}"></i></div><div><div class="toast-title">Nearby ${ucFirst(r.status)} Report</div><div class="toast-body"><strong>${esc(r.title)}</strong><br>You are ${d} away · ${esc(r.city)}</div></div><button class="toast-close" onclick="dismissToast(this.closest('.toast'))"><i class="fas fa-xmark"></i></button><div class="toast-progress"></div>`;document.getElementById('toastContainer').appendChild(t);setTimeout(()=>dismissToast(t),5200);}
+function showToast(r,dm){
+  if(typeof r === 'string'){
+    const msg = r;
+    const type = typeof dm === 'string' ? dm : 'success';
+    const icons = {success:'fa-circle-check',error:'fa-circle-xmark',warning:'fa-triangle-exclamation',info:'fa-circle-info'};
+    const t=document.createElement('div');
+    t.className=`toast ${type}`;
+    t.innerHTML=`<div class="toast-icon"><i class="fas ${icons[type]||'fa-circle-check'}"></i></div><div><div class="toast-title">Notification</div><div class="toast-body"><strong>${esc(msg)}</strong></div></div><button class="toast-close" onclick="dismissToast(this.closest('.toast'))"><i class="fas fa-xmark"></i></button><div class="toast-progress"></div>`;
+    document.getElementById('toastContainer').appendChild(t);
+    setTimeout(()=>dismissToast(t),4000);
+    return;
+  }
+  if(!r) return;
+  const distNum = Number(dm);
+  const d = isNaN(distNum) ? 'Nearby' : (distNum < 1000 ? distNum + 'm' : (distNum / 1000).toFixed(1) + 'km');
+  const distText = isNaN(distNum) ? (esc(r.city) || 'Nearby area') : `You are ${d} away · ${esc(r.city || '')}`;
+  const icons={dangerous:'fa-circle-exclamation',caution:'fa-triangle-exclamation',safe:'fa-circle-check'};
+  const st = r.status || 'caution';
+  const t=document.createElement('div');
+  t.className=`toast ${st}`;
+  t.innerHTML=`<div class="toast-icon"><i class="fas ${icons[st]||'fa-circle-exclamation'}"></i></div><div><div class="toast-title">Nearby ${ucFirst(st)} Report</div><div class="toast-body"><strong>${esc(r.title||'Incident')}</strong><br>${distText}</div></div><button class="toast-close" onclick="dismissToast(this.closest('.toast'))"><i class="fas fa-xmark"></i></button><div class="toast-progress"></div>`;
+  document.getElementById('toastContainer').appendChild(t);
+  setTimeout(()=>dismissToast(t),5200);
+}
 function dismissToast(t){if(!t||!t.parentElement)return;t.classList.add('fade-out');setTimeout(()=>{if(t.parentElement)t.parentElement.removeChild(t);},400);}
 
 /* Fetch reports */
@@ -924,8 +947,8 @@ function renderFeed(mineOnly=false){
  return `<div class="report-card ${r.status}" style="animation-delay:${i*.04}s;" onclick="openDetail(${r.id})">
  <div class="card-header">
  <h3>${esc(r.title)}</h3>
- <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
- ${isVerified?`<span class="badge" style="background:#ecfdf5;color:#059669;border:1px solid #a7f3d0;display:inline-flex;align-items:center;gap:4px;"><i class="fas fa-circle-check"></i> Verified (${r.upvotes})</span>`:''}
+ <div class="card-badges">
+ ${isVerified?`<span class="badge badge-verified" style="background:#ecfdf5;color:#059669;border:1px solid #a7f3d0;display:inline-flex;align-items:center;gap:4px;"><i class="fas fa-circle-check"></i> <span class="v-label">Verified</span> (${r.upvotes})</span>`:''}
  <span class="badge ${r.status}">${ucFirst(r.status)}</span>
  </div>
  </div>

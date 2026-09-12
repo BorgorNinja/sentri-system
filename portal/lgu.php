@@ -378,15 +378,15 @@ body{background:var(--bg);color:var(--text);display:flex;min-height:100vh;overfl
  display:none;flex-shrink:0;
 }
 .ham-btn:hover{background:#f3f4f6;}
-.page-title{font-size:1rem;font-weight:800;color:var(--navy);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.page-sub{font-size:0.72rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.page-title{font-size:1rem;font-weight:800;color:var(--navy);white-space:nowrap;}
+.page-sub{font-size:0.72rem;color:var(--muted);white-space:nowrap;}
 .badge-lgu{
  background:#f0f7ff;color:var(--navy);
  font-size:0.71rem;font-weight:700;
  padding:5px 12px;border-radius:20px;
  border:1px solid #bfdbfe;white-space:nowrap;flex-shrink:0;
 }
-.topbar-actions{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.topbar-actions{display:flex;align-items:center;gap:6px;flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
 
 /* ── CONTENT ── */
 .content{padding:22px 24px;flex:1;}
@@ -711,79 +711,80 @@ tr:hover td{background:#fafafa;}
  <h3><i class="fas fa-water" style="color:#0284c7;margin-right:6px;"></i>River Basin & Hydrological Sensor Telemetry</h3>
  <span class="card-meta">PAGASA-QC DRRMO Station Network</span>
  </div>
- <div style="padding:16px 18px;display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;">
- <div style="background:#f8fafc;border:1px solid var(--border);border-radius:12px;padding:14px;">
- <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
- <strong style="font-size:0.86rem;">Marikina River Basin (Nangka Station)</strong>
- <span style="background:#f0fdf4;color:#166534;font-size:0.68rem;font-weight:700;padding:2px 8px;border-radius:10px;border:1px solid #bbf7d0;">Normal (14.2m)</span>
- </div>
- <div style="font-size:0.72rem;color:var(--muted);margin-bottom:8px;">Alarm Level: 15.0m &middot; Critical: 18.0m</div>
- <div style="width:100%;height:8px;background:#e2e8f0;border-radius:4px;overflow:hidden;">
- <div style="width:58%;height:100%;background:#16a34a;border-radius:4px;"></div>
- </div>
- </div>
- <div style="background:#f8fafc;border:1px solid var(--border);border-radius:12px;padding:14px;">
- <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
- <strong style="font-size:0.86rem;">Tullahan River (Novaliches Station)</strong>
- <span style="background:#fffbeb;color:#b45309;font-size:0.68rem;font-weight:700;padding:2px 8px;border-radius:10px;border:1px solid #fde68a;">Alert Level 1 (17.4m)</span>
- </div>
- <div style="font-size:0.72rem;color:var(--muted);margin-bottom:8px;">Alarm Level: 17.0m &middot; Critical: 19.5m</div>
- <div style="width:100%;height:8px;background:#e2e8f0;border-radius:4px;overflow:hidden;">
- <div style="width:78%;height:100%;background:#f59e0b;border-radius:4px;"></div>
- </div>
- </div>
- <div style="background:#f8fafc;border:1px solid var(--border);border-radius:12px;padding:14px;">
- <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
- <strong style="font-size:0.86rem;">San Juan River (Quezon Ave Station)</strong>
- <span style="background:#f0fdf4;color:#166534;font-size:0.68rem;font-weight:700;padding:2px 8px;border-radius:10px;border:1px solid #bbf7d0;">Normal (11.1m)</span>
- </div>
- <div style="font-size:0.72rem;color:var(--muted);margin-bottom:8px;">Alarm Level: 13.5m &middot; Critical: 16.0m</div>
- <div style="width:100%;height:8px;background:#e2e8f0;border-radius:4px;overflow:hidden;">
- <div style="width:45%;height:100%;background:#16a34a;border-radius:4px;"></div>
- </div>
- </div>
- </div>
- </div>
+  <div style="padding:16px 18px;display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;">
+  <div style="background:#f8fafc;border:1px solid var(--border);border-radius:12px;padding:14px;">
+  <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:4px;gap:8px;">
+  <strong style="font-size:0.86rem;line-height:1.35;flex:1;min-width:0;">Marikina River Basin (Nangka Station)</strong>
+  <span style="background:#f0fdf4;color:#166534;font-size:0.68rem;font-weight:700;padding:2px 8px;border-radius:10px;border:1px solid #bbf7d0;white-space:nowrap;flex-shrink:0;">Normal (14.2m)</span>
+  </div>
+  <div style="font-size:0.72rem;color:var(--muted);margin-bottom:8px;">Alarm Level: 15.0m &middot; Critical: 18.0m</div>
+  <div style="width:100%;height:8px;background:#e2e8f0;border-radius:4px;overflow:hidden;">
+  <div style="width:58%;height:100%;background:#16a34a;border-radius:4px;"></div>
+  </div>
+  </div>
+  <div style="background:#f8fafc;border:1px solid var(--border);border-radius:12px;padding:14px;">
+  <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:4px;gap:8px;">
+  <strong style="font-size:0.86rem;line-height:1.35;flex:1;min-width:0;">Tullahan River (Novaliches Station)</strong>
+  <span style="background:#fffbeb;color:#b45309;font-size:0.68rem;font-weight:700;padding:2px 8px;border-radius:10px;border:1px solid #fde68a;white-space:nowrap;flex-shrink:0;">Alert Level 1 (17.4m)</span>
+  </div>
+  <div style="font-size:0.72rem;color:var(--muted);margin-bottom:8px;">Alarm Level: 17.0m &middot; Critical: 19.5m</div>
+  <div style="width:100%;height:8px;background:#e2e8f0;border-radius:4px;overflow:hidden;">
+  <div style="width:78%;height:100%;background:#f59e0b;border-radius:4px;"></div>
+  </div>
+  </div>
+  <div style="background:#f8fafc;border:1px solid var(--border);border-radius:12px;padding:14px;">
+  <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:4px;gap:8px;">
+  <strong style="font-size:0.86rem;line-height:1.35;flex:1;min-width:0;">San Juan River (Quezon Ave Station)</strong>
+  <span style="background:#f0fdf4;color:#166534;font-size:0.68rem;font-weight:700;padding:2px 8px;border-radius:10px;border:1px solid #bbf7d0;white-space:nowrap;flex-shrink:0;">Normal (11.1m)</span>
+  </div>
+  <div style="font-size:0.72rem;color:var(--muted);margin-bottom:8px;">Alarm Level: 13.5m &middot; Critical: 16.0m</div>
+  <div style="width:100%;height:8px;background:#e2e8f0;border-radius:4px;overflow:hidden;">
+  <div style="width:45%;height:100%;background:#16a34a;border-radius:4px;"></div>
+  </div>
+  </div>
+  </div>
+  </div>
 
- <div class="card">
- <div class="card-header">
- <h3><i class="fas fa-triangle-exclamation" style="color:#dc2626;margin-right:6px;"></i>Active Dangerous Incidents</h3>
- <span class="card-meta"><?= count($danger_reports) ?> records</span>
- </div>
- <?php if(empty($danger_reports)): ?>
- <div class="empty"><i class="fas fa-shield-halved"></i>No dangerous incidents active.</div>
- <?php else: ?>
- <div class="table-wrap">
- <table>
- <thead><tr><th scope="col">#</th><th scope="col">Title</th><th scope="col">Category</th><th scope="col">Barangay</th><th scope="col">Date</th></tr></thead>
- <tbody>
- <?php foreach($danger_reports as $r):
- $r_title_js = htmlspecialchars(json_encode($r['title'] ?? ''), ENT_QUOTES, 'UTF-8');
- $r_cat_js = htmlspecialchars(json_encode($r['category'] ?? ''), ENT_QUOTES, 'UTF-8');
- $r_stat_js = htmlspecialchars(json_encode($r['status'] ?? ''), ENT_QUOTES, 'UTF-8');
- $r_loc_js = htmlspecialchars(json_encode($r['barangay'] ?? $r['city'] ?? ''), ENT_QUOTES, 'UTF-8');
- $r_user_js = htmlspecialchars(json_encode(($r['first_name'] ?? '') . ' ' . ($r['last_name'] ?? '')), ENT_QUOTES, 'UTF-8');
- $r_date_js = htmlspecialchars(json_encode(date('M j, Y', strtotime($r['created_at']))), ENT_QUOTES, 'UTF-8');
- $r_desc_js = htmlspecialchars(json_encode($r['description'] ?? ''), ENT_QUOTES, 'UTF-8');
- ?>
- <tr style="cursor:pointer;" onclick="lguViewReport(<?= $r['id'] ?>, <?= $r_title_js ?>, <?= $r_cat_js ?>, <?= $r_stat_js ?>, <?= $r_loc_js ?>, <?= $r_user_js ?>, <?= $r_date_js ?>, <?= $r_desc_js ?>)">
- <td style="color:var(--muted);font-size:0.74rem;">#<?= $r['id'] ?></td>
- <td style="font-weight:600;max-width:180px;"><?= htmlspecialchars(mb_strimwidth($r['title'],0,50,'…')) ?></td>
- <td><span class="cat-chip"><i class="fas <?= $cat_icons[$r['category']] ?? 'fa-circle-exclamation' ?>"></i> <?= ucfirst($r['category']) ?></span></td>
- <td style="font-size:0.78rem;"><?= htmlspecialchars($r['barangay'] ?? $r['city']) ?></td>
- <td style="font-size:0.74rem;color:var(--muted);"><?= date('M j', strtotime($r['created_at'])) ?></td>
- </tr>
- <?php endforeach; ?>
- </tbody>
- </table>
- </div>
- <?php endif; ?>
- </div>
+  <div class="card">
+  <div class="card-header">
+  <h3><i class="fas fa-triangle-exclamation" style="color:#dc2626;margin-right:6px;"></i>Active Dangerous Incidents</h3>
+  <span class="card-meta"><?= count($danger_reports) ?> records</span>
+  </div>
+  <?php if(empty($danger_reports)): ?>
+  <div class="empty"><i class="fas fa-shield-halved"></i>No dangerous incidents active.</div>
+  <?php else: ?>
+  <div class="table-wrap">
+  <table>
+  <thead><tr><th scope="col">#</th><th scope="col">Title</th><th scope="col">Category</th><th scope="col">Barangay</th><th scope="col">Date</th></tr></thead>
+  <tbody>
+  <?php foreach($danger_reports as $r):
+  $r_title_js = htmlspecialchars(json_encode($r['title'] ?? ''), ENT_QUOTES, 'UTF-8');
+  $r_cat_js = htmlspecialchars(json_encode($r['category'] ?? ''), ENT_QUOTES, 'UTF-8');
+  $r_stat_js = htmlspecialchars(json_encode($r['status'] ?? ''), ENT_QUOTES, 'UTF-8');
+  $r_loc_js = htmlspecialchars(json_encode($r['barangay'] ?? $r['city'] ?? ''), ENT_QUOTES, 'UTF-8');
+  $r_user_js = htmlspecialchars(json_encode(($r['first_name'] ?? '') . ' ' . ($r['last_name'] ?? '')), ENT_QUOTES, 'UTF-8');
+  $r_date_js = htmlspecialchars(json_encode(date('M j, Y g:i A', strtotime($r['created_at']))), ENT_QUOTES, 'UTF-8');
+  $r_desc_js = htmlspecialchars(json_encode($r['description'] ?? ''), ENT_QUOTES, 'UTF-8');
+  ?>
+  <tr style="cursor:pointer;" onclick="lguViewReport(<?= $r['id'] ?>, <?= $r_title_js ?>, <?= $r_cat_js ?>, <?= $r_stat_js ?>, <?= $r_loc_js ?>, <?= $r_user_js ?>, <?= $r_date_js ?>, <?= $r_desc_js ?>, <?= $r['escalated_to_lgu'] ? 1 : 0 ?>)">
+  <td style="color:var(--muted);font-size:0.74rem;">#<?= $r['id'] ?></td>
+  <td style="font-weight:700;color:var(--red);"><?= htmlspecialchars($r['title']) ?></td>
+  <td><span class="cat-chip"><i class="fas <?= $cat_icons[$r['category']] ?? 'fa-circle-exclamation' ?>"></i> <?= ucfirst($r['category']) ?></span></td>
+  <td style="font-size:0.78rem;"><?= htmlspecialchars($r['barangay'] ?? $r['city'] ?? '') ?></td>
+  <td style="font-size:0.74rem;color:var(--muted);white-space:nowrap;"><?= date('M j, Y',strtotime($r['created_at'])) ?></td>
+  </tr>
+  <?php endforeach; ?>
+  </tbody>
+  </table>
+  </div>
+  <?php endif; ?>
+  </div>
 
- <div class="card">
- <div class="card-header">
- <h3><i class="fas fa-house-flag" style="color:#166534;margin-right:6px;"></i>Reports by Barangay</h3>
- </div>
+  <div class="card">
+  <div class="card-header">
+  <h3><i class="fas fa-house-flag" style="color:#166534;margin-right:6px;"></i>Total Incident Reports by Barangay</h3>
+  <span class="card-meta">All Severities (Active &amp; Resolved)</span>
+  </div>
  <?php if(empty($brgy_stats)): ?>
  <div class="empty"><i class="fas fa-chart-bar"></i>No data yet.</div>
  <?php else:
@@ -965,11 +966,10 @@ tr:hover td{background:#fafafa;}
  <button class="filter-btn" onclick="filterMap('safe',this)"><i class="fas fa-circle" style="color:#16a34a;font-size:0.6rem;"></i> Safe</button>
  <button class="filter-btn" id="toggleHazardRingsLgu" onclick="toggleLguHazardBuffer(this)" title="Toggle 250m/150m safety hazard buffer rings"><i class="fas fa-bullseye" style="color:#ef4444;font-size:0.7rem;"></i> Hazard Buffers</button>
  <button class="filter-btn" id="toggleHeatmapLgu" onclick="toggleLguHeatmapDensity(this)" title="Toggle incident intensity cluster overlay"><i class="fas fa-fire-flame-curved" style="color:#f59e0b;font-size:0.7rem;"></i> Density Heatmap</button>
- <div style="position:relative;margin-left:auto;">
- <input type="text" id="lguMapSearchInput" placeholder="Filter map pins..." oninput="filterLguMapBySearch(this.value)" style="padding:4px 8px 4px 22px;border:1.5px solid var(--border);border-radius:6px;font-size:0.74rem;outline:none;background:#fff;width:140px;">
- <i class="fas fa-magnifying-glass" style="position:absolute;left:7px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:0.7rem;"></i>
- </div>
- <div style="font-size:0.75rem;color:var(--muted);">OpenStreetMap</div>
+  <div style="position:relative;margin-left:auto;">
+  <input type="text" id="lguMapSearchInput" placeholder="Filter map pins..." oninput="filterLguMapBySearch(this.value)" style="padding:4px 8px 4px 22px;border:1.5px solid var(--border);border-radius:6px;font-size:0.74rem;outline:none;background:#fff;width:160px;">
+  <i class="fas fa-magnifying-glass" style="position:absolute;left:7px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:0.7rem;"></i>
+  </div>
  </div>
  <div style="position:relative;">
  <div id="incidentMap"></div>
@@ -977,7 +977,7 @@ tr:hover td{background:#fafafa;}
  <div class="legend-row"><div class="legend-dot" style="background:#dc2626;"></div>Dangerous</div>
  <div class="legend-row"><div class="legend-dot" style="background:#d97706;"></div>Caution</div>
  <div class="legend-row"><div class="legend-dot" style="background:#16a34a;"></div>Safe</div>
- <div class="legend-row" style="margin-top:4px;padding-top:4px;border-top:1px dashed #e2e8f0;font-size:0.7rem;color:#64748b;"><i class="fas fa-circle-dot" style="color:#dc2626;margin-right:4px;"></i>Buffer: 250m / 150m</div>
+ <div class="legend-row" style="margin-top:4px;padding-top:4px;border-top:1px dashed #e2e8f0;font-size:0.7rem;color:#64748b;"><i class="fas fa-circle-dot" style="color:#dc2626;margin-right:4px;"></i>Buffer: 250m Danger / 150m Caution</div>
  </div>
  </div>
  </div>
@@ -986,13 +986,16 @@ tr:hover td{background:#fafafa;}
  var markerColors = {dangerous:'#dc2626',caution:'#d97706',safe:'#16a34a'};
  var catLabels = {crime:'Crime',accident:'Accident',flooding:'Flooding',fire:'Fire',health:'Health',infrastructure:'Infrastructure',other:'Other'};
 
- function makeIcon(color){
- return L.divIcon({
- className:'',
- html:'<div style="width:14px;height:14px;border-radius:50%;background:'+color+';border:2.5px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.35);"></div>',
- iconSize:[14,14],iconAnchor:[7,7]
- });
- }
+  function makeIcon(color, status){
+    var isSafe = (status === 'safe' || color === '#16a34a');
+    var sz = isSafe ? 16 : 14;
+    var shadow = isSafe ? 'box-shadow:0 0 0 2px rgba(22,163,74,0.35),0 2px 6px rgba(0,0,0,0.35);' : 'box-shadow:0 2px 6px rgba(0,0,0,0.35);';
+    return L.divIcon({
+      className:'',
+      html:'<div style="width:'+sz+'px;height:'+sz+'px;border-radius:50%;background:'+color+';border:2.5px solid #fff;'+shadow+'"></div>',
+      iconSize:[sz,sz],iconAnchor:[sz/2,sz/2]
+    });
+  }
 
  var map = L.map('incidentMap');
  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(map);
@@ -1005,7 +1008,7 @@ tr:hover td{background:#fafafa;}
 
  reports.forEach(function(r){
  var color = markerColors[r.status] || '#888';
- var m = L.marker([r.lat,r.lng],{icon:makeIcon(color)});
+ var m = L.marker([r.lat,r.lng],{icon:makeIcon(color, r.status)});
  m.reportData = r;
  m.bindPopup(
  '<div style="min-width:200px;font-family:Inter,sans-serif;">' +
@@ -1396,13 +1399,23 @@ async function lguViewReport(id,title,category,status,barangay,reporter,date,des
  var data = await res.json();
  if (data.status === 'success' && data.report) {
  var rep = data.report;
- var steps = [
- { title: 'Citizen Reported', icon: 'fa-bullhorn', color: '#3b82f6', done: true, time: rep.created_at ? new Date(rep.created_at).toLocaleString('en-PH') : date, desc: 'Reported by ' + (rep.reporter_name || reporter) },
- { title: 'Barangay / LGU Escalation', icon: 'fa-building-shield', color: '#f59e0b', done: !!rep.escalated_to_lgu || rep.status === 'dangerous', time: rep.escalated_to_lgu ? 'Escalated to LGU' : 'Monitored locally', desc: rep.escalated_to_lgu ? 'Prioritized for direct emergency dispatch' : 'Barangay tier monitoring' },
- { title: 'LGU Dispatch to Unit', icon: 'fa-truck-fast', color: '#8b5cf6', done: !!rep.assigned_to, time: rep.assigned_to ? ('Unit: ' + (rep.responder_name || 'Unit') + (rep.responder_agency ? ' (' + rep.responder_agency.toUpperCase() + ')' : '')) : 'Pending assignment', desc: rep.assigned_to ? 'Dispatched to incident area' : 'Awaiting unit dispatch' },
- { title: 'Unit Accepted & En Route', icon: 'fa-person-running', color: '#06b6d4', done: !!rep.responded_at || !!rep.accepted_at, time: rep.responded_at ? new Date(rep.responded_at).toLocaleTimeString('en-PH') : (rep.accepted_at ? 'Accepted' : 'Standby'), desc: rep.responded_at ? 'First responders arrived on scene' : 'Dispatched unit in transit' },
- { title: 'Scene Cleared & Resolved', icon: 'fa-circle-check', color: '#10b981', done: (rep.status === 'safe' || !!rep.resolved_at), time: rep.resolved_at ? new Date(rep.resolved_at).toLocaleString('en-PH') : (rep.status === 'safe' ? 'Resolved' : 'Active'), desc: (rep.status === 'safe' || !!rep.resolved_at) ? 'Hazard safely neutralized' : 'Active emergency resolution in progress' }
- ];
+    function formatStepTime(dtStr, fallback) {
+      if (!dtStr) return fallback || 'Pending';
+      var d = new Date(dtStr);
+      if (isNaN(d.getTime())) return fallback || 'Pending';
+      return d.toLocaleString('en-PH', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true });
+    }
+    var isResolved = (rep.status === 'safe' || !!rep.resolved_at);
+    var isDispatched = !!rep.assigned_to;
+    var isEnRoute = !!rep.responded_at || !!rep.accepted_at;
+
+    var steps = [
+      { title: 'Citizen Reported', icon: 'fa-bullhorn', color: '#3b82f6', done: true, time: formatStepTime(rep.created_at, date), desc: 'Reported by ' + (rep.reporter_name || reporter) },
+      { title: 'Barangay / LGU Escalation', icon: 'fa-building-shield', color: '#f59e0b', done: !!rep.escalated_to_lgu || rep.status === 'dangerous', time: rep.escalated_to_lgu ? 'Escalated to LGU' : (rep.status === 'dangerous' ? 'High Priority' : 'Monitored locally'), desc: rep.escalated_to_lgu ? 'Prioritized for direct emergency dispatch' : 'Barangay tier monitoring' },
+      { title: 'LGU Dispatch to Unit', icon: 'fa-truck-fast', color: '#8b5cf6', done: isDispatched, time: rep.accepted_at ? formatStepTime(rep.accepted_at, 'Dispatched') : (isDispatched ? 'Dispatched' : 'Pending assignment'), desc: isDispatched ? ('Unit: ' + (rep.responder_name || 'Unit') + (rep.responder_agency ? ' (' + rep.responder_agency.toUpperCase() + ')' : '')) : 'Awaiting unit dispatch' },
+      { title: 'Unit Accepted & En Route', icon: 'fa-person-running', color: '#06b6d4', done: isEnRoute, time: rep.responded_at ? formatStepTime(rep.responded_at, 'On Scene') : (rep.accepted_at ? formatStepTime(rep.accepted_at, 'In Transit') : 'Standby'), desc: rep.responded_at ? 'First responders arrived on scene' : (rep.accepted_at ? 'Unit accepted and en route' : 'Standby for unit mobilization') },
+      { title: 'Scene Cleared & Resolved', icon: 'fa-circle-check', color: '#10b981', done: isResolved, time: rep.resolved_at ? formatStepTime(rep.resolved_at, 'Resolved') : (isResolved ? 'Resolved' : 'Pending resolution'), desc: isResolved ? 'Hazard safely neutralized' : 'Active emergency resolution in progress' }
+    ];
 
  var tlHtml = '<div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border);">' +
  '<div style="font-size:0.75rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:12px;display:flex;align-items:center;gap:6px;">' +
@@ -1656,67 +1669,73 @@ function searchTableReports(query){
 
  <div class="table-wrap" style="max-height:48vh;overflow-y:auto;">
  <table>
- <thead>
- <tr>
- <th scope="col" style="white-space:nowrap;">Responding Agency</th>
- <th scope="col">Asset Capability & Equipment</th>
- <th scope="col" style="white-space:nowrap;">Personnel</th>
- <th scope="col" style="white-space:nowrap;">Deployment ETA</th>
- <th scope="col" style="white-space:nowrap;">Status / Action</th>
- </tr>
- </thead>
- <tbody>
- <tr>
- <td>
- <strong>Philippine Coast Guard (PCG)</strong>
- <div style="font-size:0.72rem;color:var(--muted);">National Capital Region Dist.</div>
- </td>
- <td><span style="background:#e0f2fe;color:#0369a1;padding:2px 7px;border-radius:4px;font-size:0.72rem;font-weight:700;">WASAR Team (3 Rubber Boats)</span></td>
- <td>12 Operators</td>
- <td><span style="font-size:0.74rem;font-weight:700;color:#059669;">15-20 mins</span></td>
- <td><button id="ma_btn_1" onclick="requestMutualAid(1, 'Philippine Coast Guard WASAR', this)" style="padding:4px 10px;background:var(--navy);color:#fff;border:none;border-radius:6px;font-size:0.72rem;font-weight:700;cursor:pointer;">Deploy Asset</button></td>
- </tr>
- <tr>
- <td>
- <strong>AFP 525th Eng. Combat Bn</strong>
- <div style="font-size:0.72rem;color:var(--muted);">HADR Special Task Unit</div>
- </td>
- <td><span style="background:#fef3c7;color:#92400e;padding:2px 7px;border-radius:4px;font-size:0.72rem;font-weight:700;">2 Amphibious KM450 Trucks</span></td>
- <td>20 Soldiers</td>
- <td><span style="font-size:0.74rem;font-weight:700;color:#059669;">25-30 mins</span></td>
- <td><button id="ma_btn_2" onclick="requestMutualAid(2, 'AFP 525th Engineer Bn', this)" style="padding:4px 10px;background:var(--navy);color:#fff;border:none;border-radius:6px;font-size:0.72rem;font-weight:700;cursor:pointer;">Deploy Asset</button></td>
- </tr>
- <tr>
- <td>
- <strong>DSWD Regional Relief Hub</strong>
- <div style="font-size:0.72rem;color:var(--muted);">Disaster Response Management</div>
- </td>
- <td><span style="background:#f0fdf4;color:#166534;padding:2px 7px;border-radius:4px;font-size:0.72rem;font-weight:700;">2,500 Family Food Packs (FFPs)</span></td>
- <td>Logistics Crew</td>
- <td><span style="font-size:0.74rem;font-weight:700;color:#059669;">40 mins</span></td>
- <td><button id="ma_btn_3" onclick="requestMutualAid(3, 'DSWD Relief Convoy', this)" style="padding:4px 10px;background:var(--navy);color:#fff;border:none;border-radius:6px;font-size:0.72rem;font-weight:700;cursor:pointer;">Deploy Asset</button></td>
- </tr>
- <tr>
- <td>
- <strong>MMDA Urban Search & Rescue</strong>
- <div style="font-size:0.72rem;color:var(--muted);">Road Emergency Group</div>
- </td>
- <td><span style="background:#fef2f2;color:#991b1b;padding:2px 7px;border-radius:4px;font-size:0.72rem;font-weight:700;">Heavy Hydraulic Spreaders & Crane</span></td>
- <td>8 USAR Techs</td>
- <td><span style="font-size:0.74rem;font-weight:700;color:#059669;">20 mins</span></td>
- <td><button id="ma_btn_4" onclick="requestMutualAid(4, 'MMDA USAR Heavy Rescue', this)" style="padding:4px 10px;background:var(--navy);color:#fff;border:none;border-radius:6px;font-size:0.72rem;font-weight:700;cursor:pointer;">Deploy Asset</button></td>
- </tr>
- <tr>
- <td>
- <strong>DOH Mobile Field Hospital</strong>
- <div style="font-size:0.72rem;color:var(--muted);">HEMB Rapid Deployment</div>
- </td>
- <td><span style="background:#fdf4ff;color:#86198f;padding:2px 7px;border-radius:4px;font-size:0.72rem;font-weight:700;">Inflatable 20-Bed Triage Tent</span></td>
- <td>4 MDs / 8 RNs</td>
- <td><span style="font-size:0.74rem;font-weight:700;color:#059669;">35 mins</span></td>
- <td><button id="ma_btn_5" onclick="requestMutualAid(5, 'DOH Mobile Field Hospital', this)" style="padding:4px 10px;background:var(--navy);color:#fff;border:none;border-radius:6px;font-size:0.72rem;font-weight:700;cursor:pointer;">Deploy Asset</button></td>
- </tr>
- </tbody>
+  <thead>
+  <tr>
+  <th scope="col" style="white-space:nowrap;">Tier</th>
+  <th scope="col" style="white-space:nowrap;">Responding Agency</th>
+  <th scope="col">Asset Capability & Equipment</th>
+  <th scope="col" style="white-space:nowrap;">Personnel</th>
+  <th scope="col" style="white-space:nowrap;">Deployment ETA</th>
+  <th scope="col" style="white-space:nowrap;">Status / Action</th>
+  </tr>
+  </thead>
+  <tbody>
+  <tr>
+  <td><span style="background:#f0fdf4;color:#166534;padding:2px 8px;border-radius:12px;font-size:0.68rem;font-weight:800;border:1px solid #bbf7d0;white-space:nowrap;">Tier 1 Rapid</span></td>
+  <td>
+  <strong>Philippine Coast Guard (PCG)</strong>
+  <div style="font-size:0.72rem;color:var(--muted);">National Capital Region Dist.</div>
+  </td>
+  <td><span style="background:#e0f2fe;color:#0369a1;padding:2px 7px;border-radius:4px;font-size:0.72rem;font-weight:700;">WASAR Team (3 Rubber Boats)</span></td>
+  <td>12 Operators</td>
+  <td><span style="font-size:0.74rem;font-weight:700;color:#059669;">15-20 mins</span></td>
+  <td><button id="ma_btn_1" onclick="requestMutualAid(1, 'Philippine Coast Guard WASAR', this)" style="padding:4px 10px;background:var(--navy);color:#fff;border:none;border-radius:6px;font-size:0.72rem;font-weight:700;cursor:pointer;">Deploy Asset</button></td>
+  </tr>
+  <tr>
+  <td><span style="background:#f0fdf4;color:#166534;padding:2px 8px;border-radius:12px;font-size:0.68rem;font-weight:800;border:1px solid #bbf7d0;white-space:nowrap;">Tier 1 Rapid</span></td>
+  <td>
+  <strong>MMDA Urban Search & Rescue</strong>
+  <div style="font-size:0.72rem;color:var(--muted);">Road Emergency Group</div>
+  </td>
+  <td><span style="background:#fef2f2;color:#991b1b;padding:2px 7px;border-radius:4px;font-size:0.72rem;font-weight:700;">Heavy Hydraulic Spreaders & Crane</span></td>
+  <td>8 USAR Techs</td>
+  <td><span style="font-size:0.74rem;font-weight:700;color:#059669;">20 mins</span></td>
+  <td><button id="ma_btn_4" onclick="requestMutualAid(4, 'MMDA USAR Heavy Rescue', this)" style="padding:4px 10px;background:var(--navy);color:#fff;border:none;border-radius:6px;font-size:0.72rem;font-weight:700;cursor:pointer;">Deploy Asset</button></td>
+  </tr>
+  <tr>
+  <td><span style="background:#eff6ff;color:#1d4ed8;padding:2px 8px;border-radius:12px;font-size:0.68rem;font-weight:800;border:1px solid #bfdbfe;white-space:nowrap;">Tier 2 Heavy</span></td>
+  <td>
+  <strong>AFP 525th Eng. Combat Bn</strong>
+  <div style="font-size:0.72rem;color:var(--muted);">HADR Special Task Unit</div>
+  </td>
+  <td><span style="background:#fef3c7;color:#92400e;padding:2px 7px;border-radius:4px;font-size:0.72rem;font-weight:700;">2 Amphibious KM450 Trucks</span></td>
+  <td>20 Soldiers</td>
+  <td><span style="font-size:0.74rem;font-weight:700;color:#059669;">25-30 mins</span></td>
+  <td><button id="ma_btn_2" onclick="requestMutualAid(2, 'AFP 525th Engineer Bn', this)" style="padding:4px 10px;background:var(--navy);color:#fff;border:none;border-radius:6px;font-size:0.72rem;font-weight:700;cursor:pointer;">Deploy Asset</button></td>
+  </tr>
+  <tr>
+  <td><span style="background:#faf5ff;color:#7e22ce;padding:2px 8px;border-radius:12px;font-size:0.68rem;font-weight:800;border:1px solid #e9d5ff;white-space:nowrap;">Tier 3 Support</span></td>
+  <td>
+  <strong>DOH Mobile Field Hospital</strong>
+  <div style="font-size:0.72rem;color:var(--muted);">HEMB Rapid Deployment</div>
+  </td>
+  <td><span style="background:#fdf4ff;color:#86198f;padding:2px 7px;border-radius:4px;font-size:0.72rem;font-weight:700;">Inflatable 20-Bed Triage Tent</span></td>
+  <td>4 MDs / 8 RNs</td>
+  <td><span style="font-size:0.74rem;font-weight:700;color:#059669;">35 mins</span></td>
+  <td><button id="ma_btn_5" onclick="requestMutualAid(5, 'DOH Mobile Field Hospital', this)" style="padding:4px 10px;background:var(--navy);color:#fff;border:none;border-radius:6px;font-size:0.72rem;font-weight:700;cursor:pointer;">Deploy Asset</button></td>
+  </tr>
+  <tr>
+  <td><span style="background:#faf5ff;color:#7e22ce;padding:2px 8px;border-radius:12px;font-size:0.68rem;font-weight:800;border:1px solid #e9d5ff;white-space:nowrap;">Tier 3 Support</span></td>
+  <td>
+  <strong>DSWD Regional Relief Hub</strong>
+  <div style="font-size:0.72rem;color:var(--muted);">Disaster Response Management</div>
+  </td>
+  <td><span style="background:#f0fdf4;color:#166534;padding:2px 7px;border-radius:4px;font-size:0.72rem;font-weight:700;">2,500 Family Food Packs (FFPs)</span></td>
+  <td>Logistics Crew</td>
+  <td><span style="font-size:0.74rem;font-weight:700;color:#059669;">40 mins</span></td>
+  <td><button id="ma_btn_3" onclick="requestMutualAid(3, 'DSWD Relief Convoy', this)" style="padding:4px 10px;background:var(--navy);color:#fff;border:none;border-radius:6px;font-size:0.72rem;font-weight:700;cursor:pointer;">Deploy Asset</button></td>
+  </tr>
+  </tbody>
  </table>
  </div>
  </div>

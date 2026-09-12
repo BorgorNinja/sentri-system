@@ -159,6 +159,13 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   #toastContainer { left: 10px !important; right: 10px !important; bottom: 12px !important; max-width: none !important; }
   .toast { width: 100% !important; }
 
+  /* Feed card header and badges */
+  .card-header { display: flex !important; align-items: flex-start !important; justify-content: space-between !important; gap: 8px !important; }
+  .card-header h3 { min-width: 0 !important; flex: 1 1 auto !important; font-size: 0.95rem !important; }
+  .card-badges { display: inline-flex !important; align-items: center !important; gap: 4px !important; flex-shrink: 0 !important; }
+  .card-badges .badge { white-space: nowrap !important; font-size: 0.68rem !important; padding: 3px 7px !important; }
+  .card-badges .badge-verified .v-label { display: none !important; }
+
   /* Admin-specific responsive rules */
   .sidebar + .main .stats-row { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
   .admin-badge { display: none !important; }
