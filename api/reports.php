@@ -764,7 +764,9 @@ switch ($action) {
  $where_clauses[] = "r.category = '".$conn->real_escape_string($filter_cat)."'";
  }
  if ($filter_brgy) {
- $where_clauses[] = "r.barangay = '".$conn->real_escape_string($filter_brgy)."'";
+ $bk = preg_replace('/[^a-z0-9]/','',str_replace(['barangay','brgy'],'',strtolower(trim($filter_brgy))));
+ $bexpr = "REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(LOWER(TRIM(COALESCE(%s,''))),'barangay',''),'brgy',''),'.',''),',',''),'-',''),'_',''),' ','')";
+ $where_clauses[] = "(".sprintf($bexpr,'r.barangay')." = '".$conn->real_escape_string($bk)."' OR (COALESCE(TRIM(r.barangay),'')='' AND ".sprintf($bexpr,'u.barangay_name')." = '".$conn->real_escape_string($bk)."'))";
  }
  if ($filter_city) {
  $where_clauses[] = "r.city = '".$conn->real_escape_string($filter_city)."'";
